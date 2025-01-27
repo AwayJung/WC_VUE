@@ -1,56 +1,62 @@
-import Vue from "vue";
+import axios from "axios";
+
+// axios 인스턴스 생성
+const chatApi = axios.create({
+  baseURL: "http://localhost:8080",
+  headers: {
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+    "Content-Type": "application/json",
+  },
+});
 
 const state = {
   rooms: [],
   currentRoom: null,
-  messages: {},
-  users: {},
+  messages: [],
 };
 
 const mutations = {
   SET_ROOMS(state, rooms) {
-    state.rooms = rooms;
+    console.log("Setting rooms in state:", rooms);
+    state.rooms = rooms || [];
   },
-  SET_CURRENT_ROOM(state, roomId) {
-    state.currentRoom = roomId;
-  },
-  ADD_MESSAGE(state, { roomId, message }) {
-    if (!state.messages[roomId]) {
-      Vue.set(state.messages, roomId, []);
-    }
-    state.messages[roomId].push(message);
-  },
-  SET_USERS(state, { roomId, users }) {
-    Vue.set(state.users, roomId, users);
+  SET_MESSAGES(state, messages) {
+    state.messages = messages;
   },
 };
 
 const actions = {
-  joinRoom({ commit }, roomId) {
-    commit("SET_CURRENT_ROOM", roomId);
-  },
-  sendMessage({ commit }, { roomId, message }) {
-    commit("ADD_MESSAGE", {
-      roomId,
-      message: {
-        id: Date.now(),
-        content: message,
-        sender: "user",
-        timestamp: new Date().toISOString(),
-      },
-    });
-  },
-  updateUsers({ commit }, { roomId, users }) {
-    commit("SET_USERS", { roomId, users });
-  },
-};
+  async fetchUserRooms({ commit }, userId) {
+    try {
+      console.log("Fetching rooms for userId:", userId);
+      const response = await chatApi.get(`/api/chat/user/${userId}`);
+      console.log("API Response:", response);
 
-const getters = {
-  currentRoomMessages: (state) => {
-    return state.currentRoom ? state.messages[state.currentRoom] || [] : [];
+      const rooms = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data.data)
+        ? response.data.data
+        : [];
+
+      commit("SET_ROOMS", rooms);
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
+      commit("SET_ROOMS", []);
+      throw error;
+    }
   },
-  currentRoomUsers: (state) => {
-    return state.currentRoom ? state.users[state.currentRoom] || [] : [];
+
+  async fetchMessages({ commit }, roomId) {
+    try {
+      const response = await chatApi.get(`/api/chat/rooms/${roomId}`);
+      commit("SET_MESSAGES", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      commit("SET_MESSAGES", []);
+      throw error;
+    }
   },
 };
 
@@ -59,5 +65,4 @@ export default {
   state,
   mutations,
   actions,
-  getters,
 };
