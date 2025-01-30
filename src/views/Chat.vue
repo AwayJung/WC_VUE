@@ -23,7 +23,7 @@
 import { mapState, mapActions } from 'vuex';
 
 export default {
-  name: 'ChatList',  // ChatRoom에서 ChatList로 이름 변경
+  name: 'ChatList',  
   props: {
     userId: {
       type: [String, Number],
