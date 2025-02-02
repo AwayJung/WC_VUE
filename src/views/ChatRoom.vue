@@ -255,10 +255,24 @@ export default {
           "chat/fetchMessages",
           this.roomId
         );
-        this.messages = response.data;
-        this.scrollToBottom();
+
+        // 채팅 기록이 있고, 데이터가 배열이며, 내용이 있는 경우에만 메시지를 표시
+        if (
+          response &&
+          response.data &&
+          Array.isArray(response.data) &&
+          response.data.length > 0
+        ) {
+          this.messages = response.data;
+          this.scrollToBottom();
+        } else {
+          // 채팅 기록이 없는 경우 빈 배열로 초기화
+          this.messages = [];
+        }
       } catch (error) {
         console.error("채팅 히스토리 로딩 실패:", error);
+        // 에러 발생시에도 빈 배열로 초기화
+        this.messages = [];
       }
     },
   },
