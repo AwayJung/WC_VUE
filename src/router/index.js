@@ -7,7 +7,7 @@ Vue.use(VueRouter);
 
 const routes = [
   {
-    path: "/chat/room/:roomId",
+    path: "/chat/room/:roomId/:itemId",
     name: "ChatRoom",
     component: ChatRoom,
     props: true,

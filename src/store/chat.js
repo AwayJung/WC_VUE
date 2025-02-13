@@ -30,7 +30,7 @@ const actions = {
   async fetchUserRooms({ commit }, userId) {
     try {
       console.log("Fetching rooms for userId:", userId);
-      const response = await chatApi.get(`/api/chat/user/${userId}`);
+      const response = await chatApi.get(`/api/chat/rooms/user/${userId}`);
       console.log("API Response:", response);
 
       const rooms = Array.isArray(response.data)

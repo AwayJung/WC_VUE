@@ -1,7 +1,7 @@
 <template>
   <div class="chat-room">
     <div class="chat-header">
-      <h2>채팅방 {{ roomId }}</h2>
+      <h2>채팅방</h2>
       <button @click="goBack" class="back-btn">뒤로가기</button>
     </div>
 
@@ -51,6 +51,10 @@ export default {
     userId: {
       type: [String, Number],
       required: true,
+    },
+    itemId: {
+      type: Number,
+      required: false,
     },
   },
 
@@ -191,21 +195,39 @@ export default {
         // 메시지를 로컬 messages 배열에 먼저 추가
         this.messages.push(message);
 
-        // 서버로 메시지 전송
+        // headers 객체를 생성하고, itemId가 있을 경우에만 추가
+        const headers = {
+          "content-type": "application/json",
+        };
+
+        // 로그 추가
+        console.log("현재 메시지 수:", this.messages.length);
+        console.log("itemId prop:", this.itemId);
+
+        // 메시지가 첫 메시지인 경우 itemId를 헤더에 추가
+        if (this.messages.length === 1 && this.itemId) {
+          headers.itemId = this.itemId;
+          console.log("첫 메시지 전송 - headers:", headers);
+        }
+
+        // 서버로 메시지 전송 직전 로그
+        console.log("전송할 메시지:", message);
+        console.log("전송 헤더:", headers);
+
         await this.stompClient.publish({
           destination: `/app/chat/${this.roomId}`,
           body: JSON.stringify(message),
-          headers: { "content-type": "application/json" },
+          headers: headers,
         });
 
-        // 입력창 초기화
-        this.newMessage = "";
+        // 전송 성공 로그
+        console.log("메시지 전송 성공");
 
-        // 스크롤을 최하단으로
+        this.newMessage = "";
         this.scrollToBottom();
       } catch (error) {
         console.error("[STOMP] 메시지 전송 실패:", error);
-        // 전송 실패시 마지막 메시지 제거
+        console.error("실패한 메시지:", message);
         this.messages.pop();
       }
     },
@@ -214,7 +236,7 @@ export default {
       if (!this.isConnected) return;
 
       const message = {
-        type,
+        type: type,
         roomId: this.roomId,
         senderId: this.userId,
         timestamp: new Date().toISOString(),
@@ -278,6 +300,9 @@ export default {
   },
 
   created() {
+    console.log("컴포넌트 생성 - itemId:", this.itemId);
+    console.log("컴포넌트 생성 - roomId:", this.roomId);
+    console.log("컴포넌트 생성 - userId:", this.userId);
     this.loadChatHistory();
     this.initWebSocket();
   },
