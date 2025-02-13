@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <div class="chat-input">
       <input 
         v-model="message" 
@@ -25,4 +25,4 @@
       }
     }
   }
-  </script>
+  </script> -->

@@ -16,13 +16,20 @@
         </div>
 
         <div class="flex items-center space-x-3">
-          <button
-            v-if="!isLoggedIn"
-            @click="login"
-            class="px-3 py-2 text-gray-700 hover:text-orange-500"
-          >
-            로그인
-          </button>
+          <div v-if="!isLoggedIn" class="flex items-center space-x-2">
+            <router-link
+              to="/login"
+              class="px-3 py-2 text-gray-700 hover:text-orange-500"
+            >
+              로그인
+            </router-link>
+            <router-link
+              to="/signup"
+              class="px-3 py-2 text-gray-700 hover:text-orange-500"
+            >
+              회원가입
+            </router-link>
+          </div>
           <div v-else class="flex items-center space-x-2">
             <router-link
               :to="`/chat/${userId}`"
@@ -51,11 +58,6 @@ export default {
     userId: {
       type: String,
       default: "",
-    },
-  },
-  methods: {
-    login() {
-      this.$emit("login");
     },
   },
 };
