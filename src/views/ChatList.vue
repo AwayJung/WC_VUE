@@ -98,7 +98,6 @@
                 <span class="font-medium">{{
                   room.name || `채팅방 ${room.roomId}`
                 }}</span>
-                <span class="text-sm text-gray-500 ml-2">위치정보</span>
                 <span class="text-sm text-gray-500 ml-2">· 3일 전</span>
               </div>
             </div>
