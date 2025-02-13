@@ -1,0 +1,7 @@
+<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#FF8A3D">
+    <path d="M20 5C25 5 25 15 20 20C15 25 5 25 5 20C5 15 15 5 20 5Z"/>
+    <path d="M20 8L22 12C22 12 18 14 16 14C14 14 12 12 12 12L14 8C14 8 17 10 20 8Z" fill="darkgreen"/>
+  </g>
+  <text x="35" y="22" fill="#111111" font-family="Arial" font-size="16" font-weight="bold">당근마켓</text>
+</svg>

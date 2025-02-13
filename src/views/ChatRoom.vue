@@ -1,42 +1,109 @@
 <template>
-  <div class="chat-room">
-    <div class="chat-header">
-      <h2>채팅방</h2>
-      <button @click="goBack" class="back-btn">뒤로가기</button>
+  <div class="flex flex-col h-screen bg-white">
+    <!-- 헤더 -->
+    <div class="bg-white px-4 py-3 flex items-center border-b">
+      <button @click="goBack" class="text-gray-800 -ml-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </button>
+      <h2 class="ml-2 text-lg">채팅방</h2>
     </div>
 
-    <div class="chat-messages" ref="messageContainer">
+    <!-- 채팅 메시지 영역 -->
+    <div class="flex-1 overflow-y-auto bg-gray-50" ref="messageContainer">
       <div
         v-for="message in messages"
         :key="message.id || message.timestamp"
-        :class="['message', message.senderId === userId ? 'sent' : 'received']"
+        class="px-4 py-1"
       >
-        <div class="message-content">
-          <span class="sender">{{
-            message.senderId === userId ? "나" : "너"
-          }}</span>
-          <p class="text">{{ message.content }}</p>
-          <span class="time">{{ formatTime(message.timestamp) }}</span>
+        <div
+          :class="[
+            'flex',
+            message.senderId === userId ? 'justify-end' : 'justify-start',
+          ]"
+        >
+          <div
+            :class="[
+              'max-w-[70%] rounded-3xl px-4 py-2.5',
+              message.senderId === userId
+                ? 'bg-orange-500 text-white'
+                : 'bg-white text-gray-900',
+            ]"
+          >
+            <p class="text-sm leading-5">{{ message.content }}</p>
+          </div>
+        </div>
+        <div
+          :class="[
+            'text-xs text-gray-400 mt-1',
+            message.senderId === userId ? 'text-right mr-1' : 'text-left ml-1',
+          ]"
+        >
+          {{ formatTime(message.timestamp) }}
         </div>
       </div>
     </div>
 
-    <div class="chat-input">
+    <!-- 메시지 입력 영역 -->
+    <div class="border-t bg-white px-2 py-2 flex items-center gap-2">
+      <button class="w-10 h-10 flex items-center justify-center text-gray-400">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+      </button>
       <input
         v-model="newMessage"
         @keyup.enter="sendMessage"
-        placeholder="메시지를 입력하세요..."
         type="text"
+        placeholder="메시지를 입력하세요..."
+        class="flex-1 bg-gray-50 rounded-full px-4 py-2.5 text-sm focus:outline-none border border-gray-200"
       />
-      <button @click="sendMessage" :disabled="!isConnected">전송</button>
-    </div>
-
-    <div class="connection-status" :class="connectionStatusClass">
-      연결 상태: {{ connectionStatus }}
+      <button
+        @click="sendMessage"
+        :disabled="!isConnected"
+        class="w-10 h-10 flex items-center justify-center text-gray-500"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <path
+            d="M20 12L4 4L6 12L4 20L20 12Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
     </div>
   </div>
 </template>
-
 <script>
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -324,133 +391,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.chat-room {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-width: 800px;
-  margin: 0 auto;
-  background: #f5f5f5;
-}
-
-.chat-header {
-  padding: 1rem;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.back-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  background: #f0f0f0;
-  cursor: pointer;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.message {
-  max-width: 70%;
-  padding: 0.5rem;
-  border-radius: 8px;
-  margin: 0.5rem 0;
-}
-
-.sent {
-  align-self: flex-end;
-  background: #007aff;
-  color: white;
-}
-
-.received {
-  align-self: flex-start;
-  background: white;
-}
-
-.message-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.sender {
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-.text {
-  margin: 0;
-  word-break: break-word;
-}
-
-.time {
-  font-size: 0.7rem;
-  opacity: 0.7;
-  align-self: flex-end;
-}
-
-.chat-input {
-  padding: 1rem;
-  background: white;
-  display: flex;
-  gap: 1rem;
-  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.chat-input input {
-  flex: 1;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  outline: none;
-}
-
-.chat-input button {
-  padding: 0.5rem 1rem;
-  background: #007aff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.chat-input button:hover {
-  background: #0056b3;
-}
-
-.connection-status {
-  padding: 0.5rem;
-  text-align: center;
-  font-size: 0.8rem;
-  background-color: #f8f9fa;
-  border-top: 1px solid #dee2e6;
-}
-.status-connected {
-  color: #28a745;
-}
-
-.status-error {
-  color: #dc3545;
-}
-
-.status-connecting {
-  color: #ffc107;
-}
-
-.chat-input button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-</style>
