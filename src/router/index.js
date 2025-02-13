@@ -1,8 +1,8 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Chat from "@/views/Chat.vue";
 import ChatRoom from "@/views/ChatRoom.vue";
 import MainPage from "@/views/MainPage.vue";
+import ChatList from "@/views/ChatList.vue";
 
 Vue.use(VueRouter);
 
@@ -21,7 +21,7 @@ const routes = [
   {
     path: "/chat/:userId",
     name: "ChatRoomList",
-    component: Chat,
+    component: ChatList,
     props: true,
   },
 ];
