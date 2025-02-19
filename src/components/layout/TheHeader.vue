@@ -4,7 +4,9 @@
       <!-- Top Header -->
       <div class="flex items-center justify-between h-14 px-4">
         <div class="flex items-center space-x-8">
-          <img src="@/assets/logo/logo.svg" alt="당근마켓 로고" class="h-9" />
+          <router-link to="/">
+            <img src="@/assets/logo/logo.svg" alt="당근마켓 로고" class="h-9" />
+          </router-link>
           <div class="hidden md:flex items-center space-x-6">
             <a href="#" class="text-base font-medium">중고거래</a>
             <a href="#" class="text-base text-gray-400">부동산</a>

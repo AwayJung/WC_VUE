@@ -1,10 +1,11 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import ChatRoom from "@/views/ChatRoom.vue";
+import ChatRoom from "@/views/Chat/ChatRoom.vue";
 import MainPage from "@/views/MainPage.vue";
-import ChatList from "@/views/ChatList.vue";
+import ChatList from "@/views/Chat/ChatList.vue";
 import LoginPage from "@/views/LoginPage.vue";
 import SignUp from "@/views/SignUp.vue";
+import ItemCreatePage from "@/views/Item/ItemCreatePage.vue";
 
 Vue.use(VueRouter);
 
@@ -35,6 +36,11 @@ const routes = [
     path: "/signup",
     name: "SignUp",
     component: SignUp,
+  },
+  {
+    path: "/items/create",
+    name: "ItemCreate",
+    component: ItemCreatePage,
   },
 ];
 
