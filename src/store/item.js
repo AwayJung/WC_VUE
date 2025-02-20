@@ -33,7 +33,7 @@ const actions = {
     commit("SET_LOADING", true);
     try {
       const response = await createItem(itemData);
-      commit("SET_CURRENT_ITEM", response.data.data);
+      commit("SET_CURRENT_ITEM", response.data);
       return response.data.data;
     } catch (error) {
       commit("SET_ERROR", "아이템 생성에 실패했습니다.");
@@ -47,7 +47,7 @@ const actions = {
     commit("SET_LOADING", true);
     try {
       const response = await getItem(itemId);
-      commit("SET_CURRENT_ITEM", response.data.data);
+      commit("SET_CURRENT_ITEM", response.data);
       return response.data.data;
     } catch (error) {
       commit("SET_ERROR", "아이템을 불러오는데 실패했습니다.");
@@ -61,7 +61,7 @@ const actions = {
     commit("SET_LOADING", true);
     try {
       const response = await getItemList();
-      commit("SET_ITEMS", response.data.data);
+      commit("SET_ITEMS", response.data);
       return response.data.data;
     } catch (error) {
       commit("SET_ERROR", "아이템 목록을 불러오는데 실패했습니다.");
@@ -75,7 +75,7 @@ const actions = {
     commit("SET_LOADING", true);
     try {
       const response = await updateItem(itemId, itemData);
-      commit("SET_CURRENT_ITEM", response.data.data);
+      commit("SET_CURRENT_ITEM", response.data);
       return response.data.data;
     } catch (error) {
       commit("SET_ERROR", "아이템 수정에 실패했습니다.");

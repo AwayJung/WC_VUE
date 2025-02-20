@@ -6,6 +6,7 @@ import ChatList from "@/views/Chat/ChatList.vue";
 import LoginPage from "@/views/LoginPage.vue";
 import SignUp from "@/views/SignUp.vue";
 import ItemCreatePage from "@/views/Item/ItemCreatePage.vue";
+import ItemListPage from "@/views/Item/ItemListPage.vue";
 
 Vue.use(VueRouter);
 
@@ -41,6 +42,11 @@ const routes = [
     path: "/items/create",
     name: "ItemCreate",
     component: ItemCreatePage,
+  },
+  {
+    path: "/items",
+    name: "ItemListPage",
+    component: ItemListPage,
   },
 ];
 
