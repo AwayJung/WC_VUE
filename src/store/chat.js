@@ -1,14 +1,4 @@
-import axios from "axios";
-
-// axios 인스턴스 생성
-const chatApi = axios.create({
-  baseURL: "http://localhost:8080",
-  headers: {
-    "Cache-Control": "no-cache",
-    Pragma: "no-cache",
-    "Content-Type": "application/json",
-  },
-});
+import { fetchUserRooms, fetchMessages } from "../api/chat";
 
 const state = {
   rooms: [],
@@ -18,7 +8,6 @@ const state = {
 
 const mutations = {
   SET_ROOMS(state, rooms) {
-    console.log("Setting rooms in state:", rooms);
     state.rooms = rooms || [];
   },
   SET_MESSAGES(state, messages) {
@@ -29,10 +18,7 @@ const mutations = {
 const actions = {
   async fetchUserRooms({ commit }, userId) {
     try {
-      console.log("Fetching rooms for userId:", userId);
-      const response = await chatApi.get(`/api/chat/rooms/user/${userId}`);
-      console.log("API Response:", response);
-
+      const response = await fetchUserRooms(userId);
       const rooms = Array.isArray(response.data)
         ? response.data
         : Array.isArray(response.data.data)
@@ -49,7 +35,7 @@ const actions = {
 
   async fetchMessages({ commit }, roomId) {
     try {
-      const response = await chatApi.get(`/api/chat/rooms/${roomId}`);
+      const response = await fetchMessages(roomId);
       commit("SET_MESSAGES", response.data);
       return response.data;
     } catch (error) {

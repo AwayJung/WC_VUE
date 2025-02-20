@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="h-14 fixed top-0 left-0 right-0 bg-white border-b z-50">
       <div class="flex items-center justify-between h-full px-4">
-        <button @click="$router.go(-1)" class="p-1">
+        <button @click="handleGoBack" class="p-1">
           <span class="text-2xl">×</span>
         </button>
         <h1 class="text-lg font-medium">내 물건 팔기</h1>
@@ -54,9 +54,20 @@
           ></textarea>
         </div>
 
+        <!-- Error Message -->
+        <div v-if="error" class="text-red-500 text-sm mb-4 text-center">
+          {{ error }}
+        </div>
+
         <!-- Submit Button -->
-        <button type="button" @click="onSubmit" class="submit-button">
-          작성 완료
+        <button
+          type="button"
+          @click="onSubmit"
+          :disabled="!isFormValid || isSubmitting || loading"
+          class="submit-button"
+          :class="{ 'opacity-50': !isFormValid || isSubmitting || loading }"
+        >
+          {{ isSubmitting || loading ? "등록 중..." : "작성 완료" }}
         </button>
       </form>
     </main>
@@ -69,6 +80,7 @@
 </template>
 
 <script>
+import { mapState, mapActions } from "vuex";
 import ImageInput from "@/components/Item/ImageInput.vue";
 import CategoryInput from "@/components/Item/CategoryInput.vue";
 import PriceInput from "@/components/Item/PriceInput.vue";
@@ -93,9 +105,35 @@ export default {
         description: "",
       },
       isFixed: true,
+      isSubmitting: false,
     };
   },
+  computed: {
+    ...mapState("item", ["loading", "error"]),
+    isFormValid() {
+      return (
+        this.formData.title.trim() &&
+        this.formData.category &&
+        (this.isFixed ? this.formData.price : true) &&
+        this.formData.description.trim()
+      );
+    },
+  },
   methods: {
+    ...mapActions("item", ["createItem"]),
+
+    handleGoBack() {
+      if (this.formData.title || this.formData.description) {
+        if (
+          window.confirm("작성 중인 내용이 있습니다. 페이지를 나가시겠습니까?")
+        ) {
+          this.$router.go(-1);
+        }
+      } else {
+        this.$router.go(-1);
+      }
+    },
+
     updateIsFixed(value) {
       this.isFixed = value;
       if (!value) {
@@ -103,18 +141,113 @@ export default {
         this.formData.priceFlexible = false;
       }
     },
+
     updateIsPriceFlexible(value) {
       this.formData.priceFlexible = value;
     },
-    onSubmit() {
-      console.log("Form submitted:", this.formData);
-      // API 호출 로직
+
+    async uploadImages() {
+      if (!this.formData.images.length) return [];
+
+      const formData = new FormData();
+      this.formData.images.forEach((image, index) => {
+        formData.append("images", image, `image${index}.jpg`);
+      });
+
+      try {
+        const response = await this.$axios.post(
+          "/api/images/upload",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        return response.data.imageUrls;
+      } catch (error) {
+        console.error("이미지 업로드 실패:", error);
+        return [];
+      }
     },
+
+    validateForm() {
+      if (!this.formData.title.trim()) {
+        throw new Error("제목을 입력해주세요.");
+      }
+      if (!this.formData.category) {
+        throw new Error("카테고리를 선택해주세요.");
+      }
+      if (this.isFixed && !this.formData.price) {
+        throw new Error("가격을 입력해주세요.");
+      }
+      if (!this.formData.description.trim()) {
+        throw new Error("설명을 입력해주세요.");
+      }
+    },
+
+    async onSubmit() {
+      if (this.isSubmitting) return;
+
+      try {
+        this.validateForm();
+        this.isSubmitting = true;
+
+        let imageUrls = [];
+        try {
+          imageUrls = await this.uploadImages();
+        } catch (error) {
+          console.error("이미지 업로드 실패:", error);
+        }
+
+        const itemData = {
+          title: this.formData.title.trim(),
+          category: this.formData.category,
+          price: this.isFixed ? Number(this.formData.price) : null,
+          priceFlexible: this.formData.priceFlexible,
+          description: this.formData.description.trim(),
+          imageUrls: imageUrls,
+          status: "ACTIVE",
+          sellerId: 3,
+        };
+
+        await this.createItem(itemData);
+
+        // 성공 후 formData 초기화
+        this.formData = {
+          images: [],
+          title: "",
+          category: "",
+          price: "",
+          priceFlexible: false,
+          description: "",
+        };
+
+        this.$router.push("/items");
+      } catch (error) {
+        console.error("아이템 등록 실패:", error);
+        alert(
+          error.message || "아이템 등록에 실패했습니다. 다시 시도해주세요."
+        );
+      } finally {
+        this.isSubmitting = false;
+      }
+    },
+  },
+  beforeRouteLeave(to, from, next) {
+    if (this.formData.title || this.formData.description) {
+      const confirmed = window.confirm(
+        "작성 중인 내용이 있습니다. 페이지를 나가시겠습니까?"
+      );
+      next(confirmed);
+    } else {
+      next();
+    }
   },
 };
 </script>
 
-<style>
+<style scoped>
 .submit-button {
   width: 100%;
   padding: 0.75rem;
@@ -123,5 +256,10 @@ export default {
   border-radius: 0.5rem;
   font-weight: 500;
   margin-bottom: 4rem;
+  transition: opacity 0.2s ease;
+}
+
+.submit-button:disabled {
+  cursor: not-allowed;
 }
 </style>
