@@ -30,9 +30,10 @@
           <!-- 상품 이미지 -->
           <div class="w-24 h-24 bg-gray-200 rounded-md flex-shrink-0">
             <img
-              src="/placeholder-image.jpg"
+              :src="placeholderImage"
               :alt="item.description"
               class="w-full h-full object-cover rounded-md"
+              @error="handleImageError"
             />
           </div>
 
@@ -40,7 +41,7 @@
           <div class="flex-1 min-w-0">
             <div class="flex justify-between">
               <h3 class="text-base font-medium text-gray-900 truncate">
-                {{ item.description || "제목 없음" }}
+                {{ item.title || "제목 없음" }}
               </h3>
               <div class="text-sm text-gray-500">
                 {{ formatDate(item.createdAt) }}
@@ -60,8 +61,15 @@
 </template>
 
 <script>
+import defaultImage from "@/assets/images/default-placeholder.png";
+
 export default {
   name: "ItemList",
+  data() {
+    return {
+      placeholderImage: defaultImage,
+    };
+  },
   props: {
     items: {
       type: Array,
@@ -101,6 +109,10 @@ export default {
 
     navigateToDetail(itemId) {
       this.$router.push(`/items/${itemId}`);
+    },
+
+    handleImageError(e) {
+      e.target.src = this.placeholderImage;
     },
   },
 };

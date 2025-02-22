@@ -192,7 +192,7 @@
 
 <script>
 import { mapState, mapActions } from "vuex";
-import ItemList from "@/components/item/ItemList.vue";
+import ItemList from "@/components/item/Input/ItemList.vue";
 import ListCategoryFilter from "@/components/item/category/ListCategoryFilter.vue";
 
 export default {

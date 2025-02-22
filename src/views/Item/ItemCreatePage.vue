@@ -81,9 +81,9 @@
 
 <script>
 import { mapState, mapActions } from "vuex";
-import ImageInput from "@/components/item/ImageInput.vue";
+import ImageInput from "@/components/item/List/ImageInput.vue";
 import CategoryInput from "@/components/item/category/CategoryInput.vue";
-import PriceInput from "@/components/item/PriceInput.vue";
+import PriceInput from "@/components/item/List/PriceInput.vue";
 import TheFooter from "@/components/layout/TheFooter.vue";
 
 export default {

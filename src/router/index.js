@@ -7,6 +7,7 @@ import LoginPage from "@/views/LoginPage.vue";
 import SignUp from "@/views/SignUp.vue";
 import ItemCreatePage from "@/views/Item/ItemCreatePage.vue";
 import ItemListPage from "@/views/Item/ItemListPage.vue";
+import ItemDetailPage from "@/views/Item/ItemDetailPage.vue";
 
 Vue.use(VueRouter);
 
@@ -47,6 +48,12 @@ const routes = [
     path: "/items",
     name: "ItemListPage",
     component: ItemListPage,
+  },
+  {
+    path: "/items/:id",
+    name: "ItemDetail",
+    component: ItemDetailPage,
+    props: true,
   },
 ];
 

@@ -13,6 +13,12 @@ const state = {
   error: null,
 };
 
+const getters = {
+  getCurrentItem: (state) => state.currentItem,
+  getLoading: (state) => state.loading,
+  getError: (state) => state.error,
+};
+
 const mutations = {
   SET_ITEMS(state, items) {
     state.items = items;
@@ -28,80 +34,66 @@ const mutations = {
   },
 };
 
+// 공통 action 핸들러
+const createActionHandler =
+  (actionFn, errorMessage, commitType = null) =>
+  async ({ commit }, payload) => {
+    commit("SET_LOADING", true);
+    try {
+      const response = await actionFn(payload);
+      if (commitType) {
+        commit(commitType, response.data);
+      }
+      return response.data;
+    } catch (error) {
+      commit("SET_ERROR", errorMessage);
+      throw error;
+    } finally {
+      commit("SET_LOADING", false);
+    }
+  };
+
 const actions = {
-  async createItem({ commit }, itemData) {
-    commit("SET_LOADING", true);
-    try {
-      const response = await createItem(itemData);
-      commit("SET_CURRENT_ITEM", response.data);
-      return response.data.data;
-    } catch (error) {
-      commit("SET_ERROR", "아이템 생성에 실패했습니다.");
-      throw error;
-    } finally {
-      commit("SET_LOADING", false);
-    }
-  },
+  // 아이템 생성
+  createItem: createActionHandler(
+    (itemData) => createItem(itemData),
+    "아이템 생성에 실패했습니다.",
+    "SET_CURRENT_ITEM"
+  ),
 
-  async fetchItem({ commit }, itemId) {
-    commit("SET_LOADING", true);
-    try {
-      const response = await getItem(itemId);
-      commit("SET_CURRENT_ITEM", response.data);
-      return response.data.data;
-    } catch (error) {
-      commit("SET_ERROR", "아이템을 불러오는데 실패했습니다.");
-      throw error;
-    } finally {
-      commit("SET_LOADING", false);
-    }
-  },
+  // 단일 아이템 조회
+  fetchItem: createActionHandler(
+    (itemId) => getItem(itemId),
+    "아이템을 불러오는데 실패했습니다.",
+    "SET_CURRENT_ITEM"
+  ),
 
-  async fetchItems({ commit }) {
-    commit("SET_LOADING", true);
-    try {
-      const response = await getItemList();
-      commit("SET_ITEMS", response.data);
-      return response.data.data;
-    } catch (error) {
-      commit("SET_ERROR", "아이템 목록을 불러오는데 실패했습니다.");
-      throw error;
-    } finally {
-      commit("SET_LOADING", false);
-    }
-  },
+  // 아이템 목록 조회
+  fetchItems: createActionHandler(
+    () => getItemList(),
+    "아이템 목록을 불러오는데 실패했습니다.",
+    "SET_ITEMS"
+  ),
 
-  async updateItem({ commit }, { itemId, itemData }) {
-    commit("SET_LOADING", true);
-    try {
-      const response = await updateItem(itemId, itemData);
-      commit("SET_CURRENT_ITEM", response.data);
-      return response.data.data;
-    } catch (error) {
-      commit("SET_ERROR", "아이템 수정에 실패했습니다.");
-      throw error;
-    } finally {
-      commit("SET_LOADING", false);
-    }
-  },
+  // 아이템 수정
+  updateItem: createActionHandler(
+    ({ itemId, itemData }) => updateItem(itemId, itemData),
+    "아이템 수정에 실패했습니다.",
+    "SET_CURRENT_ITEM"
+  ),
 
-  async deleteItem({ commit }, itemId) {
-    commit("SET_LOADING", true);
-    try {
-      await deleteItem(itemId);
-      commit("SET_CURRENT_ITEM", null);
-    } catch (error) {
-      commit("SET_ERROR", "아이템 삭제에 실패했습니다.");
-      throw error;
-    } finally {
-      commit("SET_LOADING", false);
-    }
-  },
+  // 아이템 삭제
+  deleteItem: createActionHandler(
+    (itemId) => deleteItem(itemId),
+    "아이템 삭제에 실패했습니다.",
+    "SET_CURRENT_ITEM"
+  ),
 };
 
 export default {
   namespaced: true,
   state,
+  getters,
   mutations,
   actions,
 };
