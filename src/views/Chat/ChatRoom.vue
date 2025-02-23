@@ -256,6 +256,7 @@ export default {
         senderId: this.userId,
         content: this.newMessage,
         timestamp: new Date().toISOString(),
+        itemId: this.itemId,
       };
 
       try {
@@ -265,21 +266,15 @@ export default {
         // headers 객체를 생성하고, itemId가 있을 경우에만 추가
         const headers = {
           "content-type": "application/json",
+          itemId: this.itemId?.toString() || this.$route.query.itemId,
         };
 
-        // 로그 추가
+        console.log("전송할 메시지:", message);
+        console.log("전송 헤더:", headers);
         console.log("현재 메시지 수:", this.messages.length);
         console.log("itemId prop:", this.itemId);
 
         // 메시지가 첫 메시지인 경우 itemId를 헤더에 추가
-        if (this.messages.length === 1 && this.itemId) {
-          headers.itemId = this.itemId;
-          console.log("첫 메시지 전송 - headers:", headers);
-        }
-
-        // 서버로 메시지 전송 직전 로그
-        console.log("전송할 메시지:", message);
-        console.log("전송 헤더:", headers);
 
         await this.stompClient.publish({
           destination: `/app/chat/${this.roomId}`,

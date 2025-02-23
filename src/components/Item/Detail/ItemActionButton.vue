@@ -1,7 +1,7 @@
 <template>
   <div class="px-4 py-3 flex items-center gap-4 border-t bg-white">
-    <button class="p-2">
-      <Heart :fill="isLiked ? 'currentColor' : 'none'" />
+    <button class="p-2" @click="$emit('click-like')">
+      <Heart :fill="item.is_liked ? 'currentColor' : 'none'" />
     </button>
     <div class="flex-1">
       <p class="text-xl font-bold">{{ formatPrice(itemPrice) }}원</p>
@@ -9,7 +9,7 @@
     </div>
     <button
       class="px-6 py-3 bg-orange-500 text-white rounded-md"
-      @click="handleChat"
+      @click="$emit('click-chat')"
     >
       채팅하기
     </button>
@@ -30,6 +30,7 @@ export default {
       required: true,
       default: () => ({
         data: { price: 0 },
+        is_liked: false,
       }),
     },
   },
@@ -38,17 +39,9 @@ export default {
       return this.item?.data?.price || 0;
     },
   },
-  data() {
-    return {
-      isLiked: false,
-    };
-  },
   methods: {
     formatPrice(price) {
       return price.toLocaleString();
-    },
-    handleChat() {
-      this.$emit("chat-clicked");
     },
   },
 };

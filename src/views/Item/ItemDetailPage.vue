@@ -89,10 +89,10 @@
 <script>
 import { ArrowLeft, Home, Share2, MoreVertical } from "lucide-vue";
 import { mapState, mapGetters, mapActions } from "vuex";
-import ItemActionButton from "@/components/item/Detail/ItemActionButton.vue";
-import ItemDetailInfo from "@/components/item/Detail/ItemDetailInfo.vue";
-import ItemImageSlide from "@/components/item/Detail/ItemImageSlide.vue";
-import ItemSellerInfo from "@/components/item/Detail/ItemSellerInfo.vue";
+import ItemActionButton from "@/components/Item/Detail/ItemActionButton.vue";
+import ItemDetailInfo from "@/components/Item/Detail/ItemDetailInfo.vue";
+import ItemImageSlide from "@/components/Item/Detail/ItemImageSlide.vue";
+import ItemSellerInfo from "@/components/Item/Detail/ItemSellerInfo.vue";
 import TheFooter from "@/components/layout/TheFooter.vue";
 
 export default {
@@ -114,6 +114,7 @@ export default {
     return {
       showMenu: false,
       isMyItem: false,
+      userId: 3, // 고정된 userId 값
     };
   },
 
@@ -144,8 +145,7 @@ export default {
     },
 
     checkIfMyItem() {
-      const userId = this.$store.state.auth?.userId;
-      this.isMyItem = userId === this.currentItem?.seller?.id;
+      this.isMyItem = this.userId === this.currentItem?.seller?.id;
     },
 
     toggleMenu() {
@@ -163,7 +163,7 @@ export default {
         }
 
         await this.deleteItem(itemId);
-        this.toggleMenu(); // 메뉴 모달 닫기
+        this.toggleMenu();
         alert("상품이 성공적으로 삭제되었습니다.");
         this.$router.push("/items/");
       } catch (error) {
@@ -171,6 +171,7 @@ export default {
         alert("삭제에 실패했습니다. 다시 시도해주세요.");
       }
     },
+
     handleShare() {
       if (navigator.share) {
         navigator
@@ -191,17 +192,10 @@ export default {
     },
 
     handlePurchase() {
-      if (!this.$store.state.auth?.isLoggedIn) {
-        return this.$router.push("/login");
-      }
       this.$router.push(`/purchase/${this.currentItem.id}`);
     },
 
     async handleLike() {
-      if (!this.$store.state.auth?.isLoggedIn) {
-        return this.$router.push("/login");
-      }
-
       try {
         await this.updateItem({
           itemId: this.currentItem.id,
@@ -223,10 +217,20 @@ export default {
     },
 
     handleChat() {
-      if (!this.$store.state.auth?.isLoggedIn) {
-        return this.$router.push("/login");
-      }
-      this.$router.push(`/chat/${this.currentItem.seller.id}`);
+      console.log("handleChat 호출됨");
+      console.log("currentItem:", this.currentItem);
+      console.log("currentItem.data.itemId:", this.currentItem?.data?.itemId);
+      const roomId = crypto.randomUUID();
+      this.$router.push({
+        name: "ChatRoom",
+        params: {
+          roomId: roomId,
+        },
+        query: {
+          itemId: this.currentItem?.data?.itemId || this.$route.params.id,
+          userId: this.userId,
+        },
+      });
     },
 
     handleChatWithSeller() {
