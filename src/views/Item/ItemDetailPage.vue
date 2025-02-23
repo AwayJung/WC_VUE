@@ -156,21 +156,27 @@ export default {
       try {
         if (!confirm("정말 삭제하시겠습니까?")) return;
 
-        await this.deleteItem(this.currentItem.id);
-        this.$router.push("/");
-        this.$toast.success("상품이 삭제되었습니다.");
+        const itemId = this.$route.params.id;
+        if (!itemId) {
+          alert("상품 ID를 찾을 수 없습니다.");
+          return;
+        }
+
+        await this.deleteItem(itemId);
+        this.toggleMenu(); // 메뉴 모달 닫기
+        alert("상품이 성공적으로 삭제되었습니다.");
+        this.$router.push("/items/");
       } catch (error) {
         console.error("Failed to delete item:", error);
-        this.$toast.error("삭제에 실패했습니다.");
+        alert("삭제에 실패했습니다. 다시 시도해주세요.");
       }
     },
-
     handleShare() {
       if (navigator.share) {
         navigator
           .share({
             title: this.currentItem.title || "",
-            text: this.currentItem.description || "",
+            text: this.currentItem.description,
             url: window.location.href,
           })
           .catch((error) => {

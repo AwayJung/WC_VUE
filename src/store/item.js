@@ -83,11 +83,19 @@ const actions = {
   ),
 
   // 아이템 삭제
-  deleteItem: createActionHandler(
-    (itemId) => deleteItem(itemId),
-    "아이템 삭제에 실패했습니다.",
-    "SET_CURRENT_ITEM"
-  ),
+  deleteItem: async ({ commit }, itemId) => {
+    commit("SET_LOADING", true);
+    try {
+      await deleteItem(itemId);
+      commit("SET_CURRENT_ITEM", null); // 삭제 후 currentItem을 null로 설정
+      return true;
+    } catch (error) {
+      commit("SET_ERROR", "아이템 삭제에 실패했습니다.");
+      throw error;
+    } finally {
+      commit("SET_LOADING", false);
+    }
+  },
 };
 
 export default {
