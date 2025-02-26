@@ -120,7 +120,7 @@ export default {
       required: true,
     },
     itemId: {
-      type: Number,
+      type: [String, Number],
       required: false,
     },
   },
@@ -261,8 +261,10 @@ export default {
 
       try {
         // 메시지를 로컬 messages 배열에 먼저 추가
-        this.messages.push(message);
-
+        this.messages.push({
+          ...message,
+          senderId: this.userId, // 로컬 표시용 senderId 추가
+        });
         // headers 객체를 생성하고, itemId가 있을 경우에만 추가
         const headers = {
           "content-type": "application/json",
@@ -273,8 +275,6 @@ export default {
         console.log("전송 헤더:", headers);
         console.log("현재 메시지 수:", this.messages.length);
         console.log("itemId prop:", this.itemId);
-
-        // 메시지가 첫 메시지인 경우 itemId를 헤더에 추가
 
         await this.stompClient.publish({
           destination: `/app/chat/${this.roomId}`,

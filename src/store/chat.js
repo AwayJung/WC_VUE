@@ -1,4 +1,4 @@
-import { fetchUserRooms, fetchMessages } from "../api/chat";
+import { fetchUserRooms, fetchMessages, createChatRoom } from "../api/chat";
 
 const state = {
   rooms: [],
@@ -41,6 +41,16 @@ const actions = {
     } catch (error) {
       console.error("Error fetching messages:", error);
       commit("SET_MESSAGES", []);
+      throw error;
+    }
+  },
+
+  async createChatRoom(_, { itemId, userId }) {
+    try {
+      const response = await createChatRoom(itemId, userId);
+      return response.data;
+    } catch (error) {
+      console.error("채팅방 생성 실패:", error);
       throw error;
     }
   },

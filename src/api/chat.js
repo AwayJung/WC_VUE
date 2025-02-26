@@ -16,3 +16,7 @@ export const fetchUserRooms = (userId) => {
 export const fetchMessages = (roomId) => {
   return chatApi.get(`/api/chat/rooms/${roomId}`);
 };
+
+export const createChatRoom = (itemId, userId) => {
+  return chatApi.post(`/api/chat/create-room`, { itemId, userId });
+};

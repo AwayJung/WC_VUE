@@ -18,12 +18,12 @@ const routes = [
     component: MainPage,
   },
   {
-    path: "/chat/room/:roomId", // Remove :itemId from path
+    path: "/chat/room/:roomId",
     name: "ChatRoom",
     component: ChatRoom,
     props: (route) => ({
       roomId: route.params.roomId,
-      itemId: route.query.itemId, // Get itemId from query instead
+      itemId: route.query.itemId,
       userId: route.query.userId,
     }),
   },

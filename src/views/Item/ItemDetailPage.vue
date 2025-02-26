@@ -216,21 +216,42 @@ export default {
       }
     },
 
-    handleChat() {
+    async handleChat() {
       console.log("handleChat 호출됨");
       console.log("currentItem:", this.currentItem);
-      console.log("currentItem.data.itemId:", this.currentItem?.data?.itemId);
-      const roomId = crypto.randomUUID();
-      this.$router.push({
-        name: "ChatRoom",
-        params: {
-          roomId: roomId,
-        },
-        query: {
-          itemId: this.currentItem?.data?.itemId || this.$route.params.id,
+
+      try {
+        // 채팅방 생성 API 호출
+        const response = await this.$store.dispatch("chat/createChatRoom", {
+          itemId: parseInt(this.$route.params.id),
           userId: this.userId,
-        },
-      });
+        });
+
+        console.log("채팅방 생성 응답:", response);
+
+        // API 응답에서 roomId 추출 (응답 구조에 따라 수정 필요할 수 있음)
+        const roomId = response.data?.roomId;
+
+        if (!roomId) {
+          throw new Error("채팅방 ID를 받지 못했습니다");
+        }
+
+        // 생성된 roomId로 채팅방 이동
+        this.$router.push({
+          name: "ChatRoom",
+          params: {
+            roomId: roomId,
+          },
+          query: {
+            itemId: this.$route.params.id,
+            userId: this.userId,
+          },
+        });
+      } catch (error) {
+        console.error("채팅방 생성 또는 이동 실패:", error);
+        this.$toast?.error?.("채팅 시작에 실패했습니다. 다시 시도해주세요.") ||
+          alert("채팅 시작에 실패했습니다. 다시 시도해주세요.");
+      }
     },
 
     handleChatWithSeller() {
