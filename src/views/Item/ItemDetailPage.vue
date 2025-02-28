@@ -58,9 +58,11 @@
     >
       <ItemActionButton
         :item="currentItem"
+        :current-user-id="userId"
         @click-purchase="handlePurchase"
         @click-like="handleLike"
         @click-chat="handleChat"
+        @view-chat-history="handleViewChatHistory"
       />
       <TheFooter />
     </div>
@@ -142,6 +144,16 @@ export default {
       } catch (error) {
         console.error("Failed to load item:", error);
       }
+    },
+    handleViewChatHistory(itemId) {
+      console.log("handleViewChatHistory 호출됨, itemId:", itemId);
+
+      // URL 문자열을 직접 구성하여 이동
+      const targetUrl = `/chat/${this.userId}?itemId=${itemId}`;
+      console.log("이동할 URL:", targetUrl);
+
+      // 직접 URL 문자열을 사용해 라우팅
+      this.$router.push(targetUrl);
     },
 
     checkIfMyItem() {
@@ -229,7 +241,6 @@ export default {
 
         console.log("채팅방 생성 응답:", response);
 
-        // API 응답에서 roomId 추출 (응답 구조에 따라 수정 필요할 수 있음)
         const roomId = response.data?.roomId;
 
         if (!roomId) {

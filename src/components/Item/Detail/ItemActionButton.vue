@@ -9,13 +9,12 @@
     </div>
     <button
       class="px-6 py-3 bg-orange-500 text-white rounded-md"
-      @click="$emit('click-chat')"
+      @click="handleChatAction"
     >
-      채팅하기
+      {{ isOwner ? "대화중인 채팅방" : "채팅하기" }}
     </button>
   </div>
 </template>
-
 <script>
 import { Heart } from "lucide-vue";
 
@@ -33,15 +32,36 @@ export default {
         is_liked: false,
       }),
     },
+    currentUserId: {
+      type: Number,
+      required: true,
+    },
   },
   computed: {
     itemPrice() {
       return this.item?.data?.price || 0;
     },
+
+    isOwner() {
+      const result = this.item.data.sellerId === this.currentUserId;
+      return result;
+    },
   },
   methods: {
     formatPrice(price) {
       return price.toLocaleString();
+    },
+
+    handleChatAction() {
+      console.log("handleChatAction 호출됨, isOwner:", this.isOwner);
+      console.log("item 객체:", this.item);
+
+      if (this.isOwner) {
+        const itemId = this.item.data.itemId;
+        this.$emit("view-chat-history", itemId);
+      } else {
+        this.$emit("click-chat");
+      }
     },
   },
 };

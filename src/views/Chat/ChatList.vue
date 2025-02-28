@@ -82,11 +82,19 @@
       </button>
     </div>
 
+    <!-- 아이템 필터 표시 (itemId가 있는 경우) -->
+    <div v-if="itemId" class="px-4 py-2 flex items-center bg-gray-100">
+      <span class="text-sm font-medium">특정 상품의 채팅방만 표시 중</span>
+      <button @click="clearItemFilter" class="ml-2 text-blue-500 text-sm">
+        모든 채팅방 보기
+      </button>
+    </div>
+
     <!-- 채팅방 목록 -->
     <div class="flex-1 overflow-y-auto">
-      <div v-if="rooms.length" class="divide-y">
+      <div v-if="filteredRooms.length" class="divide-y">
         <div
-          v-for="room in rooms"
+          v-for="room in filteredRooms"
           :key="room.roomId"
           @click="enterRoom(room)"
           class="flex items-center px-4 py-3 cursor-pointer hover:bg-gray-50"
@@ -205,18 +213,70 @@ export default {
       required: false,
     },
   },
+  data() {
+    return {
+      itemId: null,
+    };
+  },
   computed: {
     ...mapState("chat", ["rooms", "currentRoom"]),
+    filteredRooms() {
+      if (!this.itemId) return this.rooms;
+      return this.rooms.filter((room) => room.itemId === parseInt(this.itemId));
+    },
   },
   methods: {
     ...mapActions("chat", ["fetchUserRooms"]),
     async loadRooms() {
       const userId = this.userId || this.$route.params.userId;
-      console.log("Loading rooms for userId:", userId);
+      this.itemId = this.$route.query.itemId || null;
+
+      console.log("Loading rooms for userId:", userId, "itemId:", this.itemId);
+      console.log("Route query params:", this.$route.query);
+      console.log("Route params:", this.$route.params);
+      console.log("Full route object:", this.$route);
 
       try {
         await this.fetchUserRooms(userId);
-        console.log("Loaded rooms:", this.rooms);
+        console.log("Loaded rooms (all):", this.rooms);
+        console.log(
+          "Room structures:",
+          this.rooms.map((room) => ({
+            roomId: room.roomId,
+            itemId: room.itemId,
+          }))
+        );
+
+        if (this.itemId) {
+          console.log(
+            "Filtering for itemId:",
+            this.itemId,
+            "Type:",
+            typeof this.itemId
+          );
+          console.log("Filtered rooms:", this.filteredRooms);
+
+          // 데이터 타입 불일치 확인
+          const parsedItemId = parseInt(this.itemId);
+          console.log(
+            "Parsed itemId:",
+            parsedItemId,
+            "Type:",
+            typeof parsedItemId
+          );
+
+          // 각 room의 itemId 확인
+          this.rooms.forEach((room) => {
+            console.log(
+              `Room ${room.roomId} itemId:`,
+              room.itemId,
+              "Type:",
+              typeof room.itemId,
+              "Match?",
+              room.itemId === parsedItemId
+            );
+          });
+        }
       } catch (error) {
         console.error("Error loading rooms:", error);
       }
@@ -229,13 +289,33 @@ export default {
         params: {
           roomId: room.roomId.toString(),
           userId: this.userId || this.$route.params.userId,
-          itemId: room.itemId,
+        },
+        query: {
+          itemId: room.data.itemId,
+        },
+      });
+    },
+    clearItemFilter() {
+      this.itemId = null;
+      this.$router.replace({
+        name: "ChatRoomList",
+        params: {
+          userId: this.userId || this.$route.params.userId,
         },
       });
     },
   },
   created() {
+    console.log("ChatList created, route:", this.$route);
+    console.log("ChatList query params:", this.$route.query);
+    console.log("itemId from query:", this.$route.query.itemId);
     this.loadRooms();
+  },
+  watch: {
+    // URL 쿼리 파라미터가 변경될 때 데이터 다시 로드
+    "$route.query.itemId": function () {
+      this.loadRooms();
+    },
   },
 };
 </script>
