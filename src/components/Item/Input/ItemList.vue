@@ -30,7 +30,7 @@
           <!-- 상품 이미지 -->
           <div class="w-24 h-24 bg-gray-200 rounded-md flex-shrink-0">
             <img
-              :src="placeholderImage"
+              :src="getImageUrl(item)"
               :alt="item.description"
               class="w-full h-full object-cover rounded-md"
               @error="handleImageError"
@@ -113,6 +113,16 @@ export default {
 
     handleImageError(e) {
       e.target.src = this.placeholderImage;
+    },
+
+    // 이미지 URL 생성 메서드 추가
+    getImageUrl(item) {
+      const imageUrl = item?.data?.imageUrl || item?.imageUrl;
+      if (!imageUrl) {
+        return this.placeholderImage;
+      }
+
+      return `http://localhost:8080${imageUrl}`;
     },
   },
 };

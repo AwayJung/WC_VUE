@@ -17,7 +17,46 @@
     <main class="flex-1 overflow-y-auto mt-14">
       <form @submit.prevent="onSubmit" class="p-4">
         <!-- 이미지 업로드 -->
-        <ImageInput v-model="formData.images" />
+        <div class="mb-6">
+          <div class="text-sm mb-2">상품 이미지</div>
+          <div class="flex flex-wrap gap-2">
+            <!-- 이미지 업로드 버튼 -->
+            <label
+              v-if="formData.images.length < 5"
+              class="w-20 h-20 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer"
+            >
+              <input
+                type="file"
+                @change="handleImageUpload"
+                accept="image/*"
+                multiple
+                class="hidden"
+              />
+              <span class="text-gray-400 text-3xl">+</span>
+            </label>
+
+            <!-- 미리보기 이미지 -->
+            <div
+              v-for="(image, index) in formData.images"
+              :key="index"
+              class="relative w-20 h-20"
+            >
+              <img
+                :src="formData.imageUrls[index]"
+                class="w-full h-full object-cover rounded"
+              />
+              <button
+                @click.prevent="removeImage(index)"
+                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">
+            최대 5개의 이미지를 업로드할 수 있습니다.
+          </p>
+        </div>
 
         <!-- 제목 -->
         <div class="mb-6">
@@ -33,15 +72,39 @@
         <!-- 카테고리 -->
         <div class="mb-6">
           <div class="text-sm mb-2">카테고리</div>
-          <CategoryInput v-model="formData.category" />
+          <select
+            v-model="formData.category"
+            class="w-full px-4 py-3 border rounded-lg"
+          >
+            <option value="">카테고리 선택</option>
+            <option value="electronics">전자기기</option>
+            <option value="clothing">의류</option>
+            <option value="books">책</option>
+            <option value="furniture">가구</option>
+            <option value="etc">기타</option>
+          </select>
         </div>
 
         <!-- 가격 입력 -->
-        <PriceInput
-          v-model="formData.price"
-          @update:isFixed="updateIsFixed"
-          @update:isPriceFlexible="updateIsPriceFlexible"
-        />
+        <div class="mb-6">
+          <div class="text-sm mb-2">가격</div>
+          <div class="flex items-center space-x-2">
+            <input
+              v-model="formData.price"
+              type="number"
+              placeholder="가격을 입력하세요"
+              class="w-full px-4 py-3 border rounded-lg"
+            />
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                v-model="formData.priceFlexible"
+                class="mr-2"
+              />
+              <span class="text-sm">가격 흥정 가능</span>
+            </label>
+          </div>
+        </div>
 
         <!-- 설명 -->
         <div class="mb-6">
@@ -63,67 +126,98 @@
         <button
           type="button"
           @click="onSubmit"
-          :disabled="!isFormValid || isSubmitting || loading"
+          :disabled="!isFormValid || isSubmitting"
           class="submit-button"
-          :class="{ 'opacity-50': !isFormValid || isSubmitting || loading }"
+          :class="{ 'opacity-50': !isFormValid || isSubmitting }"
         >
-          {{ isSubmitting || loading ? "등록 중..." : "작성 완료" }}
+          {{ isSubmitting ? "등록 중..." : "작성 완료" }}
         </button>
       </form>
     </main>
-
-    <!-- Footer Navigation -->
-    <div class="fixed bottom-0 left-0 right-0">
-      <TheFooter />
-    </div>
   </div>
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
-import ImageInput from "@/components/Item/List/ImageInput.vue";
-import CategoryInput from "@/components/Item/category/CategoryInput.vue";
-import PriceInput from "@/components/Item/List/PriceInput.vue";
-import TheFooter from "@/components/layout/TheFooter.vue";
+import axios from "axios";
 
 export default {
   name: "ItemCreatePage",
-  components: {
-    ImageInput,
-    CategoryInput,
-    PriceInput,
-    TheFooter,
-  },
   data() {
     return {
       formData: {
         images: [],
+        imageUrls: [], // 이미지 URL을 저장할 배열 추가
         title: "",
         category: "",
         price: "",
         priceFlexible: false,
         description: "",
       },
-      isFixed: true,
       isSubmitting: false,
+      error: null,
     };
   },
   computed: {
-    ...mapState("item", ["loading", "error"]),
     isFormValid() {
       return (
+        this.formData.images.length > 0 &&
         this.formData.title.trim() &&
         this.formData.category &&
-        (this.isFixed ? this.formData.price : true) &&
+        this.formData.price &&
         this.formData.description.trim()
       );
     },
   },
   methods: {
-    ...mapActions("item", ["createItem"]),
+    handleImageUpload(event) {
+      const files = Array.from(event.target.files);
+
+      // Check total number of images
+      const remainingSlots = 5 - this.formData.images.length;
+      const filesToAdd = files.slice(0, remainingSlots);
+
+      // Validate file types and sizes
+      const validFiles = filesToAdd.filter((file) => {
+        // Check file type
+        const validTypes = ["image/jpeg", "image/png", "image/gif"];
+        if (!validTypes.includes(file.type)) {
+          alert(
+            "지원되지 않는 파일 형식입니다. JPEG, PNG, GIF 파일만 업로드 가능합니다."
+          );
+          return false;
+        }
+
+        // Check file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+          alert("파일 크기는 5MB를 초과할 수 없습니다.");
+          return false;
+        }
+
+        return true;
+      });
+
+      // 유효한 파일 추가 및 URL 생성
+      validFiles.forEach((file) => {
+        this.formData.images.push(file);
+        // URL 생성 및 저장
+        this.formData.imageUrls.push(window.URL.createObjectURL(file));
+      });
+
+      // Reset file input
+      event.target.value = "";
+    },
+
+    removeImage(index) {
+      this.formData.images.splice(index, 1);
+      this.formData.imageUrls.splice(index, 1); // URL도 함께 제거
+    },
 
     handleGoBack() {
-      if (this.formData.title || this.formData.description) {
+      if (
+        this.formData.title ||
+        this.formData.description ||
+        this.formData.images.length
+      ) {
         if (
           window.confirm("작성 중인 내용이 있습니다. 페이지를 나가시겠습니까?")
         ) {
@@ -133,30 +227,56 @@ export default {
         this.$router.go(-1);
       }
     },
+    async onSubmit() {
+      // Reset previous error
+      this.error = null;
 
-    updateIsFixed(value) {
-      this.isFixed = value;
-      if (!value) {
-        this.formData.price = "";
-        this.formData.priceFlexible = false;
+      // Validate form
+      if (!this.isFormValid) {
+        this.error = "모든 필드를 채워주세요.";
+        return;
       }
-    },
 
-    updateIsPriceFlexible(value) {
-      this.formData.priceFlexible = value;
-    },
-
-    async uploadImages() {
-      if (!this.formData.images.length) return [];
-
-      const formData = new FormData();
-      this.formData.images.forEach((image, index) => {
-        formData.append("images", image, `image${index}.jpg`);
-      });
+      // Prevent multiple submissions
+      if (this.isSubmitting) return;
 
       try {
-        const response = await this.$axios.post(
-          "/api/images/upload",
+        this.isSubmitting = true;
+
+        // FormData 객체 생성
+        const formData = new FormData();
+
+        // 이미지 추가
+        if (this.formData.images.length > 0) {
+          // 모든 이미지를 "images" 키로 추가
+          for (let i = 0; i < this.formData.images.length; i++) {
+            formData.append("images", this.formData.images[i]);
+          }
+        }
+
+        // 아이템 데이터를 JSON 문자열로 변환하여 추가
+        const itemData = {
+          title: this.formData.title.trim(),
+          category: this.formData.category,
+          price: Number(this.formData.price),
+          priceFlexible: this.formData.priceFlexible,
+          description: this.formData.description.trim(),
+          sellerId: 3,
+        };
+
+        // 아이템 데이터 추가
+        formData.append("item", JSON.stringify(itemData));
+
+        // FormData 내용 확인 (디버깅용)
+        for (let pair of formData.entries()) {
+          console.log(
+            pair[0] + ": " + (pair[1] instanceof File ? pair[1].name : pair[1])
+          );
+        }
+
+        // API 요청
+        const response = await axios.post(
+          "http://localhost:8080/api/items/",
           formData,
           {
             headers: {
@@ -164,85 +284,44 @@ export default {
             },
           }
         );
-        return response.data.imageUrls;
-      } catch (error) {
-        console.error("이미지 업로드 실패:", error);
-        return [];
-      }
-    },
 
-    validateForm() {
-      if (!this.formData.title.trim()) {
-        throw new Error("제목을 입력해주세요.");
-      }
-      if (!this.formData.category) {
-        throw new Error("카테고리를 선택해주세요.");
-      }
-      if (this.isFixed && !this.formData.price) {
-        throw new Error("가격을 입력해주세요.");
-      }
-      if (!this.formData.description.trim()) {
-        throw new Error("설명을 입력해주세요.");
-      }
-    },
+        console.log("아이템 등록 응답:", response.data);
 
-    async onSubmit() {
-      if (this.isSubmitting) return;
+        // 성공 시 폼 초기화
+        this.resetForm();
 
-      try {
-        this.validateForm();
-        this.isSubmitting = true;
-
-        let imageUrls = [];
-        try {
-          imageUrls = await this.uploadImages();
-        } catch (error) {
-          console.error("이미지 업로드 실패:", error);
-        }
-
-        const itemData = {
-          title: this.formData.title.trim(),
-          category: this.formData.category,
-          price: this.isFixed ? Number(this.formData.price) : null,
-          priceFlexible: this.formData.priceFlexible,
-          description: this.formData.description.trim(),
-          imageUrls: imageUrls,
-          status: "ACTIVE",
-          sellerId: 3,
-        };
-
-        await this.createItem(itemData);
-
-        // 성공 후 formData 초기화
-        this.formData = {
-          images: [],
-          title: "",
-          category: "",
-          price: "",
-          priceFlexible: false,
-          description: "",
-        };
-
+        // 목록 페이지로 이동
         this.$router.push("/items");
       } catch (error) {
         console.error("아이템 등록 실패:", error);
-        alert(
-          error.message || "아이템 등록에 실패했습니다. 다시 시도해주세요."
+        console.error(
+          "응답 데이터:",
+          error.response ? error.response.data : "응답 없음"
         );
+        console.error(
+          "응답 상태:",
+          error.response ? error.response.status : "상태 코드 없음"
+        );
+        this.error =
+          error.response?.data?.message ||
+          error.message ||
+          "아이템 등록에 실패했습니다. 다시 시도해주세요.";
       } finally {
         this.isSubmitting = false;
       }
     },
-  },
-  beforeRouteLeave(to, from, next) {
-    if (this.formData.title || this.formData.description) {
-      const confirmed = window.confirm(
-        "작성 중인 내용이 있습니다. 페이지를 나가시겠습니까?"
-      );
-      next(confirmed);
-    } else {
-      next();
-    }
+
+    resetForm() {
+      this.formData = {
+        images: [],
+        imageUrls: [],
+        title: "",
+        category: "",
+        price: "",
+        priceFlexible: false,
+        description: "",
+      };
+    },
   },
 };
 </script>

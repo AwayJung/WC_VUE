@@ -139,6 +139,7 @@ export default {
         console.log("Loaded item data:", this.currentItem);
 
         if (this.currentItem) {
+          console.log(this.currentItem);
           this.checkIfMyItem();
         }
       } catch (error) {
@@ -157,7 +158,7 @@ export default {
     },
 
     checkIfMyItem() {
-      this.isMyItem = this.userId === this.currentItem?.seller?.id;
+      this.isMyItem = this.userId === this.currentItem.data.sellerId;
     },
 
     toggleMenu() {
