@@ -64,7 +64,7 @@
         @click-chat="handleChat"
         @view-chat-history="handleViewChatHistory"
       />
-      <TheFooter />
+      <!-- <TheFooter /> -->
     </div>
 
     <!-- 메뉴 모달 -->
@@ -95,7 +95,7 @@ import ItemActionButton from "@/components/Item/Detail/ItemActionButton.vue";
 import ItemDetailInfo from "@/components/Item/Detail/ItemDetailInfo.vue";
 import ItemImageSlide from "@/components/Item/Detail/ItemImageSlide.vue";
 import ItemSellerInfo from "@/components/Item/Detail/ItemSellerInfo.vue";
-import TheFooter from "@/components/layout/TheFooter.vue";
+// import TheFooter from "@/components/layout/TheFooter.vue";
 
 export default {
   name: "ItemDetailPage",
@@ -109,7 +109,7 @@ export default {
     ItemDetailInfo,
     ItemSellerInfo,
     ItemActionButton,
-    TheFooter,
+    // TheFooter,
   },
 
   data() {

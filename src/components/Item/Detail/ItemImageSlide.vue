@@ -1,18 +1,19 @@
 <template>
   <div class="w-full">
-    <!-- Main image slider -->
-    <div class="relative w-full h-96">
+    <div class="relative w-full overflow-hidden" style="max-height: 50vh">
       <img
         :key="currentImageUrl"
         :src="currentImageUrl"
-        class="w-full h-full object-cover transition-opacity duration-300"
+        class="w-full object-contain mx-auto transition-opacity duration-300"
+        style="max-height: 50vh"
         @error="handleImageError"
         v-if="!forceDefault"
       />
       <img
         v-else
         src="@/assets/images/default-placeholder.png"
-        class="w-full h-full object-cover"
+        class="w-full object-contain mx-auto"
+        style="max-height: 50vh"
       />
 
       <!-- Navigation arrows -->
@@ -72,8 +73,6 @@
         ></button>
       </div>
     </div>
-
-    <!-- 썸네일 프리뷰 영역 제거됨 -->
   </div>
 </template>
 
@@ -93,7 +92,6 @@ export default {
     };
   },
   computed: {
-    // Extract all images from the data structure
     allImages() {
       const mainImage = this.item?.data?.imageUrl;
       const imageUrlList = this.item?.data?.imageUrlList || [];
@@ -136,18 +134,15 @@ export default {
       return allImageUrls.length > 0 ? allImageUrls : [""];
     },
 
-    // Get the current image URL based on the index
     currentImageUrl() {
       const imgUrl = this.allImages[this.currentIndex];
       return imgUrl ? this.getFullUrl(imgUrl) : "";
     },
   },
   methods: {
-    // Add the base URL if needed
     getFullUrl(imageUrl) {
       if (!imageUrl) return "";
 
-      // Check if it's already a full URL
       if (imageUrl.startsWith("http")) {
         return imageUrl;
       }
@@ -160,8 +155,6 @@ export default {
       this.forceDefault = true;
     },
 
-    // 썸네일 관련 에러 핸들링 함수 제거
-
     resetImage() {
       this.forceDefault = false;
     },
@@ -169,12 +162,18 @@ export default {
     nextImage() {
       this.currentIndex = (this.currentIndex + 1) % this.allImages.length;
       this.resetImage();
+      // 페이지 상단으로 스크롤하지 않도록 이벤트 전파 중지
+      event.stopPropagation();
+      event.preventDefault();
     },
 
     prevImage() {
       this.currentIndex =
         (this.currentIndex - 1 + this.allImages.length) % this.allImages.length;
       this.resetImage();
+      // 페이지 상단으로 스크롤하지 않도록 이벤트 전파 중지
+      event.stopPropagation();
+      event.preventDefault();
     },
   },
   watch: {
