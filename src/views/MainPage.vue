@@ -2,22 +2,18 @@
   <div class="min-h-screen bg-white flex flex-col">
     <div class="flex-1">
       <the-header :is-logged-in="isLoggedIn" :user-id="userId" @login="login" />
-      <search-area @search="handleSearch" />
 
-      <!-- Quick Category Navigation -->
+      <!-- 검색 영역 컨테이너 추가 -->
       <div class="bg-white border-b">
-        <div class="max-w-6xl mx-auto">
-          <div
-            class="flex space-x-6 px-6 py-3 text-sm overflow-x-auto whitespace-nowrap"
-          >
-            <span class="text-gray-900">인기 검색어</span>
-            <span class="text-gray-400">골프</span>
-            <span class="text-gray-400">플스</span>
-            <span class="text-gray-400">다이슨</span>
-            <span class="text-gray-400">아이폰</span>
-            <span class="text-gray-400">냉장고</span>
-            <span class="text-gray-400">노트북</span>
-            <span class="text-gray-400">모니터</span>
+        <div class="max-w-6xl mx-auto px-6 py-3">
+          <div class="flex items-center">
+            <!-- 검색창 - 기존 SearchArea를 감싸는 컨테이너 -->
+            <div class="flex-grow">
+              <search-area
+                :show-recent-searches="false"
+                @search="handleSearch"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -128,5 +124,15 @@ export default {
 .overflow-x-auto {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* SearchArea 스타일 오버라이드 */
+:deep(.search-area) {
+  width: 100%;
+}
+
+:deep(.search-area input) {
+  border-radius: 6px;
+  height: 40px;
 }
 </style>

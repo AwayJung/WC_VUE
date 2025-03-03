@@ -1,140 +1,60 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- 당근마켓 스타일 헤더 컴포넌트 -->
-    <MarketHeader :is-logged-in="isLoggedIn" />
+    <MarketHeader
+      :is-logged-in="isLoggedIn"
+      @toggle-menu="showMenu = !showMenu"
+      @search="handleSearch"
+      @search-clear="clearSearch"
+      @header-height-changed="updateHeaderHeight"
+    />
 
     <!-- 카테고리 필터 컴포넌트 -->
-    <CategoryFilter @category-selected="handleCategorySelect" />
+    <!-- <CategoryFilter @category-selected="handleCategorySelect" /> -->
 
     <!-- 메인 컨텐츠 -->
-    <main class="pt-28 pb-20">
-      <div v-if="loading" class="flex justify-center items-center p-4">
+    <main class="pb-20">
+      <div
+        v-if="loading || searchLoading"
+        class="flex justify-center items-center p-4"
+      >
+        <div
+          class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-2"
+        ></div>
         <span>로딩 중...</span>
       </div>
       <div v-else-if="error" class="text-red-500 text-center p-4">
         {{ error }}
       </div>
+      <div
+        v-else-if="searchQuery && filteredItems.length === 0"
+        class="text-center p-8"
+      >
+        <div class="flex flex-col items-center justify-center py-10">
+          <svg
+            class="w-16 h-16 text-gray-300 mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <p class="text-gray-500 font-medium">검색 결과가 없습니다.</p>
+          <p class="text-sm text-gray-400 mt-2">다른 검색어로 시도해보세요.</p>
+        </div>
+      </div>
       <div v-else>
-        <ItemList :items="processedItems" />
+        <ItemList :items="filteredItems" />
       </div>
     </main>
 
     <!-- 하단 네비게이션 -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
-      <div class="flex justify-around py-3">
-        <!-- 홈 버튼 -->
-        <router-link to="/" class="flex flex-col items-center text-orange-500">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
-            />
-          </svg>
-          <span class="text-xs mt-1">홈</span>
-        </router-link>
-
-        <!-- 동네생활 버튼 -->
-        <router-link
-          to="/local"
-          class="flex flex-col items-center text-gray-500"
-        >
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1M19 20a2 2 0 002-2V8a2 2 0 00-2-2h-1M19 20h-1"
-            />
-          </svg>
-          <span class="text-xs mt-1">동네생활</span>
-        </router-link>
-
-        <!-- 내 근처 버튼 -->
-        <router-link
-          to="/nearby"
-          class="flex flex-col items-center text-gray-500"
-        >
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-          <span class="text-xs mt-1">내 근처</span>
-        </router-link>
-
-        <!-- 채팅 버튼 -->
-        <router-link
-          to="/chat"
-          class="flex flex-col items-center text-gray-500"
-        >
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-          <span class="text-xs mt-1">채팅</span>
-        </router-link>
-
-        <!-- 나의 당근 버튼 -->
-        <router-link to="/my" class="flex flex-col items-center text-gray-500">
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-          <span class="text-xs mt-1">나의 당근</span>
-        </router-link>
-      </div>
-    </nav>
-
-    <!-- 글쓰기 버튼 -->
-    <button
-      @click="$router.push('/items/create')"
-      class="fixed right-4 bottom-20 bg-orange-500 text-white rounded-full p-4 shadow-lg"
-    >
-      <svg class="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 4v16m8-8H4"
-        />
-      </svg>
-    </button>
+    <BottomNavigation activePage="home" :userId="userId" />
   </div>
 </template>
 
@@ -142,19 +62,26 @@
 import { mapState, mapActions } from "vuex";
 import ItemList from "@/components/Item/List/ItemList.vue";
 import MarketHeader from "@/components/layout/MarketHeader.vue";
-import ListCategoryFilter from "@/components/Item/category/ListCategoryFilter.vue";
+// import ListCategoryFilter from "@/components/Item/category/ListCategoryFilter.vue";
+import BottomNavigation from "@/components/layout/BottomNavigation.vue";
 
 export default {
   name: "ItemListPage",
   components: {
     ItemList,
     MarketHeader,
-    CategoryFilter: ListCategoryFilter,
+    // CategoryFilter: ListCategoryFilter,
+    BottomNavigation,
   },
   data() {
     return {
       isLoggedIn: false,
-      userId: "",
+      userId: "3", // 로그인 구현 전까지 기본값으로 설정
+      searchQuery: "",
+      showMenu: false,
+      headerHeight: 56, // 기본 헤더 높이
+      searchLoading: false, // 검색 로딩 상태 추가
+      selectedCategory: null, // 선택된 카테고리
     };
   },
   computed: {
@@ -169,21 +96,139 @@ export default {
       }
       return [];
     },
+    filteredItems() {
+      let result = this.processedItems;
+
+      // 카테고리 필터링
+      if (this.selectedCategory) {
+        result = result.filter(
+          (item) => item.category && item.category.id === this.selectedCategory
+        );
+      }
+
+      // 검색어 필터링
+      if (this.searchQuery) {
+        // 검색어의 공백 제거 및 소문자 변환
+        const query = this.searchQuery.toLowerCase().trim();
+
+        // 여러 필드에 대해 검색어가 포함된 아이템 필터링
+        result = result.filter((item) => {
+          const title = (item.title || "").toLowerCase();
+          const description = (item.description || "").toLowerCase();
+          const location = (item.location || "").toLowerCase();
+          const category = (item.category?.name || "").toLowerCase();
+          const tags = (item.tags || []).join(" ").toLowerCase();
+
+          return (
+            title.includes(query) ||
+            description.includes(query) ||
+            location.includes(query) ||
+            category.includes(query) ||
+            tags.includes(query)
+          );
+        });
+      }
+
+      return result;
+    },
   },
   methods: {
     ...mapActions("item", ["fetchItems"]),
 
     handleCategorySelect(categoryId) {
-      console.log("Selected category:", categoryId);
-      // TODO: 카테고리별 필터링 로직 구현
+      this.selectedCategory = categoryId;
+      console.log("선택된 카테고리:", categoryId);
+
+      // URL에 카테고리 반영
+      this.$router.push({
+        path: this.$route.path,
+        query: {
+          ...this.$route.query,
+          category: categoryId || undefined,
+        },
+      });
+    },
+
+    async handleSearch(query) {
+      this.searchQuery = query;
+      this.searchLoading = true; // 로딩 시작
+      console.log("검색어:", query);
+
+      // URL에 검색어 반영
+      this.$router.push({
+        path: this.$route.path,
+        query: {
+          ...this.$route.query,
+          q: query || undefined,
+        },
+      });
+
+      try {
+        // 필요한 경우 API 호출이나 다른 비동기 작업
+        // await this.fetchItems({ search: query });
+
+        // 비동기 작업이 없어도 약간의 딜레이로 로딩 효과 제공
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      } catch (error) {
+        console.error("검색 중 오류 발생:", error);
+      } finally {
+        this.searchLoading = false; // 로딩 종료
+      }
+    },
+
+    clearSearch() {
+      this.searchQuery = "";
+
+      // URL에서 검색어 파라미터 제거
+      const query = { ...this.$route.query };
+      delete query.q;
+
+      this.$router.push({
+        path: this.$route.path,
+        query,
+      });
+    },
+
+    // 헤더 높이가 변경될 때 호출되는 메서드
+    updateHeaderHeight(height) {
+      console.log("헤더 높이 변경됨:", height);
+      this.headerHeight = height;
     },
   },
   async created() {
+    // URL에서 검색어와 카테고리 가져오기
+    if (this.$route.query.q) {
+      this.searchQuery = this.$route.query.q;
+    }
+
+    if (this.$route.query.category) {
+      this.selectedCategory = this.$route.query.category;
+    }
+
+    // 아이템 데이터 가져오기
     await this.fetchItems();
 
     // 로그인 상태 확인 (실제 구현에 맞게 수정 필요)
     this.isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    this.userId = localStorage.getItem("userId") || "";
+    const storedUserId = localStorage.getItem("userId");
+    if (storedUserId) {
+      this.userId = storedUserId;
+    }
   },
 };
 </script>
+
+<style scoped>
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

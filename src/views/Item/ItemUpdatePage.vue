@@ -6,10 +6,7 @@
         <button @click="handleGoBack" class="p-1">
           <span class="text-2xl">×</span>
         </button>
-        <h1 class="text-lg font-medium">상품 수정하기</h1>
-        <div class="w-20 text-right">
-          <span class="text-gray-400">임시저장</span>
-        </div>
+        <h1 class="text-lg font-medium mx-auto">상품 수정하기</h1>
       </div>
     </header>
 
