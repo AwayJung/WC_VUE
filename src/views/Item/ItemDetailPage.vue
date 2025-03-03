@@ -1,26 +1,7 @@
 <template>
   <div class="min-h-screen">
-    <!-- 헤더 -->
-    <div class="fixed top-0 left-0 right-0 z-50 bg-white">
-      <div class="flex items-center justify-between p-4">
-        <div class="flex items-center gap-4">
-          <button class="p-2" @click="$router.go(-1)">
-            <ArrowLeft :size="24" />
-          </button>
-          <button class="p-2" @click="$router.push('/')">
-            <Home :size="24" />
-          </button>
-        </div>
-        <div class="flex items-center gap-4">
-          <button class="p-2" @click="handleShare">
-            <Share2 :size="24" />
-          </button>
-          <button class="p-2" @click="toggleMenu">
-            <MoreVertical :size="24" />
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- 헤더 (MarketHeader) -->
+    <MarketHeader :is-logged-in="true" class="z-50" @toggle-menu="toggleMenu" />
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="flex justify-center items-center h-screen">
@@ -35,7 +16,7 @@
       {{ error }}
     </div>
 
-    <!-- 컨텐츠 영역 -->
+    <!-- 컨텐츠 영역 (상단 여백 수정) -->
     <div v-else-if="currentItem" class="pt-16 pb-32">
       <ItemImageSlide :item="currentItem || {}" />
       <ItemSellerInfo
@@ -54,7 +35,7 @@
     <!-- 하단 고정 영역 -->
     <div
       v-if="currentItem"
-      class="fixed bottom-0 left-0 right-0 bg-white border-t"
+      class="fixed bottom-0 left-0 right-0 bg-white border-t z-10"
     >
       <ItemActionButton
         :item="currentItem"
@@ -64,14 +45,16 @@
         @click-chat="handleChat"
         @view-chat-history="handleViewChatHistory"
       />
-      <!-- <TheFooter /> -->
     </div>
 
     <!-- 메뉴 모달 -->
-    <div v-if="showMenu" class="fixed inset-0 bg-black bg-opacity-50 z-50">
+    <div v-if="showMenu" class="fixed inset-0 bg-black bg-opacity-50 z-[200]">
       <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-xl p-4">
         <div class="flex flex-col">
           <button class="py-3 text-left" @click="handleReport">신고하기</button>
+          <button v-if="isMyItem" class="py-3 text-left" @click="handleEdit">
+            수정하기
+          </button>
           <button
             v-if="isMyItem"
             class="py-3 text-left text-red-500"
@@ -89,27 +72,22 @@
 </template>
 
 <script>
-import { ArrowLeft, Home, Share2, MoreVertical } from "lucide-vue";
 import { mapState, mapGetters, mapActions } from "vuex";
 import ItemActionButton from "@/components/Item/Detail/ItemActionButton.vue";
 import ItemDetailInfo from "@/components/Item/Detail/ItemDetailInfo.vue";
 import ItemImageSlide from "@/components/Item/Detail/ItemImageSlide.vue";
 import ItemSellerInfo from "@/components/Item/Detail/ItemSellerInfo.vue";
-// import TheFooter from "@/components/layout/TheFooter.vue";
+import MarketHeader from "@/components/layout/MarketHeader.vue";
 
 export default {
   name: "ItemDetailPage",
 
   components: {
-    ArrowLeft,
-    Home,
-    Share2,
-    MoreVertical,
     ItemImageSlide,
     ItemDetailInfo,
     ItemSellerInfo,
     ItemActionButton,
-    // TheFooter,
+    MarketHeader,
   },
 
   data() {
@@ -146,6 +124,7 @@ export default {
         console.error("Failed to load item:", error);
       }
     },
+
     handleViewChatHistory(itemId) {
       console.log("handleViewChatHistory 호출됨, itemId:", itemId);
 
@@ -162,7 +141,14 @@ export default {
     },
 
     toggleMenu() {
+      console.log("메뉴 토글:", !this.showMenu);
       this.showMenu = !this.showMenu;
+    },
+
+    handleEdit() {
+      const itemId = this.$route.params.id;
+      this.toggleMenu();
+      this.$router.push(`/items/update/${itemId}`);
     },
 
     async handleDelete() {

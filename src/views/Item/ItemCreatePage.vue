@@ -16,106 +16,27 @@
     <!-- Main Content -->
     <main class="flex-1 overflow-y-auto mt-14">
       <form @submit.prevent="onSubmit" class="p-4">
-        <!-- 이미지 업로드 -->
-        <div class="mb-6">
-          <div class="text-sm mb-2">상품 이미지</div>
-          <div class="flex flex-wrap gap-2">
-            <!-- 이미지 업로드 버튼 -->
-            <label
-              v-if="formData.images.length < 5"
-              class="w-20 h-20 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer"
-            >
-              <input
-                type="file"
-                @change="handleImageUpload"
-                accept="image/*"
-                multiple
-                class="hidden"
-              />
-              <span class="text-gray-400 text-3xl">+</span>
-            </label>
+        <!-- 이미지 업로드 컴포넌트 -->
+        <ImageUploader
+          :images="formData.images"
+          :imageUrls="formData.imageUrls"
+          @upload-images="addImages"
+          @remove-image="removeImage"
+        />
 
-            <!-- 미리보기 이미지 -->
-            <div
-              v-for="(image, index) in formData.images"
-              :key="index"
-              class="relative w-20 h-20"
-            >
-              <img
-                :src="formData.imageUrls[index]"
-                class="w-full h-full object-cover rounded"
-              />
-              <button
-                @click.prevent="removeImage(index)"
-                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-          <p class="text-xs text-gray-500 mt-1">
-            최대 5개의 이미지를 업로드할 수 있습니다.
-          </p>
-        </div>
-
-        <!-- 제목 -->
-        <div class="mb-6">
-          <div class="text-sm mb-2">제목</div>
-          <input
-            v-model="formData.title"
-            type="text"
-            placeholder="글 제목"
-            class="w-full px-4 py-3 border rounded-lg"
-          />
-        </div>
-
-        <!-- 카테고리 -->
-        <div class="mb-6">
-          <div class="text-sm mb-2">카테고리</div>
-          <select
-            v-model="formData.category"
-            class="w-full px-4 py-3 border rounded-lg"
-          >
-            <option value="">카테고리 선택</option>
-            <option value="electronics">전자기기</option>
-            <option value="clothing">의류</option>
-            <option value="books">책</option>
-            <option value="furniture">가구</option>
-            <option value="etc">기타</option>
-          </select>
-        </div>
-
-        <!-- 가격 입력 -->
-        <div class="mb-6">
-          <div class="text-sm mb-2">가격</div>
-          <div class="flex items-center space-x-2">
-            <input
-              v-model="formData.price"
-              type="number"
-              placeholder="가격을 입력하세요"
-              class="w-full px-4 py-3 border rounded-lg"
-            />
-            <label class="flex items-center">
-              <input
-                type="checkbox"
-                v-model="formData.priceFlexible"
-                class="mr-2"
-              />
-              <span class="text-sm">가격 흥정 가능</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- 설명 -->
-        <div class="mb-6">
-          <div class="text-sm mb-2">자세한 설명</div>
-          <textarea
-            v-model="formData.description"
-            rows="6"
-            placeholder="게시글 내용을 작성해 주세요. (판매 금지 물품은 게시가 제한될 수 있어요.)"
-            class="w-full px-4 py-3 border rounded-lg resize-none"
-          ></textarea>
-        </div>
+        <!-- 상품 정보 폼 컴포넌트 -->
+        <ItemForm
+          :title="formData.title"
+          @update:title="formData.title = $event"
+          :category="formData.category"
+          @update:category="formData.category = $event"
+          :price="formData.price"
+          @update:price="formData.price = $event"
+          :priceFlexible="formData.priceFlexible"
+          @update:priceFlexible="formData.priceFlexible = $event"
+          :description="formData.description"
+          @update:description="formData.description = $event"
+        />
 
         <!-- Error Message -->
         <div v-if="error" class="text-red-500 text-sm mb-4 text-center">
@@ -139,14 +60,20 @@
 
 <script>
 import axios from "axios";
+import ItemForm from "@/components/Item/Create/ItemForm.vue";
+import ImageUploader from "@/components/Item/Create/ImageUploader.vue";
 
 export default {
   name: "ItemCreatePage",
+  components: {
+    ImageUploader,
+    ItemForm,
+  },
   data() {
     return {
       formData: {
         images: [],
-        imageUrls: [], // 이미지 URL을 저장할 배열 추가
+        imageUrls: [],
         title: "",
         category: "",
         price: "",
@@ -160,7 +87,6 @@ export default {
   computed: {
     isFormValid() {
       return (
-        this.formData.images.length > 0 &&
         this.formData.title.trim() &&
         this.formData.category &&
         this.formData.price &&
@@ -169,47 +95,17 @@ export default {
     },
   },
   methods: {
-    handleImageUpload(event) {
-      const files = Array.from(event.target.files);
-
-      // Check total number of images
-      const remainingSlots = 5 - this.formData.images.length;
-      const filesToAdd = files.slice(0, remainingSlots);
-
-      // Validate file types and sizes
-      const validFiles = filesToAdd.filter((file) => {
-        // Check file type
-        const validTypes = ["image/jpeg", "image/png", "image/gif"];
-        if (!validTypes.includes(file.type)) {
-          alert(
-            "지원되지 않는 파일 형식입니다. JPEG, PNG, GIF 파일만 업로드 가능합니다."
-          );
-          return false;
-        }
-
-        // Check file size (5MB limit)
-        if (file.size > 5 * 1024 * 1024) {
-          alert("파일 크기는 5MB를 초과할 수 없습니다.");
-          return false;
-        }
-
-        return true;
-      });
-
-      // 유효한 파일 추가 및 URL 생성
-      validFiles.forEach((file) => {
+    // 이미지 업로더에서 사용할 메소드들
+    addImages(files) {
+      files.forEach((file) => {
         this.formData.images.push(file);
-        // URL 생성 및 저장
         this.formData.imageUrls.push(window.URL.createObjectURL(file));
       });
-
-      // Reset file input
-      event.target.value = "";
     },
 
     removeImage(index) {
       this.formData.images.splice(index, 1);
-      this.formData.imageUrls.splice(index, 1); // URL도 함께 제거
+      this.formData.imageUrls.splice(index, 1);
     },
 
     handleGoBack() {
@@ -227,6 +123,7 @@ export default {
         this.$router.go(-1);
       }
     },
+
     async onSubmit() {
       // Reset previous error
       this.error = null;

@@ -8,7 +8,7 @@ import SignUp from "@/views/SignUp.vue";
 import ItemCreatePage from "@/views/Item/ItemCreatePage.vue";
 import ItemListPage from "@/views/Item/ItemListPage.vue";
 import ItemDetailPage from "@/views/Item/ItemDetailPage.vue";
-
+import ItemUpdatePage from "@/views/Item/ItemUpdatePage.vue";
 Vue.use(VueRouter);
 
 const routes = [
@@ -58,6 +58,14 @@ const routes = [
     name: "ItemDetail",
     component: ItemDetailPage,
     props: true,
+  },
+  {
+    path: "/items/update/:id",
+    name: "ItemUpdate",
+    component: ItemUpdatePage,
+    meta: {
+      requiresAuth: true,
+    },
   },
 ];
 

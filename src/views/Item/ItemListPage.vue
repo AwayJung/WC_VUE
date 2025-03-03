@@ -1,75 +1,10 @@
 <template>
-  <div class="min-h-screen bg-white">
-    <!-- 헤더 -->
-    <header class="fixed top-0 left-0 right-0 bg-white z-50">
-      <div class="flex items-center justify-between px-4 h-12 border-b">
-        <div class="flex items-center">
-          <svg
-            class="w-4 h-4 ml-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </div>
-        <div class="flex items-center space-x-4">
-          <button class="p-2">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-          <button class="p-2">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </button>
-          <button class="p-2">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
+  <div class="min-h-screen bg-gray-50">
+    <!-- 당근마켓 스타일 헤더 컴포넌트 -->
+    <MarketHeader :is-logged-in="isLoggedIn" />
 
-      <!-- 카테고리 필터 컴포넌트로 교체 -->
-      <ListCategoryFilter @category-select="handleCategorySelect" />
-    </header>
+    <!-- 카테고리 필터 컴포넌트 -->
+    <CategoryFilter @category-selected="handleCategorySelect" />
 
     <!-- 메인 컨텐츠 -->
     <main class="pt-28 pb-20">
@@ -87,15 +22,21 @@
     <!-- 하단 네비게이션 -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
       <div class="flex justify-around py-3">
-        <button class="flex flex-col items-center">
+        <!-- 홈 버튼 -->
+        <router-link to="/" class="flex flex-col items-center text-orange-500">
           <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
             <path
               d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
             />
           </svg>
           <span class="text-xs mt-1">홈</span>
-        </button>
-        <button class="flex flex-col items-center">
+        </router-link>
+
+        <!-- 동네생활 버튼 -->
+        <router-link
+          to="/local"
+          class="flex flex-col items-center text-gray-500"
+        >
           <svg
             class="w-6 h-6"
             fill="none"
@@ -106,12 +47,17 @@
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1M19 20a2 2 0 002-2V8a2 2 0 00-2-2h-1M19 20h-1"
             />
           </svg>
           <span class="text-xs mt-1">동네생활</span>
-        </button>
-        <button class="flex flex-col items-center">
+        </router-link>
+
+        <!-- 내 근처 버튼 -->
+        <router-link
+          to="/nearby"
+          class="flex flex-col items-center text-gray-500"
+        >
           <svg
             class="w-6 h-6"
             fill="none"
@@ -132,8 +78,13 @@
             />
           </svg>
           <span class="text-xs mt-1">내 근처</span>
-        </button>
-        <button class="flex flex-col items-center">
+        </router-link>
+
+        <!-- 채팅 버튼 -->
+        <router-link
+          to="/chat"
+          class="flex flex-col items-center text-gray-500"
+        >
           <svg
             class="w-6 h-6"
             fill="none"
@@ -148,8 +99,10 @@
             />
           </svg>
           <span class="text-xs mt-1">채팅</span>
-        </button>
-        <button class="flex flex-col items-center">
+        </router-link>
+
+        <!-- 나의 당근 버튼 -->
+        <router-link to="/my" class="flex flex-col items-center text-gray-500">
           <svg
             class="w-6 h-6"
             fill="none"
@@ -164,7 +117,7 @@
             />
           </svg>
           <span class="text-xs mt-1">나의 당근</span>
-        </button>
+        </router-link>
       </div>
     </nav>
 
@@ -173,12 +126,7 @@
       @click="$router.push('/items/create')"
       class="fixed right-4 bottom-20 bg-orange-500 text-white rounded-full p-4 shadow-lg"
     >
-      <svg
-        class="w-6 h-6"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
+      <svg class="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
@@ -192,14 +140,22 @@
 
 <script>
 import { mapState, mapActions } from "vuex";
-import ItemList from "@/components/Item/Input/ItemList.vue";
+import ItemList from "@/components/Item/List/ItemList.vue";
+import MarketHeader from "@/components/layout/MarketHeader.vue";
 import ListCategoryFilter from "@/components/Item/category/ListCategoryFilter.vue";
 
 export default {
   name: "ItemListPage",
   components: {
     ItemList,
-    ListCategoryFilter,
+    MarketHeader,
+    CategoryFilter: ListCategoryFilter,
+  },
+  data() {
+    return {
+      isLoggedIn: false,
+      userId: "",
+    };
   },
   computed: {
     ...mapState("item", ["items", "loading", "error"]),
@@ -218,14 +174,16 @@ export default {
     ...mapActions("item", ["fetchItems"]),
 
     handleCategorySelect(categoryId) {
-      // 카테고리 선택 처리
       console.log("Selected category:", categoryId);
       // TODO: 카테고리별 필터링 로직 구현
-      // this.$store.dispatch('item/fetchItemsByCategory', categoryId);
     },
   },
   async created() {
     await this.fetchItems();
+
+    // 로그인 상태 확인 (실제 구현에 맞게 수정 필요)
+    this.isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    this.userId = localStorage.getItem("userId") || "";
   },
 };
 </script>
