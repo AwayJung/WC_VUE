@@ -52,28 +52,10 @@
       </div>
     </div>
 
-    <!-- 탭 메뉴 -->
-    <div class="flex border-b">
-      <button
-        class="flex-1 px-4 py-3 font-medium border-b-2 border-black text-black"
-      >
-        일반
-      </button>
-      <button class="flex-1 px-4 py-3 font-medium text-gray-400">
-        비즈니스
-      </button>
-    </div>
-
     <!-- 필터 버튼들 -->
     <div class="flex gap-2 p-4 overflow-x-auto">
       <button class="px-4 py-2 bg-gray-900 text-white rounded-full text-sm">
         전체
-      </button>
-      <button class="px-4 py-2 bg-white border rounded-full text-sm">
-        판매
-      </button>
-      <button class="px-4 py-2 bg-white border rounded-full text-sm">
-        구매
       </button>
       <button
         class="px-4 py-2 bg-white border rounded-full text-sm whitespace-nowrap"

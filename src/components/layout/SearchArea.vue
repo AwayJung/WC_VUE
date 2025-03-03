@@ -121,17 +121,31 @@ export default {
 
     async handleSearch() {
       if (!this.searchQuery.trim()) return;
+
+      // 현재 라우트의 쿼리와 검색어가 같은 경우 중복 라우팅 방지
+      if (
+        this.$route.name === "ItemListPage" &&
+        this.$route.query.q === this.searchQuery
+      ) {
+        // 검색 이벤트는 여전히 발생시킴
+        this.$emit("search", this.searchQuery);
+        return;
+      }
+
       this.addToRecentSearches(this.searchQuery);
 
       try {
         await this.$router.push({
-          name: "ItemListPage", // "ItemList"가 아닌 "ItemListPage"로 수정
+          name: "ItemListPage",
           query: { q: this.searchQuery },
         });
         this.$emit("search", this.searchQuery);
       } catch (error) {
         if (error.name !== "NavigationDuplicated") {
           console.error("검색 오류:", error);
+        } else {
+          // 중복 라우팅 오류가 발생해도 이벤트는 발생시킴
+          this.$emit("search", this.searchQuery);
         }
       }
     },

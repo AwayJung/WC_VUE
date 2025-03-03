@@ -12,7 +12,11 @@
             />
           </router-link>
           <div class="hidden md:flex items-center space-x-6">
-            <a href="#" class="text-base font-medium">중고거래</a>
+            <router-link
+              :to="{ name: 'ItemListPage' }"
+              class="text-base font-medium"
+              >중고거래</router-link
+            >
             <a href="#" class="text-base text-gray-400">부동산</a>
             <a href="#" class="text-base text-gray-400">중고차</a>
             <a href="#" class="text-base text-gray-400">알바</a>

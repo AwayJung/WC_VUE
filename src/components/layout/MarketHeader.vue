@@ -183,16 +183,37 @@ export default {
       }
     },
 
+    // 검색창 토글 (보이기/숨기기)
     toggleSearchBar() {
       this.showSearchBar = !this.showSearchBar;
+
+      // 검색창을 닫을 때만 검색어 초기화 및 이벤트 발생
       if (!this.showSearchBar) {
-        this.currentSearchQuery = "";
-        this.$emit("search-clear");
+        this.hideSearchBar();
       }
+    },
+
+    // 검색창 숨기기
+    hideSearchBar() {
+      if (this.showSearchBar) {
+        this.showSearchBar = false;
+      }
+
+      // 검색어 초기화
+      this.currentSearchQuery = "";
+
+      // 검색어 초기화 이벤트 발생 (라우터 관련 코드는 부모에서 처리 안 하도록 특별 이벤트 발생)
+      this.$emit("search-clear-no-route");
     },
 
     onSearch(query) {
       this.currentSearchQuery = query;
+
+      // 현재 라우트와 같은 경우 NavigationDuplicated 에러 방지
+      const currentQuery = this.$route.query.q || "";
+      if (currentQuery === query) {
+        return;
+      }
 
       this.$router
         .push({
@@ -210,7 +231,9 @@ export default {
 
     onSearchClear() {
       this.currentSearchQuery = "";
-      this.$emit("search-clear");
+
+      // 부모 컴포넌트에서는 이 이벤트를 받아서 라우터 조작을 하지 않도록 안내 필요
+      this.$emit("search-clear-no-route");
     },
   },
 };

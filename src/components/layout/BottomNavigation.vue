@@ -37,11 +37,11 @@
         <span class="text-xs mt-1">동네생활</span>
       </router-link>
 
-      <!-- 내 근처 버튼 -->
+      <!-- 물품 목록 링크 - 별도 메뉴로 이동 -->
       <router-link
-        to="/nearby"
+        :to="{ name: 'ItemListPage' }"
         class="flex flex-col items-center"
-        :class="activePage === 'nearby' ? 'text-orange-500' : 'text-gray-500'"
+        :class="activePage === 'items' ? 'text-orange-500' : 'text-gray-500'"
       >
         <svg
           class="w-6 h-6"
@@ -53,16 +53,10 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-          />
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
           />
         </svg>
-        <span class="text-xs mt-1">내 근처</span>
+        <span class="text-xs mt-1">물품 목록</span>
       </router-link>
 
       <!-- 채팅 버튼 -->
@@ -120,7 +114,7 @@ export default {
       type: String,
       default: "home",
       validator: (value) =>
-        ["home", "local", "nearby", "chat", "my"].includes(value),
+        ["home", "local", "nearby", "items", "chat", "my"].includes(value),
     },
     userId: {
       type: [String, Number],
