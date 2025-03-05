@@ -106,12 +106,9 @@ export default {
   },
 
   methods: {
-    ...mapActions("item", [
-      "fetchItem",
-      "deleteItem",
-      "updateItem",
-      "toggleItemLike",
-    ]),
+    ...mapActions("item", ["fetchItem", "deleteItem", "updateItem"]),
+    // itemLike 액션 추가
+    ...mapActions("itemLike", ["toggleItemLike", "checkItemLikeStatus"]),
 
     async loadItemData() {
       const itemId = this.$route.params.id;
@@ -123,9 +120,23 @@ export default {
         if (this.currentItem) {
           console.log(this.currentItem);
           this.checkIfMyItem();
+
+          // 상품 로드 후 찜 상태 확인 추가
+          await this.loadItemLikeStatus(itemId);
         }
       } catch (error) {
         console.error("Failed to load item:", error);
+      }
+    },
+
+    // 찜 상태 확인 함수 추가
+    async loadItemLikeStatus(itemId) {
+      try {
+        console.log("찜 상태 확인 시작:", itemId);
+        const response = await this.checkItemLikeStatus(itemId);
+        console.log("찜 상태 확인 결과:", response);
+      } catch (error) {
+        console.error("찜 상태 확인 실패:", error);
       }
     },
 
@@ -198,11 +209,20 @@ export default {
       this.$router.push(`/purchase/${this.currentItem.id}`);
     },
 
+    // handleLike 함수 수정
     async handleLike({ itemId, isLiked }) {
       try {
         console.log("===== handleLike 시작 =====");
         console.log("아이템 ID:", itemId || this.$route.params.id);
         console.log("현재 찜 상태:", isLiked);
+
+        // 실제 찜 상태 토글 호출 추가
+        const id = itemId || this.$route.params.id;
+        const result = await this.toggleItemLike(id);
+        console.log("찜하기 결과:", result);
+
+        // 찜 상태 변경 후 상품 정보 다시 로드 (선택적)
+        // await this.loadItemData();
       } catch (error) {
         console.error("찜하기 처리 실패:", error);
         this.$toast?.error?.("찜하기 처리에 실패했습니다.") ||

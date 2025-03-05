@@ -89,32 +89,18 @@
             class="p-4 cursor-pointer bg-white"
             @click="goToItemDetail(item.itemId)"
           >
-            <h2 class="text-lg font-semibold mb-2 truncate">
-              {{ item.name || "상품명" }}
-            </h2>
+            <!-- 상품명과 좋아요 수를 한 줄에 배치하기 위한 Flex 컨테이너 -->
+            <div class="flex justify-between items-start">
+              <h2 class="text-lg font-semibold mb-2 truncate">
+                {{ item.name || "상품명" }}
+              </h2>
+              <!-- 오른쪽에 좋아요 수 컴포넌트 배치 -->
+              <ItemLikeCount :count="item.likeCount || 1" />
+            </div>
+
             <p class="text-gray-900 font-bold mb-2">
               {{ formatPrice(item.price) }}원
             </p>
-
-            <div class="flex items-center text-sm text-gray-500 mt-3">
-              <span class="flex items-center mr-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-                {{ item.likeCount || 1 }}
-              </span>
-            </div>
           </div>
         </div>
       </div>
@@ -128,6 +114,7 @@ import { mapState, mapActions } from "vuex";
 import MarketHeader from "@/components/layout/MarketHeader.vue";
 import BottomNavigation from "@/components/layout/BottomNavigation.vue";
 import ItemImageSlide from "@/components/Item/Detail/ItemImageSlide.vue";
+import ItemLikeCount from "@/components/Item/ItemLikeCount.vue"; // 새로 만든 컴포넌트 추가
 
 export default {
   name: "ItemLikesPage",
@@ -135,6 +122,7 @@ export default {
     MarketHeader,
     BottomNavigation,
     ItemImageSlide,
+    ItemLikeCount, // 컴포넌트 등록
   },
   data() {
     return {

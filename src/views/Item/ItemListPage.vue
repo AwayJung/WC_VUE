@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- 당근마켓 스타일 헤더 컴포넌트 -->
     <MarketHeader
       :is-logged-in="isLoggedIn"
       @toggle-menu="showMenu = !showMenu"
@@ -8,9 +7,6 @@
       @search-clear="clearSearch"
       @header-height-changed="updateHeaderHeight"
     />
-
-    <!-- 카테고리 필터 컴포넌트 -->
-    <!-- <CategoryFilter @category-selected="handleCategorySelect" /> -->
 
     <!-- 메인 컨텐츠 -->
     <main class="pb-20">
@@ -86,16 +82,24 @@ export default {
   },
   computed: {
     ...mapState("item", ["items", "loading", "error"]),
+    ...mapState("itemLike", ["likedItems"]), // itemLike 스토어의 상태 추가
+
     processedItems() {
       if (!this.items) return [];
+
+      let result = [];
       if (this.items.data && Array.isArray(this.items.data)) {
-        return this.items.data;
+        result = this.items.data;
+      } else if (this.items.data) {
+        result = Object.values(this.items.data);
+      } else {
+        return [];
       }
-      if (this.items.data) {
-        return Object.values(this.items.data);
-      }
-      return [];
+
+      // likedItems의 상태 정보를 processedItems에 병합
+      return this.mergeLikeInfo(result);
     },
+
     filteredItems() {
       let result = this.processedItems;
 
@@ -134,6 +138,56 @@ export default {
   },
   methods: {
     ...mapActions("item", ["fetchItems"]),
+    ...mapActions("itemLike", ["fetchMyLikes"]), // itemLike 액션 추가
+
+    // 좋아요 정보를 아이템 목록에 병합하는 메서드
+    mergeLikeInfo(items) {
+      // likedItems가 없거나 비어있으면 원래 아이템 목록 반환
+      if (!this.likedItems || this.likedItems.length === 0) {
+        return items;
+      }
+
+      // likedItems를 맵으로 변환하여 빠른 조회 가능하게 함
+      const likeMap = {};
+      this.likedItems.forEach((likedItem) => {
+        const itemId = likedItem.itemId;
+        if (itemId) {
+          likeMap[itemId] = {
+            isLiked: true,
+            likeCount: likedItem.likeCount || 1,
+          };
+        }
+      });
+
+      // 각 아이템에 좋아요 정보 적용
+      return items.map((item) => {
+        const itemId = item.itemId || (item.data && item.data.itemId);
+
+        if (itemId && likeMap[itemId]) {
+          // item.data가 있는 경우
+          if (item.data) {
+            return {
+              ...item,
+              data: {
+                ...item.data,
+                isLiked: likeMap[itemId].isLiked,
+                likeCount: likeMap[itemId].likeCount,
+              },
+            };
+          }
+          // item에 직접 데이터가 있는 경우
+          else {
+            return {
+              ...item,
+              isLiked: likeMap[itemId].isLiked,
+              likeCount: likeMap[itemId].likeCount,
+            };
+          }
+        }
+
+        return item;
+      });
+    },
 
     handleCategorySelect(categoryId) {
       this.selectedCategory = categoryId;
@@ -191,8 +245,21 @@ export default {
 
     // 헤더 높이가 변경될 때 호출되는 메서드
     updateHeaderHeight(height) {
-      console.log("헤더 높이 변경됨:", height);
       this.headerHeight = height;
+    },
+
+    // 아이템 목록과 좋아요 정보를 함께 로드
+    async loadItemsWithLikes() {
+      try {
+        // 아이템 목록과 좋아요 목록을 병렬로 가져옴
+        await Promise.all([this.fetchItems(), this.fetchMyLikes()]);
+
+        console.log("아이템과 좋아요 정보 로드 완료");
+        console.log("아이템 수:", this.processedItems.length);
+        console.log("좋아요 아이템 수:", this.likedItems?.length || 0);
+      } catch (error) {
+        console.error("데이터 로드 중 오류 발생:", error);
+      }
     },
   },
   async created() {
@@ -205,8 +272,8 @@ export default {
       this.selectedCategory = this.$route.query.category;
     }
 
-    // 아이템 데이터 가져오기
-    await this.fetchItems();
+    // 아이템 데이터와 찜 목록 함께 가져오기
+    await this.loadItemsWithLikes();
 
     // 로그인 상태 확인 (실제 구현에 맞게 수정 필요)
     this.isLoggedIn = localStorage.getItem("isLoggedIn") === "true";

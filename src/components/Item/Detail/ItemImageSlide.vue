@@ -130,7 +130,6 @@ export default {
         )
         .filter((url, index, self) => self.indexOf(url) === index);
 
-      console.log("유효한 이미지 URLs:", allImageUrls);
       return allImageUrls.length > 0 ? allImageUrls : [""];
     },
 
@@ -171,7 +170,6 @@ export default {
       this.currentIndex =
         (this.currentIndex - 1 + this.allImages.length) % this.allImages.length;
       this.resetImage();
-      // 페이지 상단으로 스크롤하지 않도록 이벤트 전파 중지
       event.stopPropagation();
       event.preventDefault();
     },
@@ -184,9 +182,6 @@ export default {
       },
       deep: true,
     },
-  },
-  mounted() {
-    console.log("컴포넌트 마운트됨, 모든 이미지 URLs:", this.allImages);
   },
 };
 </script>
