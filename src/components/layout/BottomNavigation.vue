@@ -15,11 +15,13 @@
         <span class="text-xs mt-1">홈</span>
       </router-link>
 
-      <!-- 동네생활 버튼 -->
+      <!-- 찜 목록 버튼 -->
       <router-link
-        to="/local"
+        to="/favorites"
         class="flex flex-col items-center"
-        :class="activePage === 'local' ? 'text-orange-500' : 'text-gray-500'"
+        :class="
+          activePage === 'favorites' ? 'text-orange-500' : 'text-gray-500'
+        "
       >
         <svg
           class="w-6 h-6"
@@ -31,10 +33,10 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             stroke-width="2"
-            d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1M19 20a2 2 0 002-2V8a2 2 0 00-2-2h-1M19 20h-1"
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
           />
         </svg>
-        <span class="text-xs mt-1">동네생활</span>
+        <span class="text-xs mt-1">찜 목록</span>
       </router-link>
 
       <!-- 물품 목록 링크 - 별도 메뉴로 이동 -->
@@ -114,7 +116,7 @@ export default {
       type: String,
       default: "home",
       validator: (value) =>
-        ["home", "local", "nearby", "items", "chat", "my"].includes(value),
+        ["home", "favorites", "nearby", "items", "chat", "my"].includes(value),
     },
     userId: {
       type: [String, Number],

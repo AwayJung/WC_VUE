@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen">
-    <!-- 헤더 (MarketHeader) -->
     <MarketHeader :is-logged-in="true" class="z-50" @toggle-menu="toggleMenu" />
 
     <!-- 로딩 상태 -->
@@ -16,7 +15,7 @@
       {{ error }}
     </div>
 
-    <!-- 컨텐츠 영역 (상단 여백 수정) -->
+    <!-- 컨텐츠 영역 -->
     <div v-else-if="currentItem" class="pt-16 pb-32">
       <ItemImageSlide :item="currentItem || {}" />
       <ItemSellerInfo
@@ -24,7 +23,7 @@
         @click-chat="handleChatWithSeller"
         @click-profile="handleViewSellerProfile"
       />
-      <ItemDetailInfo :item="currentItem" @update-like="handleUpdateLike" />
+      <ItemDetailInfo :item="currentItem" />
     </div>
 
     <!-- 데이터 없음 -->
@@ -107,7 +106,12 @@ export default {
   },
 
   methods: {
-    ...mapActions("item", ["fetchItem", "deleteItem", "updateItem"]),
+    ...mapActions("item", [
+      "fetchItem",
+      "deleteItem",
+      "updateItem",
+      "toggleItemLike",
+    ]),
 
     async loadItemData() {
       const itemId = this.$route.params.id;
@@ -194,15 +198,15 @@ export default {
       this.$router.push(`/purchase/${this.currentItem.id}`);
     },
 
-    async handleLike() {
+    async handleLike({ itemId, isLiked }) {
       try {
-        await this.updateItem({
-          itemId: this.currentItem.id,
-          data: { is_liked: !this.currentItem.is_liked },
-        });
+        console.log("===== handleLike 시작 =====");
+        console.log("아이템 ID:", itemId || this.$route.params.id);
+        console.log("현재 찜 상태:", isLiked);
       } catch (error) {
-        console.error("Failed to update like status:", error);
-        this.$toast.error("처리에 실패했습니다.");
+        console.error("찜하기 처리 실패:", error);
+        this.$toast?.error?.("찜하기 처리에 실패했습니다.") ||
+          alert("찜하기 처리에 실패했습니다.");
       }
     },
 

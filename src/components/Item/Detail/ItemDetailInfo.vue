@@ -3,14 +3,13 @@
     <!-- 제목 -->
     <h2 class="text-xl font-bold mb-2">{{ item.data.title || "제목 없음" }}</h2>
 
-    <!-- 날짜 -->
-    <p class="text-gray-500 text-sm mb-4">
-      {{ formatTimeAgo(item.data.createdAt) }}
-    </p>
-
     <!-- 설명 -->
     <div class="mb-4 whitespace-pre-line">
       {{ item.data.description }}
+    </div>
+    <!-- 날짜 및 조회수 -->
+    <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
+      <p>조회수 {{ item.data.viewCount }}</p>
     </div>
   </div>
 </template>

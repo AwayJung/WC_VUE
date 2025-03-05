@@ -9,6 +9,7 @@ import ItemCreatePage from "@/views/Item/ItemCreatePage.vue";
 import ItemListPage from "@/views/Item/ItemListPage.vue";
 import ItemDetailPage from "@/views/Item/ItemDetailPage.vue";
 import ItemUpdatePage from "@/views/Item/ItemUpdatePage.vue";
+import ItemLikesPage from "@/views/Item/ItemLikesPage.vue";
 Vue.use(VueRouter);
 
 const routes = [
@@ -66,6 +67,11 @@ const routes = [
     meta: {
       requiresAuth: true,
     },
+  },
+  {
+    path: "/favorites",
+    name: "ItemLikes",
+    component: ItemLikesPage,
   },
 ];
 
