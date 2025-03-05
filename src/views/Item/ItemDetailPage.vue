@@ -210,19 +210,15 @@ export default {
     },
 
     // handleLike 함수 수정
-    async handleLike({ itemId, isLiked }) {
+    async handleLike({ isLiked }) {
       try {
-        console.log("===== handleLike 시작 =====");
-        console.log("아이템 ID:", itemId || this.$route.params.id);
+        console.log("===== itemDetailPage/handleLike 시작 =====");
         console.log("현재 찜 상태:", isLiked);
 
         // 실제 찜 상태 토글 호출 추가
-        const id = itemId || this.$route.params.id;
-        const result = await this.toggleItemLike(id);
-        console.log("찜하기 결과:", result);
-
-        // 찜 상태 변경 후 상품 정보 다시 로드 (선택적)
-        // await this.loadItemData();
+        //const id = itemId || this.$route.params.id;
+        // const result = await this.toggleItemLike(id);
+        //console.log("찜하기 결과:", result);
       } catch (error) {
         console.error("찜하기 처리 실패:", error);
         this.$toast?.error?.("찜하기 처리에 실패했습니다.") ||

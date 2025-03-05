@@ -94,26 +94,15 @@ export default {
         console.log("handleLikeToggle 호출됨");
         const itemId = this.item.data.itemId;
 
-        // 로컬 상태를 즉시 토글 (UI 응답성 향상)
-        this.isLiked = !this.isLiked;
-
         // API 호출을 통한 서버 상태 업데이트
         const serverIsLiked = await this.toggleItemLike(itemId);
         console.log("서버 응답 liked 상태:", serverIsLiked);
 
-        // 서버 응답과 로컬 상태가 다르면 서버 상태로 조정
-        if (serverIsLiked !== undefined && this.isLiked !== serverIsLiked) {
-          console.log("서버 상태와 다르므로 조정:", serverIsLiked);
-          this.isLiked = serverIsLiked;
-        }
-
         // 부모 컴포넌트에 현재 상태 알림
         this.$emit("click-like", { itemId, isLiked: this.isLiked });
       } catch (error) {
-        // 에러 발생 시 상태 원복
         console.error("찜하기 오류:", error);
         this.isLiked = !this.isLiked;
-        // 에러 알림
         this.$toast?.error?.("찜하기 처리에 실패했습니다.") ||
           alert("찜하기 처리에 실패했습니다.");
       }

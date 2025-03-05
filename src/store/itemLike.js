@@ -54,16 +54,11 @@ const mutations = {
 
 const actions = {
   toggleItemLike({ commit, dispatch }, itemId) {
-    console.log("===== toggleItemLike 액션 시작 =====");
-    console.log("아이템 ID:", itemId);
+    console.log("===== itemLike/toggleItemLike 액션 시작 =====");
 
     return itemLikeApi
       .toggleLike(itemId)
       .then((response) => {
-        console.log("API 응답:", response);
-        console.log("response.data:", response.data);
-        console.log("response.data.data:", response.data.data);
-
         const isLiked = response.data.data;
         console.log("찜하기 상태:", isLiked);
 
@@ -74,9 +69,7 @@ const actions = {
         commit("UPDATE_ITEM_LIKE_STATUS", { itemId, isLiked });
 
         // item 모듈의 currentItem.data.isLiked 업데이트
-        console.log("item 모듈에 dispatch 시작");
         dispatch("item/updateItemLikeStatus", isLiked, { root: true });
-        console.log("item 모듈에 dispatch 완료");
 
         return isLiked;
       })
