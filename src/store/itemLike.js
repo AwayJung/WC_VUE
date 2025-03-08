@@ -1,5 +1,3 @@
-// itemLike.js 스토어 모듈 수정본
-
 import Vue from "vue";
 import itemLikeApi from "../api/itemLike";
 
@@ -83,46 +81,83 @@ const actions = {
   fetchMyLikes({ commit }) {
     return itemLikeApi.getMyLikes().then((response) => {
       console.log("찜 목록 API 응답:", response.data);
-      // 데이터 유효성 체크와 로깅 추가
+
       const likedItems = response.data.data || [];
       console.log("불러온 찜 목록:", likedItems);
-
-      // 각 아이템의 필드 로깅
-      likedItems.forEach((item, index) => {
-        console.log(`아이템 ${index}:`, item);
-        console.log(`  - itemId: ${item.itemId}`);
-        console.log(`  - likeCount: ${item.likeCount}`);
-        console.log(`  - isLiked: ${item.isLiked}`);
-      });
 
       commit("SET_LIKED_ITEMS", likedItems);
       return likedItems;
     });
   },
 
-  // 현재 아이템 찜 상태 확인
+  // 특정 아이템 찜 상태 확인
   checkItemLikeStatus({ commit, dispatch }, itemId) {
     return itemLikeApi.getItemLikeStatus(itemId).then((response) => {
       console.log("아이템 찜 상태 API 응답:", response.data);
 
-      // data가 객체인지 boolean인지 확인하고 적절히 처리
-      let isLiked;
-      if (typeof response.data.data === "boolean") {
+      // 응답 데이터 분석
+      let isLiked = false;
+
+      // 1. 직접 boolean으로 오는 경우
+      if (typeof response.data === "boolean") {
+        isLiked = response.data;
+      }
+      // 2. data 속성에 boolean으로 오는 경우
+      else if (typeof response.data.data === "boolean") {
         isLiked = response.data.data;
-      } else if (response.data.data && typeof response.data.data === "object") {
-        isLiked = response.data.data.liked || false;
-      } else {
-        isLiked = false;
+      }
+      // 3. data 속성에 숫자로 오는 경우 (1이면 true)
+      else if (typeof response.data.data === "number") {
+        isLiked = response.data.data === 1;
+      }
+      // 4. data 속성이 객체인 경우
+      else if (
+        typeof response.data.data === "object" &&
+        response.data.data !== null
+      ) {
+        // isLiked 속성이 있는 경우
+        if ("isLiked" in response.data.data) {
+          isLiked = Boolean(response.data.data.isLiked);
+        }
+        // liked 속성이 있는 경우
+        else if ("liked" in response.data.data) {
+          isLiked = Boolean(response.data.data.liked);
+        }
       }
 
+      console.log("파싱된 isLiked 값:", isLiked);
+
+      // 현재 아이템 좋아요 상태 업데이트
       commit("SET_CURRENT_ITEM_LIKED", isLiked);
 
-      // item 모듈의 currentItem.data.isLiked 업데이트 위해 추가
+      // item 모듈의 currentItem.data.isLiked 업데이트
       dispatch("item/updateItemLikeStatus", isLiked, { root: true });
 
-      return response.data.data;
+      return isLiked;
     });
   },
+
+  // checkItemLikeStatus({ commit, dispatch }, itemId) {
+  //   return itemLikeApi.getItemLikeStatus(itemId).then((response) => {
+  //     console.log("아이템 찜 상태 API 응답:", response.data);
+
+  //     let isLiked;
+  //     if (typeof response.data.data === "boolean") {
+  //       isLiked = response.data.data;
+  //     } else if (response.data.data && typeof response.data.data === "object") {
+  //       isLiked = response.data.data.liked || false;
+  //     } else {
+  //       isLiked = false;
+  //     }
+
+  //     commit("SET_CURRENT_ITEM_LIKED", isLiked);
+
+  //     // item 모듈의 currentItem.data.isLiked 업데이트 위해 추가
+  //     dispatch("item/updateItemLikeStatus", isLiked, { root: true });
+
+  //     return response.data.data;
+  //   });
+  // },
 };
 
 export default {

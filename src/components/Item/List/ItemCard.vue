@@ -76,16 +76,7 @@ export default {
       required: true,
     },
   },
-  mounted() {
-    // 디버깅용 로그
-    console.log("ItemCard mounted with item:", this.item);
-    // 중첩 구조 확인
-    console.log("Item structure:", {
-      hasData: !!this.item.data,
-      itemId: this.getItemId(),
-      likeCount: this.getLikeCount(),
-    });
-  },
+
   methods: {
     // 안전하게 itemId 가져오기
     getItemId() {
