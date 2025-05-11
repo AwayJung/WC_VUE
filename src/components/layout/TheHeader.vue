@@ -42,6 +42,12 @@
             <button class="px-3 py-2 text-gray-700 hover:text-orange-500">
               마이페이지
             </button>
+            <button
+                @click="handleLogout"
+                class="px-3 py-2 text-gray-700 hover:text-orange-500"
+            >
+              로그아웃
+            </button>
           </div>
         </div>
       </div>
@@ -50,6 +56,8 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
 export default {
   name: "TheHeader",
   props: {
@@ -62,6 +70,21 @@ export default {
       default: "",
     },
   },
+  computed: {
+    // auth 네임스페이스의 getters를 로컬 computed 이름으로 매핑
+    ...mapGetters('auth', {
+      // 로컬에서 사용할 이름 : '스토어에 정의된 getter 이름'
+      isLoggedIn: 'isAuthenticated'
+    })
+  },
+  methods: {
+    async handleLogout() {
+      // 1) Vuex 액션 호출
+      await this.$store.dispatch('auth/logout');
+      // 페이지 강제 새로고침
+      window.location.reload();
+    }
+  }
 };
 </script>
 

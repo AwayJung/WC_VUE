@@ -44,6 +44,11 @@ const routes = [
     component: SignUp,
   },
   {
+    path: "/logout",
+    name: "Logout",
+    component: LoginPage,
+  },
+  {
     path: "/items/create",
     name: "ItemCreate",
     component: ItemCreatePage,

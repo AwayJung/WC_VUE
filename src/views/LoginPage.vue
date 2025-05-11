@@ -70,16 +70,69 @@ export default {
     return {
       email: "",
       password: "",
+      isLoading: false,
+      errorMessage: ""
     };
   },
   methods: {
-    handleLogin() {
-      // 로그인 처리
-      this.$emit("login", {
-        email: this.email,
-        password: this.password,
-      });
-    },
+    async handleLogin() {
+      this.isLoading = true;
+      this.errorMessage = "";
+
+      try {
+        // Vuex 액션 디스패치
+        await this.$store.dispatch('auth/login', {
+          email: this.email,
+          password: this.password
+        });
+
+        // 로그인 성공 처리
+        this.$router.push('/');
+      } catch (error) {
+        console.error('로그인 실패:', error);
+
+        if (error.response) {
+          // API에서 오는 에러 메시지 처리
+          const { message } = error.response.data;
+          this.errorMessage = message || '로그인에 실패했습니다.';
+        } else if (error.request) {
+          this.errorMessage = '서버 응답이 없습니다. 네트워크 연결을 확인해주세요.';
+        } else {
+          this.errorMessage = '요청 중 오류가 발생했습니다.';
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    }
   },
+  computed: {
+    isAuthenticated() {
+      return this.$store.getters['auth/isAuthenticated'];
+    }
+  },
+  created() {
+    // 토큰의 유효성 확인
+    if (this.isAuthenticated) {
+      // 토큰 유효성 확인 로직 추가
+      const token = this.$store.state.auth.accessToken;
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const exp = payload.exp * 1000;
+          if (Date.now() >= exp) {
+            // 토큰이 만료되었으면 스토어의 토큰 삭제
+            this.$store.dispatch('auth/logout');
+            return; // 로그인 페이지로 계속 진행
+          }
+        } catch (e) {
+          // 오류 발생 시 스토어의 토큰 삭제
+          this.$store.dispatch('auth/logout');
+          return;
+        }
+      }
+      // 토큰이 유효하면 홈으로 리디렉트
+      this.$router.push('/');
+    }
+  }
 };
 </script>
