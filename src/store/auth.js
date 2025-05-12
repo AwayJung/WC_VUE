@@ -45,20 +45,17 @@ const actions = {
     },
 
     // 로그아웃 액션
-    async logout({ commit }) {
-        try {
-            // Axios 인스턴스(loginApi)에 등록된
-            // 요청 인터셉터가 Authorization 헤더를 자동으로 추가함
-            await loginApi.post('/api/users/logout');
-        } catch (e) {
-            // 네트워크 에러여도 무시하고 클라이언트 토큰은 반드시 제거
+    async logout({ commit, state }) {
+        const token = state.accessToken;
+        if (token) {
+            try {
+                await loginApi.post('/api/users/logout');
+            } catch (e) { /* 무시 */ }
         }
-        // 1) 메모리 초기화
         commit('CLEAR_AUTH_DATA');
-
-        // 2) vuex-persistedstate 기본 키(vuex)를 삭제해 로컬스토리지 초기화
         localStorage.removeItem('vuex');
     },
+
 
     // 토큰 갱신 액션
     async refreshToken({ commit, state }) {

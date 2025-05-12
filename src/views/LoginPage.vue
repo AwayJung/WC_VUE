@@ -59,25 +59,38 @@
           </router-link>
         </div>
       </form>
+
+      <!-- 에러 모달 -->
+      <LoginErrorModal
+          :visible="showErrorModal"
+          :message="errorMessage"
+          @close="showErrorModal = false"
+      />
+
     </div>
   </div>
 </template>
 
 <script>
+import LoginErrorModal from "@/views/LoginErrorModal.vue";
+
 export default {
+  components : { LoginErrorModal },
   name: "LoginPage",
   data() {
     return {
       email: "",
       password: "",
       isLoading: false,
-      errorMessage: ""
+      errorMessage: "",
+      showErrorModal: false  // ← 모달 표시 여부
     };
   },
   methods: {
     async handleLogin() {
       this.isLoading = true;
       this.errorMessage = "";
+      this.showErrorModal = false;
 
       try {
         // Vuex 액션 디스패치
@@ -100,6 +113,9 @@ export default {
         } else {
           this.errorMessage = '요청 중 오류가 발생했습니다.';
         }
+
+        // 모달 열기
+        this.showErrorModal = true;
       } finally {
         this.isLoading = false;
       }
@@ -110,29 +126,29 @@ export default {
       return this.$store.getters['auth/isAuthenticated'];
     }
   },
-  created() {
-    // 토큰의 유효성 확인
-    if (this.isAuthenticated) {
-      // 토큰 유효성 확인 로직 추가
-      const token = this.$store.state.auth.accessToken;
-      if (token) {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          const exp = payload.exp * 1000;
-          if (Date.now() >= exp) {
-            // 토큰이 만료되었으면 스토어의 토큰 삭제
+    created() {
+      // 토큰의 유효성 확인
+      if (this.isAuthenticated) {
+        // 토큰 유효성 확인 로직 추가
+        const token = this.$store.state.auth.accessToken;
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const exp = payload.exp * 1000;
+            if (Date.now() >= exp) {
+              // 토큰이 만료되었으면 스토어의 토큰 삭제
+              this.$store.dispatch('auth/logout');
+              return; // 로그인 페이지로 계속 진행
+            }
+          } catch (e) {
+            // 오류 발생 시 스토어의 토큰 삭제
             this.$store.dispatch('auth/logout');
-            return; // 로그인 페이지로 계속 진행
+            return;
           }
-        } catch (e) {
-          // 오류 발생 시 스토어의 토큰 삭제
-          this.$store.dispatch('auth/logout');
-          return;
         }
+        // 토큰이 유효하면 홈으로 리디렉트
+        this.$router.push('/');
       }
-      // 토큰이 유효하면 홈으로 리디렉트
-      this.$router.push('/');
-    }
-  }
+    },
 };
 </script>

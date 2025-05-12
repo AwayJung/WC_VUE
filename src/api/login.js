@@ -36,7 +36,12 @@ loginApi.interceptors.response.use(
         const originalRequest = error.config;
 
         // 401 오류이고, 토큰 만료이며, 재시도하지 않은 요청일 경우
-        if (error.response.status === 401 && !originalRequest._retry) {
+        if (error.response.status === 401 && !originalRequest._retry &&
+            !originalRequest.url.endsWith('/login') &&
+            !originalRequest.url.endsWith('/refresh') &&
+            !originalRequest.url.endsWith('/logout')
+            )
+        {
             originalRequest._retry = true;
 
             try {
@@ -66,32 +71,5 @@ loginApi.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
-/**
- * 사용자 로그아웃
- * @returns {Promise} 로그아웃 요청 결과
- */
-export const logout = async () => {
-    try {
-        // 1) 서버에 로그아웃 요청
-        await loginApi.post('/api/users/logout');
-
-        // 2) 스토어에 저장된 토큰 삭제
-        store.dispatch('auth/logout');
-        // (auth/logout 액션 안에서 accessToken, refreshToken 등을 초기화하도록 구현)
-
-        // 3) 로그인 페이지로 이동
-        if (router.currentRoute.path !== '/login') {
-            router.replace('/login').catch(err => {
-                if (err.name !== 'NavigationDuplicated') {
-                    console.error(err);
-                }
-            });
-        }
-    } catch (err) {
-        console.error('로그아웃 실패:', err);
-        throw err;
-    }
-};
 
 export default loginApi;
