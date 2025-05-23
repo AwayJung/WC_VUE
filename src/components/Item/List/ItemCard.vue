@@ -30,7 +30,7 @@
 
         <div class="flex text-base text-gray-500">
           <span class="mx-1">·</span>
-          <span>{{ formatRelativeTime(getItemCreatedAt()) }}</span>
+          <span>{{ formatTimeAgo(getItemCreatedAt()) }}</span>
         </div>
 
         <div v-if="getItemComments()" class="flex text-base text-gray-500 mt-2">
@@ -59,12 +59,14 @@
 <script>
 import defaultImage from "@/assets/images/default-placeholder.png";
 import ItemLikeCount from "@/components/Item/ItemLikeCount.vue";
+import { timeUtilsMixin } from "@/utils/timeUtils";
 
 export default {
   name: "ItemCard",
   components: {
     ItemLikeCount,
   },
+  mixins: [timeUtilsMixin],
   data() {
     return {
       placeholderImage: defaultImage,
@@ -146,33 +148,6 @@ export default {
         currency: "KRW",
         maximumFractionDigits: 0,
       }).format(price);
-    },
-
-    formatRelativeTime(dateString) {
-      if (!dateString) return "";
-
-      const now = new Date();
-      const date = new Date(dateString);
-
-      if (isNaN(date.getTime())) return "";
-
-      const diffInSeconds = Math.floor((now - date) / 1000);
-
-      if (diffInSeconds < 60) {
-        return "방금 전";
-      } else if (diffInSeconds < 3600) {
-        return `${Math.floor(diffInSeconds / 60)}분 전`;
-      } else if (diffInSeconds < 86400) {
-        return `${Math.floor(diffInSeconds / 3600)}시간 전`;
-      } else if (diffInSeconds < 604800) {
-        return `${Math.floor(diffInSeconds / 86400)}일 전`;
-      } else {
-        return new Date(dateString).toLocaleDateString("ko-KR", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-      }
     },
 
     handleImageError(e) {

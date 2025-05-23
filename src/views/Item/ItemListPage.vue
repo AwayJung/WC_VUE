@@ -8,7 +8,6 @@
       @header-height-changed="updateHeaderHeight"
     />
 
-    <!-- 메인 컨텐츠 -->
     <main class="pb-20">
       <div
         v-if="loading || searchLoading"
@@ -58,7 +57,6 @@
 import { mapState, mapActions } from "vuex";
 import ItemList from "@/components/Item/List/ItemList.vue";
 import MarketHeader from "@/components/layout/MarketHeader.vue";
-// import ListCategoryFilter from "@/components/Item/category/ListCategoryFilter.vue";
 import BottomNavigation from "@/components/layout/BottomNavigation.vue";
 
 export default {
@@ -66,7 +64,6 @@ export default {
   components: {
     ItemList,
     MarketHeader,
-    // CategoryFilter: ListCategoryFilter,
     BottomNavigation,
   },
   data() {
@@ -79,6 +76,16 @@ export default {
       searchLoading: false, // 검색 로딩 상태 추가
       selectedCategory: null, // 선택된 카테고리
     };
+  },
+  watch: {
+    // URL의 카테고리 파라미터 변경 감지
+    "$route.query.category": {
+      immediate: false, // created에서 처리하므로 false
+      handler(newCategoryId) {
+        this.selectedCategory = newCategoryId ? parseInt(newCategoryId) : null;
+        this.loadItemsWithLikes();
+      },
+    },
   },
   computed: {
     ...mapState("item", ["items", "loading", "error"]),
@@ -103,14 +110,7 @@ export default {
     filteredItems() {
       let result = this.processedItems;
 
-      // 카테고리 필터링
-      if (this.selectedCategory) {
-        result = result.filter(
-          (item) => item.category && item.category.id === this.selectedCategory
-        );
-      }
-
-      // 검색어 필터링
+      // 검색어 필터링만 프론트엔드에서 처리 (카테고리는 백엔드에서 이미 필터링됨)
       if (this.searchQuery) {
         // 검색어의 공백 제거 및 소문자 변환
         const query = this.searchQuery.toLowerCase().trim();
@@ -119,16 +119,12 @@ export default {
         result = result.filter((item) => {
           const title = (item.title || "").toLowerCase();
           const description = (item.description || "").toLowerCase();
-          const location = (item.location || "").toLowerCase();
-          const category = (item.category?.name || "").toLowerCase();
-          const tags = (item.tags || []).join(" ").toLowerCase();
+          const categoryName = (item.categoryName || "").toLowerCase();
 
           return (
             title.includes(query) ||
             description.includes(query) ||
-            location.includes(query) ||
-            category.includes(query) ||
-            tags.includes(query)
+            categoryName.includes(query)
           );
         });
       }
@@ -137,8 +133,8 @@ export default {
     },
   },
   methods: {
-    ...mapActions("item", ["fetchItems"]),
-    ...mapActions("itemLike", ["fetchMyLikes"]), // itemLike 액션 추가
+    ...mapActions("item", ["fetchItems", "fetchItemsByCategory"]),
+    ...mapActions("itemLike", ["fetchMyLikes"]),
 
     // 좋아요 정보를 아이템 목록에 병합하는 메서드
     mergeLikeInfo(items) {
@@ -189,20 +185,6 @@ export default {
       });
     },
 
-    handleCategorySelect(categoryId) {
-      this.selectedCategory = categoryId;
-      console.log("선택된 카테고리:", categoryId);
-
-      // URL에 카테고리 반영
-      this.$router.push({
-        path: this.$route.path,
-        query: {
-          ...this.$route.query,
-          category: categoryId || undefined,
-        },
-      });
-    },
-
     async handleSearch(query) {
       this.searchQuery = query;
       this.searchLoading = true; // 로딩 시작
@@ -218,10 +200,6 @@ export default {
       });
 
       try {
-        // 필요한 경우 API 호출이나 다른 비동기 작업
-        // await this.fetchItems({ search: query });
-
-        // 비동기 작업이 없어도 약간의 딜레이로 로딩 효과 제공
         await new Promise((resolve) => setTimeout(resolve, 300));
       } catch (error) {
         console.error("검색 중 오류 발생:", error);
@@ -251,10 +229,24 @@ export default {
     // 아이템 목록과 좋아요 정보를 함께 로드
     async loadItemsWithLikes() {
       try {
-        // 아이템 목록과 좋아요 목록을 병렬로 가져옴
-        await Promise.all([this.fetchItems(), this.fetchMyLikes()]);
+        const categoryId = this.$route.query.category;
+        let itemsPromise;
+
+        if (categoryId) {
+          // 카테고리가 있으면 카테고리별 조회
+          console.log("카테고리별 조회:", categoryId);
+          itemsPromise = this.fetchItemsByCategory(parseInt(categoryId));
+        } else {
+          // 없으면 전체 조회
+          console.log("전체 아이템 조회");
+          itemsPromise = this.fetchItems();
+        }
+
+        // 아이템과 좋아요 정보를 병렬로 가져옴
+        await Promise.all([itemsPromise, this.fetchMyLikes()]);
 
         console.log("아이템과 좋아요 정보 로드 완료");
+        console.log("선택된 카테고리:", categoryId);
         console.log("아이템 수:", this.processedItems.length);
         console.log("좋아요 아이템 수:", this.likedItems?.length || 0);
       } catch (error) {
@@ -268,8 +260,9 @@ export default {
       this.searchQuery = this.$route.query.q;
     }
 
+    // URL에서 카테고리 가져오기
     if (this.$route.query.category) {
-      this.selectedCategory = this.$route.query.category;
+      this.selectedCategory = parseInt(this.$route.query.category);
     }
 
     // 아이템 데이터와 찜 목록 함께 가져오기

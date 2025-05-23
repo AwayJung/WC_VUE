@@ -31,7 +31,6 @@
       <div class="text-lg font-medium text-gray-500">
         등록된 상품이 없습니다
       </div>
-      <p class="text-gray-400 mt-2">첫 상품을 등록해보세요!</p>
     </div>
 
     <!-- 상품 목록 -->

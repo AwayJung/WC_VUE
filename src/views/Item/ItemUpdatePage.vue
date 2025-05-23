@@ -33,8 +33,8 @@
         <ItemForm
           :title="formData.title"
           @update:title="formData.title = $event"
-          :category="formData.category"
-          @update:category="formData.category = $event"
+          :categoryId="formData.categoryId"
+          @update:categoryId="formData.categoryId = $event"
           :price="formData.price"
           @update:price="formData.price = $event"
           :priceFlexible="formData.priceFlexible"
@@ -98,7 +98,7 @@ export default {
     isFormValid() {
       return (
         this.formData.title.trim() &&
-        this.formData.category &&
+        this.formData.categoryId &&
         this.formData.price &&
         this.formData.description.trim()
       );
@@ -254,7 +254,7 @@ export default {
         // 아이템 데이터를 JSON 문자열로 변환하여 추가
         const itemData = {
           title: this.formData.title.trim(),
-          category: this.formData.category,
+          categoryId: this.formData.categoryId,
           price: Number(this.formData.price),
           priceFlexible: this.formData.priceFlexible,
           description: this.formData.description.trim(),

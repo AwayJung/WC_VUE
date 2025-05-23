@@ -17,11 +17,10 @@
               class="text-base font-medium"
               >중고거래</router-link
             >
-            <a href="#" class="text-base text-gray-400">부동산</a>
-            <a href="#" class="text-base text-gray-400">중고차</a>
+            <a href="#" class="text-base text-gray-400">인기 매물</a>
             <a href="#" class="text-base text-gray-400">알바</a>
-            <a href="#" class="text-base text-gray-400">동네업체</a>
-            <a href="#" class="text-base text-gray-400">모임</a>
+            <a href="#" class="text-base text-gray-400">동네 업체</a>
+            <a href="#" class="text-base text-gray-400">동네 생활</a>
           </div>
         </div>
 

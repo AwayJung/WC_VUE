@@ -48,12 +48,13 @@
       <!-- Popular Categories -->
       <div class="py-12 bg-white">
         <div class="max-w-6xl mx-auto px-6">
-          <h2 class="text-lg font-bold mb-6">인기 카테고리</h2>
-          <div class="grid grid-cols-4 md:grid-cols-7 gap-4 md:gap-6">
+          <h2 class="text-lg font-bold mb-14">인기 카테고리</h2>
+          <div class="grid grid-cols-5 md:grid-cols-5 gap-5 md:gap-14">
             <div
               v-for="category in categories"
               :key="category.id"
-              class="flex flex-col items-center"
+              class="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity"
+              @click="handleCategoryClick(category.id)"
             >
               <div
                 class="w-14 h-14 md:w-16 md:h-16 mb-2 bg-gray-50 rounded-full flex items-center justify-center text-2xl md:text-3xl"
@@ -93,10 +94,13 @@ export default {
         { id: 1, name: "디지털기기", emoji: "📱" },
         { id: 2, name: "생활가전", emoji: "🏠" },
         { id: 3, name: "가구/인테리어", emoji: "🪑" },
-        { id: 4, name: "생활/주방", emoji: "🍽" },
-        { id: 5, name: "유아동", emoji: "👶" },
-        { id: 6, name: "유아도서", emoji: "📚" },
-        { id: 7, name: "의류", emoji: "👕" },
+        { id: 4, name: "의류", emoji: "👕" },
+        { id: 5, name: "생활/주방", emoji: "🍽" },
+        { id: 6, name: "도서", emoji: "📚" },
+        { id: 7, name: "게임", emoji: "🎮" },
+        { id: 8, name: "스포츠/레저", emoji: "📚" },
+        { id: 9, name: "뷰티/미용", emoji: "💄" },
+        { id: 10, name: "기타", emoji: "📦" },
       ],
     };
   },
@@ -112,6 +116,12 @@ export default {
     handleSearch(searchText) {
       console.log("Search:", searchText);
       // 검색 로직 구현
+    },
+    handleCategoryClick(categoryId) {
+      this.$router.push({
+        path: "/items",
+        query: { category: categoryId },
+      });
     },
   },
 };

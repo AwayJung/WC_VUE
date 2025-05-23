@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- 헤더 고정 위치 -->
-    <header class="fixed top-0 left-0 right-0 bg-white z-40 border-b">
+    <header class="fixed top-0 left-0 right-0 bg-white z-50 border-b">
       <div class="flex items-center justify-between px-4 h-14">
         <div class="flex items-center space-x-2">
           <!-- 로고 -->
@@ -33,7 +33,7 @@
           </button>
 
           <!-- 메뉴 버튼 -->
-          <button class="p-2" v-if="!isLoggedIn" @click="toggleSidebar">
+          <button class="p-2" v-if="!isLoggedIn" @click="$emit('toggle-menu')">
             <svg
               class="w-6 h-6"
               fill="none"
@@ -49,8 +49,8 @@
             </svg>
           </button>
 
-          <!-- 알림 버튼 (로그인 시) -->
-          <button class="p-2" v-if="isLoggedIn">
+          <!-- 공유  버튼 (로그인 시) -->
+          <button class="p-2" v-if="isLoggedIn" @click="shareContent">
             <svg
               class="w-6 h-6"
               fill="none"
@@ -61,13 +61,13 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
               />
             </svg>
           </button>
 
           <!-- 메뉴 버튼 (로그인 시) -->
-          <button class="p-2" v-if="isLoggedIn" @click="toggleSidebar">
+          <button class="p-2" v-if="isLoggedIn" @click="$emit('toggle-menu')">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-6 w-6"
@@ -97,114 +97,6 @@
       </div>
     </header>
 
-    <!-- 사이드바 -->
-    <div>
-      <!-- 사이드바 오버레이 -->
-      <div
-        v-if="showSidebar"
-        class="fixed inset-0 bg-black bg-opacity-50 z-45"
-        @click="closeSidebar"
-      ></div>
-
-      <!-- 사이드바 메뉴 -->
-      <div
-        class="fixed top-0 right-0 bottom-0 w-64 bg-white z-50 shadow-lg transition-transform duration-300 transform"
-        :class="showSidebar ? 'translate-x-0' : 'translate-x-full'"
-      >
-        <!-- 사이드바 헤더 -->
-        <div class="flex items-center justify-between p-4 border-b">
-          <h2 class="text-lg font-medium">MENU</h2>
-          <button @click="closeSidebar" class="p-2">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <!-- 사이드바 콘텐츠 -->
-        <div class="p-4">
-          <nav class="space-y-4">
-            <!-- 로그인/비로그인 상태에 따라 다른 메뉴 표시 -->
-            <div v-if="!isLoggedIn" class="space-y-4">
-              <router-link
-                to="/login"
-                class="block py-2 px-4 rounded hover:bg-gray-100"
-                @click="closeSidebar"
-              >
-                로그인
-              </router-link>
-              <router-link
-                to="/signup"
-                class="block py-2 px-4 rounded hover:bg-gray-100"
-                @click="closeSidebar"
-              >
-                회원가입
-              </router-link>
-            </div>
-
-            <!-- 로그인한 경우 메뉴 -->
-            <div v-else class="space-y-4">
-              <router-link
-                to="/profile"
-                class="block py-2 px-4 rounded hover:bg-gray-100"
-                @click="closeSidebar"
-              >
-                내 프로필
-              </router-link>
-              <router-link
-                to="/items/create"
-                class="block py-2 px-4 rounded hover:bg-gray-100"
-                @click="closeSidebar"
-              >
-                물건 등록하기
-              </router-link>
-              <router-link
-                to="/favorites"
-                class="block py-2 px-4 rounded hover:bg-gray-100"
-                @click="closeSidebar"
-              >
-                관심목록
-              </router-link>
-              <button
-                @click="handleLogout"
-                class="w-full text-left py-2 px-4 rounded hover:bg-gray-100 text-red-500"
-              >
-                로그아웃
-              </button>
-            </div>
-
-            <!-- 공통 메뉴 -->
-            <div class="pt-4 mt-4 border-t space-y-4">
-              <router-link
-                to="/items"
-                class="block py-2 px-4 rounded hover:bg-gray-100"
-                @click="closeSidebar"
-              >
-                판매 내역
-              </router-link>
-              <router-link
-                to="/settings"
-                class="block py-2 px-4 rounded hover:bg-gray-100"
-                @click="closeSidebar"
-              >
-                고객 센터
-              </router-link>
-            </div>
-          </nav>
-        </div>
-      </div>
-    </div>
-
     <!-- 실제 헤더 높이만큼 공간 확보-->
     <div ref="headerSpacer" class="w-full"></div>
   </div>
@@ -227,7 +119,6 @@ export default {
   data() {
     return {
       showSearchBar: false,
-      showSidebar: false,
       currentSearchQuery: "",
       headerObserver: null,
     };
@@ -240,18 +131,12 @@ export default {
     this.$nextTick(() => {
       this.updateHeaderHeight();
     });
-
-    // ESC 키를 눌렀을 때 사이드바 닫기
-    window.addEventListener("keydown", this.handleKeyDown);
   },
   beforeDestroy() {
     // ResizeObserver 정리
     if (this.headerObserver) {
       this.headerObserver.disconnect();
     }
-
-    // 이벤트 리스너 정리
-    window.removeEventListener("keydown", this.handleKeyDown);
   },
   watch: {
     // 검색창 상태 변경 감시
@@ -265,16 +150,6 @@ export default {
       this.$nextTick(() => {
         this.updateHeaderHeight();
       });
-    },
-    // 사이드바 상태 변경 감시
-    showSidebar(newVal) {
-      if (newVal) {
-        // 사이드바가 열리면 body 스크롤 방지
-        document.body.style.overflow = "hidden";
-      } else {
-        // 사이드바가 닫히면 body 스크롤 허용
-        document.body.style.overflow = "";
-      }
     },
   },
   methods: {
@@ -293,6 +168,33 @@ export default {
         if (headerEl) {
           this.headerObserver.observe(headerEl);
         }
+      }
+    },
+
+    shareContent() {
+      // 현재 페이지 URL 가져오기
+      const url = window.location.href;
+
+      // 공유 기능 지원 확인
+      if (navigator.share) {
+        navigator
+          .share({
+            title: "당근마켓에서 공유하기",
+            url: url,
+          })
+          .catch((error) => {
+            console.error("공유하기 에러:", error);
+          });
+      } else {
+        // 기본 클립보드 복사 대체 기능
+        navigator.clipboard
+          .writeText(url)
+          .then(() => {
+            alert("URL이 클립보드에 복사되었습니다.");
+          })
+          .catch((err) => {
+            console.error("클립보드 복사 실패:", err);
+          });
       }
     },
 
@@ -331,35 +233,6 @@ export default {
       this.$emit("search-clear-no-route");
     },
 
-    // 사이드바 토글
-    toggleSidebar() {
-      this.showSidebar = !this.showSidebar;
-    },
-
-    // 사이드바 닫기
-    closeSidebar() {
-      this.showSidebar = false;
-    },
-
-    // ESC 키 처리
-    handleKeyDown(e) {
-      if (e.key === "Escape") {
-        this.closeSidebar();
-      }
-    },
-
-    // 로그아웃 처리
-    handleLogout() {
-      // 로그아웃 로직 구현
-      // 예: this.$store.dispatch('auth/logout');
-
-      // 사이드바 닫기
-      this.closeSidebar();
-
-      // 홈으로 이동
-      this.$router.push("/");
-    },
-
     onSearch(query) {
       this.currentSearchQuery = query;
 
@@ -392,12 +265,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* 사이드바 트랜지션 효과 */
-.transform {
-  transition-property: transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
-}
-</style>

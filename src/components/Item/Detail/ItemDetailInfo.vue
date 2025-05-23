@@ -2,7 +2,12 @@
   <div class="p-4">
     <!-- 제목 -->
     <h2 class="text-xl font-bold mb-2">{{ item.data.title || "제목 없음" }}</h2>
-
+    <!-- 카테고리와 날짜 -->
+    <div class="flex items-center text-sm text-gray-500 mb-4">
+      <span class="mr-1">{{ item.data.categoryName }}</span>
+      <span class="mr-1">·</span>
+      <span>{{ formatTimeAgo(item.data.createdAt) }}</span>
+    </div>
     <!-- 설명 -->
     <div class="mb-4 whitespace-pre-line">
       {{ item.data.description }}
@@ -22,8 +27,11 @@
 </template>
 
 <script>
+import { timeUtilsMixin } from "@/utils/timeUtils";
+
 export default {
   name: "ItemDetailInfo",
+  mixins: [timeUtilsMixin],
   props: {
     item: {
       type: Object,
@@ -40,29 +48,12 @@ export default {
       const likeCount = this.item.data && this.item.data.likeCount;
       if (likeCount === null || likeCount === undefined) return 0;
 
-      // 1000 이상이면 K 단위로 표시 (예: 1,500 -> 1.5K)
-      if (likeCount >= 1000) {
-        return (likeCount / 1000).toFixed(1) + "K";
-      }
       return likeCount;
     },
   },
-  methods: {
-    formatTimeAgo(date) {
-      if (!date) return "날짜 정보 없음";
-      const formattedDate = new Date(date).toLocaleDateString("ko-KR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      return formattedDate;
-    },
-  },
+  methods: {},
   mounted() {
     console.log("ItemDetailInfo mounted with item:", this.item);
-    // 좋아요 정보 로그 추가
     console.log(
       "Item like status:",
       this.item.data

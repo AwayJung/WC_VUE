@@ -4,6 +4,7 @@ import {
   getItemList,
   updateItem,
   deleteItem,
+  getItemsByCategory,
 } from "../api/item";
 
 const state = {
@@ -11,6 +12,7 @@ const state = {
   currentItem: null,
   loading: false,
   error: null,
+  selectedCategory: null,
 };
 
 const getters = {
@@ -22,6 +24,7 @@ const getters = {
     if (!state.currentItem || !state.currentItem.data) return false;
     return state.currentItem.data.isLiked || false;
   },
+  getSelectedCategory: (state) => state.selectedCategory,
 };
 
 const mutations = {
@@ -36,6 +39,9 @@ const mutations = {
   },
   SET_ERROR(state, error) {
     state.error = error;
+  },
+  SET_SELECTED_CATEGORY(state, categoryId) {
+    state.selectedCategory = categoryId;
   },
   // 찜하기 상태 업데이트 뮤테이션 개선
   UPDATE_ITEM_LIKE_STATUS(state, isLiked) {
@@ -154,6 +160,17 @@ const actions = {
       return true;
     }
     return false;
+  },
+  // 카테고리별 아이템 목록 조회 액션 추가
+  fetchItemsByCategory: createActionHandler(
+    (categoryId) => getItemsByCategory(categoryId),
+    "카테고리별 아이템을 불러오는데 실패했습니다.",
+    "SET_ITEMS"
+  ),
+
+  // 카테고리 설정 액션
+  setSelectedCategory({ commit }, categoryId) {
+    commit("SET_SELECTED_CATEGORY", categoryId);
   },
 };
 

@@ -14,8 +14,8 @@
 
     <div class="text-sm mb-2">카테고리</div>
     <CategoryInput
-      :value="category"
-      @input="$emit('update:category', $event)"
+      :value="categoryId"
+      @input="$emit('update:categoryId', $event)"
     />
 
     <!-- 가격 입력 -->
@@ -79,8 +79,8 @@ export default {
       type: String,
       required: true,
     },
-    category: {
-      type: String,
+    categoryId: {
+      type: [String, Number],
       required: true,
     },
     price: {

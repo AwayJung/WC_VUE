@@ -25,6 +25,10 @@ export const updateItem = (itemId, itemData) => {
   return itemApi.put(`/api/items/${itemId}`, itemData);
 };
 
+export const getItemsByCategory = (categoryId) => {
+  return itemApi.get(`/api/items/category/${categoryId}`);
+};
+
 export const deleteItem = (itemId) => {
   return itemApi.delete(`/api/items/${itemId}`);
 };
