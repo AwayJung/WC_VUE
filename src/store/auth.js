@@ -1,6 +1,7 @@
 // src/store/auth.js
 import { login } from '@/api/login.js';
 import loginApi from '@/api/login.js';
+import { signupUser } from '@/api/login.js';
 
 const state = {
     accessToken: null,
@@ -41,6 +42,17 @@ const actions = {
             }
         } catch (error) {
             return Promise.reject(error);
+        }
+    },
+
+    // 회원가입 액션
+    async signup(_context, signupData) {
+        try {
+            const response = await signupUser(signupData);
+            // 필요하다면 상태 저장
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
         }
     },
 

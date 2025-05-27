@@ -15,6 +15,10 @@ export const login = (loginData) => {
     return loginApi.post("/api/users/login", loginData);
 };
 
+export const signupUser = (signupData) => {
+    return loginApi.post("/api/users/signup", signupData);
+}
+
 // 요청 인터셉터 - 모든 요청에 토큰 추가
 loginApi.interceptors.request.use(
     config => {

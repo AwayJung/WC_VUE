@@ -4,9 +4,9 @@
       <!-- 로고 -->
       <div class="text-center mb-8">
         <img
-          src="@/assets/logo/logo.svg"
-          alt="로고"
-          class="h-12 mx-auto mb-2"
+            src="@/assets/logo/logo.svg"
+            alt="로고"
+            class="h-12 mx-auto mb-2"
         />
         <h2 class="text-2xl font-semibold text-gray-700">회원가입</h2>
       </div>
@@ -19,11 +19,11 @@
             이메일
           </label>
           <input
-            v-model="email"
-            type="email"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
-            placeholder="이메일을 입력하세요"
+              v-model="email"
+              type="email"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+              placeholder="이메일을 입력하세요"
           />
         </div>
 
@@ -33,11 +33,11 @@
             비밀번호
           </label>
           <input
-            v-model="password"
-            type="password"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
-            placeholder="비밀번호를 입력하세요"
+              v-model="password"
+              type="password"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+              placeholder="비밀번호를 입력하세요"
           />
         </div>
 
@@ -47,11 +47,11 @@
             비밀번호 확인
           </label>
           <input
-            v-model="passwordConfirm"
-            type="password"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
-            placeholder="비밀번호를 다시 입력하세요"
+              v-model="passwordConfirm"
+              type="password"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+              placeholder="비밀번호를 다시 입력하세요"
           />
         </div>
 
@@ -61,18 +61,18 @@
             닉네임
           </label>
           <input
-            v-model="nickname"
-            type="text"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
-            placeholder="닉네임을 입력하세요"
+              v-model="nickname"
+              type="text"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+              placeholder="닉네임을 입력하세요"
           />
         </div>
 
         <!-- 회원가입 버튼 -->
         <button
-          type="submit"
-          class="w-full py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-md focus:outline-none transition duration-150"
+            type="submit"
+            class="w-full py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-md focus:outline-none transition duration-150"
         >
           회원가입
         </button>
@@ -81,8 +81,8 @@
         <div class="text-center text-sm mt-4 text-gray-600">
           이미 계정이 있으신가요?
           <router-link
-            to="/login"
-            class="text-orange-500 hover:text-orange-600 ml-1"
+              to="/login"
+              class="text-orange-500 hover:text-orange-600 ml-1"
           >
             로그인하기
           </router-link>
@@ -104,19 +104,39 @@ export default {
     };
   },
   methods: {
-    handleSignup() {
-      // 비밀번호 확인
-      if (this.password !== this.passwordConfirm) {
-        alert("비밀번호가 일치하지 않습니다.");
+    async handleSignup() {
+      let errorMessage = "";
+
+      if (this.password.length < 10) {
+        errorMessage = "비밀번호를 10자리 이상 작성하세요.";
+      }
+      else if (this.nickname.length < 2) {
+        errorMessage = "닉네임을 2자 이상 작성하세요.";
+      }
+      else if (this.password !== this.passwordConfirm) {
+        errorMessage = "비밀번호가 일치하지 않습니다.";
+      }
+
+      if (errorMessage) {
+        alert(errorMessage);
         return;
       }
 
       // 회원가입 처리
-      this.$emit("signup", {
-        email: this.email,
+      const signupData = {
+        loginEmail: this.email,
         password: this.password,
-        nickname: this.nickname,
-      });
+        name: this.nickname,
+      };
+
+      try {
+        await this.$store.dispatch("auth/signup", signupData);
+        alert("회원가입이 완료되었습니다.");
+        this.$router.push("/");
+      } catch (err) {
+        console.error(err);
+        alert("회원가입 실패: " + (err.message || "서버 오류"));
+      }
     },
   },
 };
