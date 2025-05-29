@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-white flex flex-col">
     <div class="flex-1">
-      <the-header :is-logged-in="isLoggedIn" :user-id="userId" @login="login" />
+      <the-header />
 
       <!-- 검색 영역 컨테이너 추가 -->
       <div class="bg-white border-b">
@@ -18,7 +18,6 @@
         </div>
       </div>
 
-      <!-- Main Banner -->
       <div class="bg-yellow-100">
         <div class="max-w-6xl mx-auto px-6">
           <div class="flex items-center justify-between py-16">
@@ -75,6 +74,7 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import TheHeader from "@/components/layout/TheHeader.vue";
 import SearchArea from "@/components/layout/SearchArea.vue";
 import TheFooter from "@/components/layout/TheFooter.vue";
@@ -88,8 +88,6 @@ export default {
   },
   data() {
     return {
-      isLoggedIn: false,
-      userId: "",
       categories: [
         { id: 1, name: "디지털기기", emoji: "📱" },
         { id: 2, name: "생활가전", emoji: "🏠" },
@@ -104,14 +102,21 @@ export default {
       ],
     };
   },
+  computed: {
+    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+  },
+  mounted() {
+    console.log("=== 현재 로그인 정보 ===");
+    console.log("인증 상태:", this.isAuthenticated);
+    console.log("현재 사용자:", this.currentUser);
+    console.log("사용자 ID:", this.currentUser?.userId);
+    console.log("사용자 이름:", this.currentUser?.name);
+    console.log("사용자 이메일:", this.currentUser?.loginEmail);
+    console.log("======================");
+  },
   methods: {
-    login() {
-      this.isLoggedIn = true;
-      this.userId = "3";
-    },
     logout() {
-      this.isLoggedIn = false;
-      this.userId = "";
+      this.$store.dispatch("auth/logout");
     },
     handleSearch(searchText) {
       console.log("Search:", searchText);
@@ -136,7 +141,6 @@ export default {
   scrollbar-width: none;
 }
 
-/* SearchArea 스타일 오버라이드 */
 :deep(.search-area) {
   width: 100%;
 }

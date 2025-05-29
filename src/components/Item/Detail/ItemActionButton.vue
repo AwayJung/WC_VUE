@@ -24,7 +24,7 @@
 
 <script>
 import { Heart } from "lucide-vue";
-import { mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   name: "ItemActionButton",
@@ -40,10 +40,6 @@ export default {
         isLiked: false,
       }),
     },
-    currentUserId: {
-      type: Number,
-      required: true,
-    },
   },
   data() {
     return {
@@ -54,6 +50,13 @@ export default {
     this.updateLikedStatus();
   },
   computed: {
+    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+
+    // 현재 사용자 ID - Vuex에서 가져오기
+    currentUserId() {
+      return this.currentUser?.userId || null;
+    },
+
     itemPrice() {
       return this.item?.data?.price || 0;
     },
@@ -119,3 +122,5 @@ export default {
   },
 };
 </script>
+
+<style scoped></style>

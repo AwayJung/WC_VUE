@@ -1,6 +1,10 @@
 <template>
   <div class="min-h-screen">
-    <MarketHeader :is-logged-in="true" class="z-50" @toggle-menu="toggleMenu" />
+    <MarketHeader
+      :is-logged-in="isAuthenticated"
+      class="z-50"
+      @toggle-menu="toggleMenu"
+    />
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="flex justify-center items-center h-screen">
@@ -38,7 +42,7 @@
     >
       <ItemActionButton
         :item="currentItem"
-        :current-user-id="userId"
+        :current-user-id="currentUserId"
         @click-purchase="handlePurchase"
         @click-like="handleLike"
         @click-chat="handleChat"
@@ -93,15 +97,21 @@ export default {
     return {
       showMenu: false,
       isMyItem: false,
-      userId: 3, // 고정된 userId 값
     };
   },
 
   computed: {
     ...mapState("item", ["loading", "error"]),
     ...mapGetters("item", ["getCurrentItem"]),
+    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+
     currentItem() {
       return this.getCurrentItem || null;
+    },
+
+    // 현재 사용자 ID
+    currentUserId() {
+      return this.currentUser?.userId || null;
     },
   },
 
@@ -121,8 +131,10 @@ export default {
           console.log(this.currentItem);
           this.checkIfMyItem();
 
-          // 상품 로드 후 찜 상태 확인 추가
-          await this.loadItemLikeStatus(itemId);
+          // 로그인된 사용자만 찜 상태 확인
+          if (this.isAuthenticated) {
+            await this.loadItemLikeStatus(itemId);
+          }
         }
       } catch (error) {
         console.error("Failed to load item:", error);
@@ -143,8 +155,15 @@ export default {
     handleViewChatHistory(itemId) {
       console.log("handleViewChatHistory 호출됨, itemId:", itemId);
 
+      // 로그인 체크
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        this.$router.push("/login");
+        return;
+      }
+
       // URL 문자열을 직접 구성하여 이동
-      const targetUrl = `/chat/${this.userId}?itemId=${itemId}`;
+      const targetUrl = `/chat/${this.currentUserId}?itemId=${itemId}`;
       console.log("이동할 URL:", targetUrl);
 
       // 직접 URL 문자열을 사용해 라우팅
@@ -152,7 +171,10 @@ export default {
     },
 
     checkIfMyItem() {
-      this.isMyItem = this.userId === this.currentItem.data.sellerId;
+      // 로그인되어 있고 현재 사용자 ID와 판매자 ID가 같은지 확인
+      this.isMyItem =
+        this.isAuthenticated &&
+        this.currentUserId === this.currentItem.data.sellerId;
     },
 
     toggleMenu() {
@@ -161,6 +183,18 @@ export default {
     },
 
     handleEdit() {
+      // 로그인 및 권한 체크
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        this.$router.push("/login");
+        return;
+      }
+
+      if (!this.isMyItem) {
+        alert("권한이 없습니다.");
+        return;
+      }
+
       const itemId = this.$route.params.id;
       this.toggleMenu();
       this.$router.push(`/items/update/${itemId}`);
@@ -168,6 +202,18 @@ export default {
 
     async handleDelete() {
       try {
+        // 로그인 및 권한 체크
+        if (!this.isAuthenticated) {
+          alert("로그인이 필요합니다.");
+          this.$router.push("/login");
+          return;
+        }
+
+        if (!this.isMyItem) {
+          alert("권한이 없습니다.");
+          return;
+        }
+
         if (!confirm("정말 삭제하시겠습니까?")) return;
 
         const itemId = this.$route.params.id;
@@ -201,24 +247,46 @@ export default {
     },
 
     async handleReport() {
+      // 로그인 체크
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        this.$router.push("/login");
+        return;
+      }
+
       this.toggleMenu();
       this.$router.push(`/report/item/${this.currentItem.id}`);
     },
 
     handlePurchase() {
+      // 로그인 체크
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        this.$router.push("/login");
+        return;
+      }
+
       this.$router.push(`/purchase/${this.currentItem.id}`);
     },
 
     // handleLike 함수 수정
     async handleLike({ isLiked }) {
       try {
+        // 로그인 체크
+        if (!this.isAuthenticated) {
+          alert("로그인이 필요합니다.");
+          this.$router.push("/login");
+          return;
+        }
+
         console.log("===== itemDetailPage/handleLike 시작 =====");
+        console.log("현재 사용자 ID:", this.currentUserId);
         console.log("현재 찜 상태:", isLiked);
 
         // 실제 찜 상태 토글 호출 추가
-        //const id = itemId || this.$route.params.id;
-        // const result = await this.toggleItemLike(id);
-        //console.log("찜하기 결과:", result);
+        const itemId = this.$route.params.id;
+        const result = await this.toggleItemLike(itemId);
+        console.log("찜하기 결과:", result);
       } catch (error) {
         console.error("찜하기 처리 실패:", error);
         this.$toast?.error?.("찜하기 처리에 실패했습니다.") ||
@@ -239,11 +307,18 @@ export default {
       console.log("handleChat 호출됨");
       console.log("currentItem:", this.currentItem);
 
+      // 로그인 체크
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        this.$router.push("/login");
+        return;
+      }
+
       try {
         // 채팅방 생성 API 호출
         const response = await this.$store.dispatch("chat/createChatRoom", {
           itemId: parseInt(this.$route.params.id),
-          userId: this.userId,
+          userId: this.currentUserId,
         });
 
         console.log("채팅방 생성 응답:", response);
@@ -262,7 +337,7 @@ export default {
           },
           query: {
             itemId: this.$route.params.id,
-            userId: this.userId,
+            userId: this.currentUserId,
           },
         });
       } catch (error) {
@@ -284,6 +359,16 @@ export default {
   async created() {
     console.log("ItemDetailPage created with id:", this.$route.params.id);
     await this.loadItemData();
+  },
+
+  mounted() {
+    // 페이지 로드시 현재 로그인 정보 확인
+    console.log("=== ItemDetailPage 로그인 정보 ===");
+    console.log("인증 상태:", this.isAuthenticated);
+    console.log("현재 사용자:", this.currentUser);
+    console.log("사용자 ID:", this.currentUserId);
+    console.log("내 상품 여부:", this.isMyItem);
+    console.log("================================");
   },
 
   async beforeRouteUpdate(to, from, next) {

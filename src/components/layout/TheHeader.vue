@@ -1,7 +1,6 @@
 <template>
   <header class="bg-white border-b">
     <div class="container mx-auto">
-      <!-- Top Header -->
       <div class="flex items-center justify-between h-14 px-4">
         <div class="flex items-center space-x-8">
           <router-link to="/">
@@ -25,7 +24,7 @@
         </div>
 
         <div class="flex items-center space-x-3">
-          <div v-if="!isLoggedIn" class="flex items-center space-x-2">
+          <div v-if="!isAuthenticated" class="flex items-center space-x-2">
             <router-link
               to="/login"
               class="px-3 py-2 text-gray-700 hover:text-orange-500"
@@ -41,7 +40,7 @@
           </div>
           <div v-else class="flex items-center space-x-2">
             <router-link
-              :to="`/chat/${userId}`"
+              :to="`/chat/${currentUserId}`"
               class="px-3 py-2 text-gray-700 hover:text-orange-500"
             >
               채팅
@@ -50,8 +49,8 @@
               마이페이지
             </button>
             <button
-                @click="handleLogout"
-                class="px-3 py-2 text-gray-700 hover:text-orange-500"
+              @click="handleLogout"
+              class="px-3 py-2 text-gray-700 hover:text-orange-500"
             >
               로그아웃
             </button>
@@ -67,31 +66,21 @@ import { mapGetters } from "vuex";
 
 export default {
   name: "TheHeader",
-  props: {
-    isLoggedIn: {
-      type: Boolean,
-      default: false,
-    },
-    userId: {
-      type: String,
-      default: "",
-    },
-  },
   computed: {
-    // auth 네임스페이스의 getters를 로컬 computed 이름으로 매핑
-    ...mapGetters('auth', {
-      // 로컬에서 사용할 이름 : '스토어에 정의된 getter 이름'
-      isLoggedIn: 'isAuthenticated'
-    })
+    ...mapGetters("auth", {
+      isAuthenticated: "isAuthenticated",
+      currentUser: "currentUser",
+    }),
+    currentUserId() {
+      return this.currentUser?.userId || null;
+    },
   },
   methods: {
     async handleLogout() {
-      // 1) Vuex 액션 호출
-      await this.$store.dispatch('auth/logout');
-      // 페이지 강제 새로고침
-      window.location.reload();
-    }
-  }
+      await this.$store.dispatch("auth/logout");
+      this.$router.push("/"); // 메인 페이지로 이동
+    },
+  },
 };
 </script>
 

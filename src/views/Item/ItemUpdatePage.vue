@@ -18,6 +18,22 @@
       <span class="ml-2">로딩 중...</span>
     </div>
 
+    <!-- 권한 없음 메시지 -->
+    <div
+      v-else-if="!isAuthenticated"
+      class="flex justify-center items-center h-screen"
+    >
+      <div class="text-center">
+        <p class="text-gray-500 mb-4">로그인이 필요합니다.</p>
+        <button
+          @click="$router.push('/login')"
+          class="px-4 py-2 bg-orange-500 text-white rounded"
+        >
+          로그인하기
+        </button>
+      </div>
+    </div>
+
     <!-- Main Content -->
     <main v-else class="flex-1 overflow-y-auto mt-14">
       <form @submit.prevent="onSubmit" class="p-4">
@@ -65,7 +81,7 @@
 
 <script>
 import axios from "axios";
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapGetters } from "vuex";
 import ItemForm from "@/components/Item/Create/ItemForm.vue";
 import ImageUploader from "@/components/Item/Create/ImageUploader.vue";
 
@@ -81,7 +97,7 @@ export default {
         images: [],
         imageUrls: [],
         title: "",
-        category: "",
+        categoryId: "",
         price: "",
         priceFlexible: false,
         description: "",
@@ -89,11 +105,16 @@ export default {
       originalImages: [], // 기존 이미지 정보 저장
       isSubmitting: false,
       formError: null, // 이름 변경: error -> formError
-      userId: 3, // 고정된 userId 값
     };
   },
   computed: {
     ...mapState("item", ["loading", "error", "currentItem"]),
+    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+
+    // 현재 사용자 ID
+    currentUserId() {
+      return this.currentUser?.userId || null;
+    },
 
     isFormValid() {
       return (
@@ -107,6 +128,14 @@ export default {
     itemId() {
       return this.$route.params.id;
     },
+
+    // 현재 사용자가 이 상품의 소유자인지 확인
+    isOwner() {
+      return (
+        this.isAuthenticated &&
+        this.currentItem?.data?.sellerId === this.currentUserId
+      );
+    },
   },
   methods: {
     ...mapActions("item", ["fetchItem", "updateItem"]),
@@ -114,13 +143,19 @@ export default {
     // 상품 데이터 불러오기
     async loadItemData() {
       try {
+        // 로그인 체크
+        if (!this.isAuthenticated) {
+          console.log("로그인되지 않은 사용자");
+          return;
+        }
+
         await this.fetchItem(this.itemId);
 
         if (this.currentItem && this.currentItem.data) {
           const item = this.currentItem.data;
 
           // 판매자 확인 (자신의 상품이 아니면 리다이렉트)
-          if (item.sellerId !== this.userId) {
+          if (item.sellerId !== this.currentUserId) {
             alert("자신의 상품만 수정할 수 있습니다.");
             this.$router.push(`/items/${this.itemId}`);
             return;
@@ -131,7 +166,7 @@ export default {
             images: [],
             imageUrls: [],
             title: item.title || "",
-            category: item.categoryId || item.category || "",
+            categoryId: item.categoryId || item.category || "",
             price: item.price ? String(item.price) : "",
             priceFlexible: item.priceFlexible || false,
             description: item.description || "",
@@ -163,6 +198,13 @@ export default {
 
           // 이미지 URL 초기화
           this.formData.imageUrls = imageUrls;
+
+          console.log("상품 데이터 로드 완료:", {
+            itemId: this.itemId,
+            sellerId: item.sellerId,
+            currentUserId: this.currentUserId,
+            isOwner: this.isOwner,
+          });
         }
       } catch (error) {
         console.error("상품 정보 로드 실패:", error);
@@ -220,6 +262,19 @@ export default {
     },
 
     async onSubmit() {
+      // 로그인 및 권한 체크
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        this.$router.push("/login");
+        return;
+      }
+
+      if (!this.isOwner) {
+        alert("권한이 없습니다.");
+        this.$router.push(`/items/${this.itemId}`);
+        return;
+      }
+
       // Reset previous error
       this.formError = null;
 
@@ -229,13 +284,11 @@ export default {
         return;
       }
 
-      // Prevent multiple submissions
       if (this.isSubmitting) return;
 
       try {
         this.isSubmitting = true;
 
-        // FormData 객체 생성
         const formData = new FormData();
 
         // 새로운 이미지 추가
@@ -258,7 +311,7 @@ export default {
           price: Number(this.formData.price),
           priceFlexible: this.formData.priceFlexible,
           description: this.formData.description.trim(),
-          sellerId: this.userId,
+          sellerId: this.currentUserId,
           imageIds: imageFileNames, // 남아있는 기존 이미지 파일명 전달
         };
 
@@ -266,13 +319,15 @@ export default {
         formData.append("item", JSON.stringify(itemData));
 
         // FormData 내용 확인 (디버깅용)
+        console.log("=== 수정 요청 데이터 ===");
+        console.log("사용자 ID:", this.currentUserId);
+        console.log("아이템 데이터:", itemData);
         for (let pair of formData.entries()) {
           console.log(
             pair[0] + ": " + (pair[1] instanceof File ? pair[1].name : pair[1])
           );
         }
 
-        // API 요청
         const response = await axios.put(
           `http://localhost:8080/api/items/${this.itemId}`,
           formData,
@@ -285,7 +340,6 @@ export default {
 
         console.log("아이템 수정 응답:", response.data);
 
-        // 상세 페이지로 이동
         this.$router.push(`/items/${this.itemId}`);
       } catch (error) {
         console.error("아이템 수정 실패:", error);
@@ -309,6 +363,34 @@ export default {
 
   async created() {
     await this.loadItemData();
+  },
+
+  mounted() {
+    console.log("=== ItemUpdatePage 로그인 정보 ===");
+    console.log("인증 상태:", this.isAuthenticated);
+    console.log("현재 사용자:", this.currentUser);
+    console.log("사용자 ID:", this.currentUserId);
+    console.log("상품 소유자 여부:", this.isOwner);
+    console.log("===============================");
+  },
+
+  // 라우트 가드 - 페이지 진입 전 권한 체크
+  async beforeRouteEnter(to, from, next) {
+    next(async (vm) => {
+      // 로그인 체크
+      if (!vm.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        vm.$router.push("/login");
+        return;
+      }
+
+      // 상품 정보가 로드된 후 권한 체크
+      if (vm.currentItem && !vm.isOwner) {
+        alert("자신의 상품만 수정할 수 있습니다.");
+        vm.$router.push(`/items/${vm.itemId}`);
+        return;
+      }
+    });
   },
 };
 </script>

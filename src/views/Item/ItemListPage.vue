@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <MarketHeader
-      :is-logged-in="isLoggedIn"
+      :is-logged-in="isAuthenticated"
       @toggle-menu="showMenu = !showMenu"
       @search="handleSearch"
       @search-clear="clearSearch"
@@ -49,12 +49,12 @@
     </main>
 
     <!-- 하단 네비게이션 -->
-    <BottomNavigation activePage="home" :userId="userId" />
+    <BottomNavigation activePage="home" :userId="currentUserId" />
   </div>
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapGetters } from "vuex";
 import ItemList from "@/components/Item/List/ItemList.vue";
 import MarketHeader from "@/components/layout/MarketHeader.vue";
 import BottomNavigation from "@/components/layout/BottomNavigation.vue";
@@ -68,8 +68,6 @@ export default {
   },
   data() {
     return {
-      isLoggedIn: false,
-      userId: "3", // 로그인 구현 전까지 기본값으로 설정
       searchQuery: "",
       showMenu: false,
       headerHeight: 56, // 기본 헤더 높이
@@ -90,6 +88,12 @@ export default {
   computed: {
     ...mapState("item", ["items", "loading", "error"]),
     ...mapState("itemLike", ["likedItems"]), // itemLike 스토어의 상태 추가
+    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+
+    // 현재 사용자 ID
+    currentUserId() {
+      return this.currentUser?.userId || null;
+    },
 
     processedItems() {
       if (!this.items) return [];
@@ -242,13 +246,20 @@ export default {
           itemsPromise = this.fetchItems();
         }
 
-        // 아이템과 좋아요 정보를 병렬로 가져옴
-        await Promise.all([itemsPromise, this.fetchMyLikes()]);
+        // 아이템과 좋아요 정보를 병렬로 가져옴 (로그인된 경우에만)
+        const promises = [itemsPromise];
+        if (this.isAuthenticated) {
+          promises.push(this.fetchMyLikes());
+        }
+
+        await Promise.all(promises);
 
         console.log("아이템과 좋아요 정보 로드 완료");
         console.log("선택된 카테고리:", categoryId);
         console.log("아이템 수:", this.processedItems.length);
         console.log("좋아요 아이템 수:", this.likedItems?.length || 0);
+        console.log("현재 사용자 ID:", this.currentUserId);
+        console.log("인증 상태:", this.isAuthenticated);
       } catch (error) {
         console.error("데이터 로드 중 오류 발생:", error);
       }
@@ -267,13 +278,14 @@ export default {
 
     // 아이템 데이터와 찜 목록 함께 가져오기
     await this.loadItemsWithLikes();
-
-    // 로그인 상태 확인 (실제 구현에 맞게 수정 필요)
-    this.isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const storedUserId = localStorage.getItem("userId");
-    if (storedUserId) {
-      this.userId = storedUserId;
-    }
+  },
+  mounted() {
+    // 페이지 로드시 현재 로그인 정보 확인
+    console.log("=== ItemListPage 로그인 정보 ===");
+    console.log("인증 상태:", this.isAuthenticated);
+    console.log("현재 사용자:", this.currentUser);
+    console.log("사용자 ID:", this.currentUserId);
+    console.log("===============================");
   },
 };
 </script>
