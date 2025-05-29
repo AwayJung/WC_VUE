@@ -33,6 +33,7 @@ const actions = {
                     accessToken: data.accessToken,
                     refreshToken: data.refreshToken,
                     user: {
+                        userId: data.userId,
                         name: data.name,
                         loginEmail: data.loginEmail,
                         // 기타 필요한 사용자 정보
