@@ -50,6 +50,28 @@
 
     <!-- 하단 네비게이션 -->
     <BottomNavigation activePage="home" :userId="currentUserId" />
+
+    <!-- 글쓰기 버튼 -->
+    <button
+      @click="goToWritePage"
+      class="fixed bottom-24 right-6 z-50 px-6 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-lg transition-all duration-200 flex items-center justify-center space-x-2"
+      style="box-shadow: 0 4px 20px rgba(251, 146, 60, 0.4)"
+    >
+      <svg
+        class="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+        />
+      </svg>
+      <span class="font-medium text-base whitespace-nowrap">글쓰기</span>
+    </button>
   </div>
 </template>
 
@@ -139,6 +161,18 @@ export default {
   methods: {
     ...mapActions("item", ["fetchItems", "fetchItemsByCategory"]),
     ...mapActions("itemLike", ["fetchMyLikes"]),
+
+    goToWritePage() {
+      console.log("글쓰기 페이지로 이동");
+
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        this.$router.push("/login");
+        return;
+      }
+
+      this.$router.push("/items/create");
+    },
 
     // 좋아요 정보를 아이템 목록에 병합하는 메서드
     mergeLikeInfo(items) {
@@ -280,7 +314,6 @@ export default {
     await this.loadItemsWithLikes();
   },
   mounted() {
-    // 페이지 로드시 현재 로그인 정보 확인
     console.log("=== ItemListPage 로그인 정보 ===");
     console.log("인증 상태:", this.isAuthenticated);
     console.log("현재 사용자:", this.currentUser);
@@ -302,5 +335,9 @@ export default {
   to {
     transform: rotate(360deg);
   }
+}
+
+.fixed button:hover {
+  transform: scale(1.05);
 }
 </style>
