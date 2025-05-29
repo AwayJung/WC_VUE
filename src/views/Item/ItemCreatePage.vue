@@ -1,6 +1,5 @@
 <template>
   <div class="h-screen flex flex-col bg-white">
-    <!-- Header -->
     <header class="h-14 fixed top-0 left-0 right-0 bg-white border-b z-50">
       <div class="flex items-center justify-between h-full px-4">
         <button @click="handleGoBack" class="p-1">
@@ -10,10 +9,25 @@
       </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto mt-14">
+    <!-- 로그인 필요 메시지 -->
+    <div
+      v-if="!isAuthenticated"
+      class="flex-1 flex justify-center items-center mt-14"
+    >
+      <div class="text-center p-8">
+        <p class="text-gray-500 mb-4">로그인이 필요합니다.</p>
+        <button
+          @click="$router.push('/login')"
+          class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+        >
+          로그인하기
+        </button>
+      </div>
+    </div>
+
+    <!-- 로그인된 사용자용 폼 -->
+    <main v-else class="flex-1 overflow-y-auto mt-14">
       <form @submit.prevent="onSubmit" class="p-4">
-        <!-- 이미지 업로드 컴포넌트 -->
         <ImageUploader
           :images="formData.images"
           :imageUrls="formData.imageUrls"
@@ -21,7 +35,6 @@
           @remove-image="removeImage"
         />
 
-        <!-- 상품 정보 폼 컴포넌트 -->
         <ItemForm
           :title="formData.title"
           @update:title="formData.title = $event"
@@ -35,12 +48,10 @@
           @update:description="formData.description = $event"
         />
 
-        <!-- Error Message -->
         <div v-if="error" class="text-red-500 text-sm mb-4 text-center">
           {{ error }}
         </div>
 
-        <!-- Submit Button -->
         <button
           type="button"
           @click="onSubmit"
@@ -56,6 +67,7 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import axios from "axios";
 import ItemForm from "@/components/Item/Create/ItemForm.vue";
 import ImageUploader from "@/components/Item/Create/ImageUploader.vue";
@@ -82,17 +94,39 @@ export default {
     };
   },
   computed: {
+    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+
+    // 현재 사용자 ID
+    currentUserId() {
+      return this.currentUser?.userId || null;
+    },
+
     isFormValid() {
       return (
         this.formData.title.trim() &&
         this.formData.categoryId &&
         this.formData.price &&
-        this.formData.description.trim()
+        this.formData.description.trim() &&
+        this.currentUserId // 사용자 ID도 유효성 검사에 포함
       );
     },
   },
+  created() {
+    // 컴포넌트 생성시 로그인 상태 확인
+    console.log("=== ItemCreatePage 로그인 정보 ===");
+    console.log("인증 상태:", this.isAuthenticated);
+    console.log("현재 사용자:", this.currentUser);
+    console.log("사용자 ID:", this.currentUserId);
+    console.log("===============================");
+
+    // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
+    if (!this.isAuthenticated) {
+      console.log("로그인되지 않음 - 로그인 페이지로 이동");
+      this.$router.push("/login");
+      return;
+    }
+  },
   methods: {
-    // 이미지 업로더에서 사용할 메소드들
     addImages(files) {
       files.forEach((file) => {
         this.formData.images.push(file);
@@ -122,16 +156,25 @@ export default {
     },
 
     async onSubmit() {
-      // Reset previous error
+      console.log("=== 아이템 등록 시작 ===");
+      console.log("현재 사용자 ID:", this.currentUserId);
+      console.log("인증 상태:", this.isAuthenticated);
+
       this.error = null;
 
-      // Validate form
-      if (!this.isFormValid) {
-        this.error = "모든 필드를 채워주세요.";
+      // 로그인 체크
+      if (!this.isAuthenticated || !this.currentUserId) {
+        this.error = "로그인이 필요합니다.";
+        console.error("로그인되지 않음");
         return;
       }
 
-      // Prevent multiple submissions
+      if (!this.isFormValid) {
+        this.error = "모든 필드를 채워주세요.";
+        console.error("폼 유효성 검사 실패");
+        return;
+      }
+
       if (this.isSubmitting) return;
 
       try {
@@ -155,8 +198,10 @@ export default {
           price: Number(this.formData.price),
           priceFlexible: this.formData.priceFlexible,
           description: this.formData.description.trim(),
-          sellerId: 3,
+          sellerId: this.currentUserId, // ✅ Vuex에서 가져온 실제 사용자 ID
         };
+
+        console.log("전송할 아이템 데이터:", itemData);
 
         // 아이템 데이터 추가
         formData.append("item", JSON.stringify(itemData));
@@ -202,6 +247,7 @@ export default {
           "아이템 등록에 실패했습니다. 다시 시도해주세요.";
       } finally {
         this.isSubmitting = false;
+        console.log("=== 아이템 등록 종료 ===");
       }
     },
 
@@ -210,7 +256,7 @@ export default {
         images: [],
         imageUrls: [],
         title: "",
-        category: "",
+        categoryId: "",
         price: "",
         priceFlexible: false,
         description: "",
