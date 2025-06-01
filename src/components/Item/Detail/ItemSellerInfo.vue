@@ -14,7 +14,6 @@
           {{ item.data.sellerName || "판매자" }}
         </h3>
       </div>
-      <div class="flex items-center text-green-500">{{ "36.5" }}°C</div>
     </div>
   </div>
 </template>

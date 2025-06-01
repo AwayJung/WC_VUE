@@ -62,8 +62,8 @@
       </router-link>
 
       <!-- 채팅 버튼 -->
-      <router-link
-        :to="{ name: 'ChatRoomList', params: { userId: userId || '3' } }"
+      <button
+        @click="handleChatClick"
         class="flex flex-col items-center"
         :class="activePage === 'chat' ? 'text-orange-500' : 'text-gray-500'"
       >
@@ -81,11 +81,11 @@
           />
         </svg>
         <span class="text-xs mt-1">채팅</span>
-      </router-link>
+      </button>
 
       <!-- 나의 당근 버튼 -->
       <router-link
-        to="/my"
+        to="/mypage"
         class="flex flex-col items-center"
         :class="activePage === 'my' ? 'text-orange-500' : 'text-gray-500'"
       >
@@ -109,6 +109,8 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
 export default {
   name: "BottomNavigation",
   props: {
@@ -118,9 +120,23 @@ export default {
       validator: (value) =>
         ["home", "favorites", "nearby", "items", "chat", "my"].includes(value),
     },
-    userId: {
-      type: [String, Number],
-      default: "3",
+  },
+  computed: {
+    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+    currentUserId() {
+      return this.currentUser?.userId;
+    },
+  },
+  methods: {
+    handleChatClick() {
+      if (this.isAuthenticated && this.currentUserId) {
+        this.$router.push({
+          name: "ChatRoomList",
+          params: { userId: this.currentUserId },
+        });
+      } else {
+        this.$router.push("/login");
+      }
     },
   },
 };
