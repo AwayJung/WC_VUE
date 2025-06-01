@@ -10,6 +10,7 @@ import ItemListPage from "@/views/Item/ItemListPage.vue";
 import ItemDetailPage from "@/views/Item/ItemDetailPage.vue";
 import ItemUpdatePage from "@/views/Item/ItemUpdatePage.vue";
 import ItemLikesPage from "@/views/Item/ItemLikesPage.vue";
+import MyPage from "@/views/MyPage.vue";
 Vue.use(VueRouter);
 
 const routes = [
@@ -67,6 +68,12 @@ const routes = [
     meta: {
       requiresAuth: true,
     },
+  },
+  {
+    path: "/mypage",
+    name: "MyPage",
+    component: MyPage,
+    meta: { requiresAuth: true },
   },
   {
     path: "/favorites",

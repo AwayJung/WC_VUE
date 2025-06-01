@@ -21,7 +21,6 @@
               class="text-base text-gray-400 font-medium hover:text-orange-500"
               >인기 매물</router-link
             >
-            <a href="#" class="text-base text-gray-400">알바</a>
             <a href="#" class="text-base text-gray-400">동네 업체</a>
             <a href="#" class="text-base text-gray-400">동네 생활</a>
           </div>
@@ -49,9 +48,12 @@
             >
               채팅
             </router-link>
-            <button class="px-3 py-2 text-gray-700 hover:text-orange-500">
-              마이페이지
-            </button>
+            <router-link
+              to="/mypage"
+              class="px-3 py-2 text-gray-700 hover:text-orange-500"
+            >
+              나의 당근
+            </router-link>
             <button
               @click="handleLogout"
               class="px-3 py-2 text-gray-700 hover:text-orange-500"
@@ -82,7 +84,7 @@ export default {
   methods: {
     async handleLogout() {
       await this.$store.dispatch("auth/logout");
-      this.$router.push("/"); // 메인 페이지로 이동
+      this.$router.push("/");
     },
   },
 };
