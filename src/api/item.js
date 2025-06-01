@@ -32,3 +32,7 @@ export const getItemsByCategory = (categoryId) => {
 export const deleteItem = (itemId) => {
   return itemApi.delete(`/api/items/${itemId}`);
 };
+
+export const getItemsOrderByViewCount = () => {
+  return itemApi.get("/api/items/popular");
+};

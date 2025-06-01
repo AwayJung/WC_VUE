@@ -13,10 +13,14 @@
           <div class="hidden md:flex items-center space-x-6">
             <router-link
               :to="{ name: 'ItemListPage' }"
-              class="text-base font-medium"
-              >중고거래</router-link
+              class="text-base font-medium hover:text-orange-500"
+              >중고 거래</router-link
             >
-            <a href="#" class="text-base text-gray-400">인기 매물</a>
+            <router-link
+              :to="{ name: 'ItemListPage', query: { sort: 'popular' } }"
+              class="text-base text-gray-400 font-medium hover:text-orange-500"
+              >인기 매물</router-link
+            >
             <a href="#" class="text-base text-gray-400">알바</a>
             <a href="#" class="text-base text-gray-400">동네 업체</a>
             <a href="#" class="text-base text-gray-400">동네 생활</a>

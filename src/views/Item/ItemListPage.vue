@@ -8,6 +8,36 @@
       @header-height-changed="updateHeaderHeight"
     />
 
+    <div
+      v-if="!selectedCategory"
+      class="bg-white border-b border-gray-200 px-4 py-3"
+    >
+      <div class="flex items-center space-x-4">
+        <button
+          @click="changeSortType('latest')"
+          :class="[
+            'px-3 py-1 text-sm font-medium rounded-md transition-colors',
+            currentSort === 'latest'
+              ? 'bg-orange-100 text-orange-600'
+              : 'text-gray-600 hover:text-gray-900',
+          ]"
+        >
+          최신순
+        </button>
+        <button
+          @click="changeSortType('popular')"
+          :class="[
+            'px-3 py-1 text-sm font-medium rounded-md transition-colors',
+            currentSort === 'popular'
+              ? 'bg-orange-100 text-orange-600'
+              : 'text-gray-600 hover:text-gray-900',
+          ]"
+        >
+          인기순
+        </button>
+      </div>
+    </div>
+
     <main class="pb-20">
       <div
         v-if="loading || searchLoading"
@@ -48,14 +78,11 @@
       </div>
     </main>
 
-    <!-- 하단 네비게이션 -->
+    <!-- 기존 하단 네비게이션, 글쓰기 버튼 동일 -->
     <BottomNavigation activePage="home" :userId="currentUserId" />
-
-    <!-- 글쓰기 버튼 -->
     <button
       @click="goToWritePage"
       class="fixed bottom-24 right-6 z-50 px-6 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-lg transition-all duration-200 flex items-center justify-center space-x-2"
-      style="box-shadow: 0 4px 20px rgba(251, 146, 60, 0.4)"
     >
       <svg
         class="w-6 h-6"
@@ -92,34 +119,44 @@ export default {
     return {
       searchQuery: "",
       showMenu: false,
-      headerHeight: 56, // 기본 헤더 높이
-      searchLoading: false, // 검색 로딩 상태 추가
-      selectedCategory: null, // 선택된 카테고리
+      headerHeight: 56,
+      searchLoading: false,
+      selectedCategory: null,
     };
   },
   watch: {
-    // URL의 카테고리 파라미터 변경 감지
-    "$route.query.category": {
-      immediate: false, // created에서 처리하므로 false
-      handler(newCategoryId) {
-        this.selectedCategory = newCategoryId ? parseInt(newCategoryId) : null;
-        this.loadItemsWithLikes();
+    // ✅ 수정: 카테고리와 정렬 파라미터 모두 감지
+    "$route.query": {
+      deep: true,
+      handler(newQuery, oldQuery) {
+        // 카테고리나 정렬이 변경되었을 때만 데이터 다시 로드
+        if (
+          newQuery.category !== oldQuery.category ||
+          newQuery.sort !== oldQuery.sort
+        ) {
+          this.selectedCategory = newQuery.category
+            ? parseInt(newQuery.category)
+            : null;
+          this.loadItemsWithLikes();
+        }
       },
     },
   },
   computed: {
     ...mapState("item", ["items", "loading", "error"]),
-    ...mapState("itemLike", ["likedItems"]), // itemLike 스토어의 상태 추가
+    ...mapState("itemLike", ["likedItems"]),
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
 
-    // 현재 사용자 ID
+    currentSort() {
+      return this.$route.query.sort || "latest";
+    },
+
     currentUserId() {
       return this.currentUser?.userId || null;
     },
 
     processedItems() {
       if (!this.items) return [];
-
       let result = [];
       if (this.items.data && Array.isArray(this.items.data)) {
         result = this.items.data;
@@ -128,25 +165,17 @@ export default {
       } else {
         return [];
       }
-
-      // likedItems의 상태 정보를 processedItems에 병합
       return this.mergeLikeInfo(result);
     },
 
     filteredItems() {
       let result = this.processedItems;
-
-      // 검색어 필터링만 프론트엔드에서 처리 (카테고리는 백엔드에서 이미 필터링됨)
       if (this.searchQuery) {
-        // 검색어의 공백 제거 및 소문자 변환
         const query = this.searchQuery.toLowerCase().trim();
-
-        // 여러 필드에 대해 검색어가 포함된 아이템 필터링
         result = result.filter((item) => {
           const title = (item.title || "").toLowerCase();
           const description = (item.description || "").toLowerCase();
           const categoryName = (item.categoryName || "").toLowerCase();
-
           return (
             title.includes(query) ||
             description.includes(query) ||
@@ -154,34 +183,78 @@ export default {
           );
         });
       }
-
       return result;
     },
   },
   methods: {
-    ...mapActions("item", ["fetchItems", "fetchItemsByCategory"]),
+    ...mapActions("item", [
+      "fetchItems",
+      "fetchItemsByCategory",
+      "fetchPopularItems",
+    ]),
     ...mapActions("itemLike", ["fetchMyLikes"]),
 
-    goToWritePage() {
-      console.log("글쓰기 페이지로 이동");
+    changeSortType(sortType) {
+      this.$router.push({
+        path: this.$route.path,
+        query: {
+          ...this.$route.query,
+          sort: sortType === "latest" ? undefined : sortType,
+        },
+      });
+    },
 
+    async loadItemsWithLikes() {
+      try {
+        const categoryId = this.$route.query.category;
+        const sortType = this.$route.query.sort || "latest";
+
+        let itemsPromise;
+
+        if (categoryId) {
+          // 카테고리가 있으면 무조건 카테고리별 조회 (최신순만)
+          console.log("카테고리별 조회:", categoryId);
+          itemsPromise = this.fetchItemsByCategory(parseInt(categoryId));
+        } else if (sortType === "popular") {
+          // 전체 인기순 조회
+          console.log("전체 인기순 조회");
+          itemsPromise = this.fetchPopularItems();
+        } else {
+          // 전체 최신순 조회
+          console.log("전체 최신순 조회");
+          itemsPromise = this.fetchItems();
+        }
+
+        const promises = [itemsPromise];
+        if (this.isAuthenticated) {
+          promises.push(this.fetchMyLikes());
+        }
+
+        await Promise.all(promises);
+        console.log(
+          "데이터 로드 완료 - 정렬:",
+          sortType,
+          "카테고리:",
+          categoryId
+        );
+      } catch (error) {
+        console.error("데이터 로드 중 오류 발생:", error);
+      }
+    },
+
+    goToWritePage() {
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
         this.$router.push("/login");
         return;
       }
-
       this.$router.push("/items/create");
     },
 
-    // 좋아요 정보를 아이템 목록에 병합하는 메서드
     mergeLikeInfo(items) {
-      // likedItems가 없거나 비어있으면 원래 아이템 목록 반환
       if (!this.likedItems || this.likedItems.length === 0) {
         return items;
       }
-
-      // likedItems를 맵으로 변환하여 빠른 조회 가능하게 함
       const likeMap = {};
       this.likedItems.forEach((likedItem) => {
         const itemId = likedItem.itemId;
@@ -192,13 +265,9 @@ export default {
           };
         }
       });
-
-      // 각 아이템에 좋아요 정보 적용
       return items.map((item) => {
         const itemId = item.itemId || (item.data && item.data.itemId);
-
         if (itemId && likeMap[itemId]) {
-          // item.data가 있는 경우
           if (item.data) {
             return {
               ...item,
@@ -208,9 +277,7 @@ export default {
                 likeCount: likeMap[itemId].likeCount,
               },
             };
-          }
-          // item에 직접 데이터가 있는 경우
-          else {
+          } else {
             return {
               ...item,
               isLiked: likeMap[itemId].isLiked,
@@ -218,17 +285,13 @@ export default {
             };
           }
         }
-
         return item;
       });
     },
 
     async handleSearch(query) {
       this.searchQuery = query;
-      this.searchLoading = true; // 로딩 시작
-      console.log("검색어:", query);
-
-      // URL에 검색어 반영
+      this.searchLoading = true;
       this.$router.push({
         path: this.$route.path,
         query: {
@@ -236,108 +299,37 @@ export default {
           q: query || undefined,
         },
       });
-
       try {
         await new Promise((resolve) => setTimeout(resolve, 300));
       } catch (error) {
         console.error("검색 중 오류 발생:", error);
       } finally {
-        this.searchLoading = false; // 로딩 종료
+        this.searchLoading = false;
       }
     },
 
     clearSearch() {
       this.searchQuery = "";
-
-      // URL에서 검색어 파라미터 제거
       const query = { ...this.$route.query };
       delete query.q;
-
       this.$router.push({
         path: this.$route.path,
         query,
       });
     },
 
-    // 헤더 높이가 변경될 때 호출되는 메서드
     updateHeaderHeight(height) {
       this.headerHeight = height;
     },
-
-    // 아이템 목록과 좋아요 정보를 함께 로드
-    async loadItemsWithLikes() {
-      try {
-        const categoryId = this.$route.query.category;
-        let itemsPromise;
-
-        if (categoryId) {
-          // 카테고리가 있으면 카테고리별 조회
-          console.log("카테고리별 조회:", categoryId);
-          itemsPromise = this.fetchItemsByCategory(parseInt(categoryId));
-        } else {
-          // 없으면 전체 조회
-          console.log("전체 아이템 조회");
-          itemsPromise = this.fetchItems();
-        }
-
-        // 아이템과 좋아요 정보를 병렬로 가져옴 (로그인된 경우에만)
-        const promises = [itemsPromise];
-        if (this.isAuthenticated) {
-          promises.push(this.fetchMyLikes());
-        }
-
-        await Promise.all(promises);
-
-        console.log("아이템과 좋아요 정보 로드 완료");
-        console.log("선택된 카테고리:", categoryId);
-        console.log("아이템 수:", this.processedItems.length);
-        console.log("좋아요 아이템 수:", this.likedItems?.length || 0);
-        console.log("현재 사용자 ID:", this.currentUserId);
-        console.log("인증 상태:", this.isAuthenticated);
-      } catch (error) {
-        console.error("데이터 로드 중 오류 발생:", error);
-      }
-    },
   },
   async created() {
-    // URL에서 검색어와 카테고리 가져오기
     if (this.$route.query.q) {
       this.searchQuery = this.$route.query.q;
     }
-
-    // URL에서 카테고리 가져오기
     if (this.$route.query.category) {
       this.selectedCategory = parseInt(this.$route.query.category);
     }
-
-    // 아이템 데이터와 찜 목록 함께 가져오기
     await this.loadItemsWithLikes();
-  },
-  mounted() {
-    console.log("=== ItemListPage 로그인 정보 ===");
-    console.log("인증 상태:", this.isAuthenticated);
-    console.log("현재 사용자:", this.currentUser);
-    console.log("사용자 ID:", this.currentUserId);
-    console.log("===============================");
   },
 };
 </script>
-
-<style scoped>
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.fixed button:hover {
-  transform: scale(1.05);
-}
-</style>

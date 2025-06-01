@@ -5,6 +5,7 @@ import {
   updateItem,
   deleteItem,
   getItemsByCategory,
+  getItemsOrderByViewCount,
 } from "../api/item";
 
 const state = {
@@ -112,7 +113,18 @@ const actions = {
     "아이템 목록을 불러오는데 실패했습니다.",
     "SET_ITEMS"
   ),
-
+  async fetchPopularItems({ commit }) {
+    commit("SET_LOADING", true);
+    commit("SET_ERROR", null);
+    try {
+      const response = await getItemsOrderByViewCount();
+      commit("SET_ITEMS", response.data);
+    } catch (error) {
+      commit("SET_ERROR", error.message);
+    } finally {
+      commit("SET_LOADING", false);
+    }
+  },
   // 아이템 수정
   updateItem: createActionHandler(
     ({ itemId, itemData }) => updateItem(itemId, itemData),
