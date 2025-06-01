@@ -8,9 +8,6 @@
             :alt="displayName"
             class="w-24 h-24 rounded-full object-cover border-4 border-orange-100"
           />
-          <div
-            class="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full border-4 border-white"
-          ></div>
         </div>
         <div class="flex-1">
           <h2 class="text-2xl font-bold text-gray-900 mb-2">
@@ -49,36 +46,35 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
 export default {
   name: "ProfileCard",
-  props: {
-    currentUser: {
-      type: Object,
-      default: null,
-    },
-  },
   emits: ["edit-profile"],
 
   computed: {
+    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+
     displayName() {
-      return this.currentUser?.nickname || this.currentUser?.name || "사용자";
+      return this.currentUser?.name;
     },
 
     profileImage() {
       return (
         this.currentUser?.profileImage ||
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop"
+        require("@/assets/images/carrot_profile_default.jpg")
       );
     },
   },
 
   methods: {
     formatJoinDate() {
+      // currentUser의 가입일 정보 포맷팅
       if (this.currentUser?.createdAt) {
         const date = new Date(this.currentUser.createdAt);
         return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
       }
-      return "2023년 3월"; // 기본값
+      return "";
     },
 
     handleEditProfile() {

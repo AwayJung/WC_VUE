@@ -1,14 +1,9 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- 공통 헤더 -->
     <TheHeader />
 
     <div class="max-w-6xl mx-auto px-4 py-8">
-      <!-- 프로필 상단 카드 -->
-      <ProfileCard
-        :current-user="currentUser"
-        @edit-profile="handleEditProfile"
-      />
+      <ProfileCard @edit-profile="handleEditProfile" />
 
       <!-- 통계 카드들 -->
       <StatsCards :stats="userStats" />
@@ -38,10 +33,11 @@
         <div class="p-6">
           <SalesTab
             v-if="activeTab === 'sales'"
-            :sales-data="salesData"
+            :sales-data="filteredSalesData"
             :filter="salesFilter"
             @filter-change="handleSalesFilterChange"
             @create-item="handleCreateItem"
+            @view-all-sales="handleViewAllSales"
           />
 
           <LikesTab
@@ -56,10 +52,9 @@
       </div>
     </div>
 
-    <!-- 프로필 수정 모달 -->
+    <!-- 프로필 수정 모달 (props도 제거) -->
     <ProfileEditModal
       :visible="showProfileEdit"
-      :current-user="currentUser"
       @close="showProfileEdit = false"
       @save="handleSaveProfile"
     />
@@ -67,7 +62,7 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 import TheHeader from "@/components/layout/TheHeader.vue";
 import ProfileCard from "@/components/mypage/ProfileCard.vue";
 import StatsCards from "@/components/mypage/StatsCards.vue";
@@ -93,6 +88,7 @@ export default {
       activeTab: "sales",
       showProfileEdit: false,
       salesFilter: "all",
+      allItems: [],
 
       tabs: [
         { id: "sales", name: "판매내역" },
@@ -100,8 +96,6 @@ export default {
         { id: "support", name: "고객지원" },
       ],
 
-      // 실제로는 API에서 가져올 데이터
-      salesData: [],
       likesData: [],
       userStats: {
         sales: 0,
@@ -114,9 +108,32 @@ export default {
 
   computed: {
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+
+    // 현재 사용자의 판매상품만 필터링
+    mySalesData() {
+      if (!this.allItems || !this.currentUser) return [];
+
+      return this.allItems.filter((item) => {
+        const itemSellerId = item.sellerId || (item.data && item.data.sellerId);
+        return itemSellerId === this.currentUser.userId;
+      });
+    },
+
+    // 필터에 따른 판매상품
+    filteredSalesData() {
+      if (this.salesFilter === "all") return this.mySalesData;
+
+      return this.mySalesData.filter((item) => {
+        const status =
+          item.status || (item.data && item.data.status) || "selling";
+        return status === this.salesFilter;
+      });
+    },
   },
 
   methods: {
+    ...mapActions("item", ["fetchItems"]),
+
     handleEditProfile() {
       this.showProfileEdit = true;
     },
@@ -124,15 +141,26 @@ export default {
     handleSalesFilterChange(filter) {
       this.salesFilter = filter;
       console.log("판매내역 필터 변경:", filter);
-      // 실제로는 API 호출하여 필터된 데이터 가져오기
-      this.fetchSalesData(filter);
     },
 
     handleCreateItem() {
       this.$router.push("/items/create");
     },
 
+    // 내 판매상품 전체보기 (새로 추가)
+    handleViewAllSales() {
+      this.$router.push({
+        path: "/items",
+        query: {
+          sellerId: this.currentUser.userId,
+          type: "my-sales",
+          title: "내 판매상품",
+        },
+      });
+    },
+
     handleNavigateItems() {
+      // 전체 아이템 목록으로 이동 (기존 관심목록 기능)
       this.$router.push("/items");
     },
 
@@ -168,17 +196,25 @@ export default {
     },
 
     // API 호출 메서드들
-    async fetchSalesData(filter = "all") {
+    async fetchAllItems() {
       try {
-        console.log("판매 데이터 조회:", filter);
-        // 실제 API 호출
-        // const response = await salesApi.getSalesList({
-        //   userId: this.currentUser.userId,
-        //   filter: filter
-        // });
-        // this.salesData = response.data;
+        console.log("전체 아이템 데이터 조회");
+        // Vuex store에서 아이템 가져오기
+        await this.fetchItems();
+
+        // store에서 데이터 구조에 맞게 가져오기
+        const items = this.$store.state.item.items;
+        if (items && items.data) {
+          if (Array.isArray(items.data)) {
+            this.allItems = items.data;
+          } else {
+            this.allItems = Object.values(items.data);
+          }
+        }
+
+        console.log("내 판매상품:", this.mySalesData);
       } catch (error) {
-        console.error("판매 데이터 조회 실패:", error);
+        console.error("아이템 데이터 조회 실패:", error);
       }
     },
 
@@ -199,6 +235,9 @@ export default {
         // 실제 API 호출
         // const response = await userApi.getUserStats(this.currentUser.userId);
         // this.userStats = response.data;
+
+        // 임시로 내 판매상품 개수 업데이트
+        this.userStats.sales = this.mySalesData.length;
       } catch (error) {
         console.error("사용자 통계 조회 실패:", error);
       }
@@ -235,11 +274,10 @@ export default {
 
     // 초기 데이터 로딩
     try {
-      await Promise.all([
-        this.fetchSalesData(),
-        this.fetchLikesData(),
-        this.fetchUserStats(),
-      ]);
+      await Promise.all([this.fetchAllItems(), this.fetchLikesData()]);
+
+      // 아이템 로드 후 통계 업데이트
+      await this.fetchUserStats();
     } catch (error) {
       console.error("초기 데이터 로딩 실패:", error);
     }
