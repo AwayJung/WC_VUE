@@ -48,38 +48,83 @@ const mutations = {
       state.likedItems.splice(itemIndex, 1);
     }
   },
+
+  // 인증되지 않은 사용자의 경우 찜 목록 초기화
+  CLEAR_LIKED_ITEMS(state) {
+    state.likedItems = [];
+    state.currentItemLiked = false;
+  },
+};
+
+const getters = {
+  // 현재 사용자가 인증되었는지 확인하는 getter
+  isUserAuthenticated: (state, getters, rootState) => {
+    return rootState.auth.isAuthenticated;
+  },
+
+  // 현재 사용자 정보 getter
+  currentUser: (state, getters, rootState) => {
+    return rootState.auth.user;
+  },
+
+  // 찜한 아이템 개수 getter
+  likedItemsCount: (state) => {
+    return state.likedItems.length;
+  },
+
+  // 특정 아이템이 찜되었는지 확인하는 getter
+  isItemLiked: (state) => (itemId) => {
+    return state.likedItems.some((item) => item.itemId === itemId);
+  },
 };
 
 const actions = {
-  toggleItemLike({ commit, dispatch }, itemId) {
+  // 인증 상태 확인 후 액션 실행하는 헬퍼 함수
+  async checkAuthAndExecute({ getters, dispatch }, actionCallback) {
+    if (!getters.isUserAuthenticated) {
+      // 인증되지 않은 경우 처리
+      console.warn("사용자가 인증되지 않았습니다. 로그인이 필요합니다.");
+      throw new Error("LOGIN_REQUIRED");
+    }
+
+    try {
+      return await actionCallback();
+    } catch (error) {
+      // 토큰 만료나 인증 오류 시 처리
+      if (error.response?.status === 401) {
+        console.warn("인증이 만료되었습니다. 다시 로그인해주세요.");
+        await dispatch("auth/logout", null, { root: true });
+        throw new Error("AUTH_EXPIRED");
+      }
+      throw error;
+    }
+  },
+
+  async toggleItemLike({ commit, dispatch }, itemId) {
     console.log("===== itemLike/toggleItemLike 액션 시작 =====");
 
-    return itemLikeApi
-      .toggleLike(itemId)
-      .then((response) => {
-        const isLiked = response.data.data;
-        console.log("찜하기 상태:", isLiked);
+    return dispatch("checkAuthAndExecute", async () => {
+      const response = await itemLikeApi.toggleLike(itemId);
+      const isLiked = response.data.data;
+      console.log("찜하기 상태:", isLiked);
 
-        // 현재 아이템 좋아요 상태 업데이트
-        commit("SET_CURRENT_ITEM_LIKED", isLiked);
+      // 현재 아이템 좋아요 상태 업데이트
+      commit("SET_CURRENT_ITEM_LIKED", isLiked);
 
-        // 목록 내 해당 아이템의 좋아요 상태와 카운트 업데이트
-        commit("UPDATE_ITEM_LIKE_STATUS", { itemId, isLiked });
+      // 목록 내 해당 아이템의 좋아요 상태와 카운트 업데이트
+      commit("UPDATE_ITEM_LIKE_STATUS", { itemId, isLiked });
 
-        // item 모듈의 currentItem.data.isLiked 업데이트
-        dispatch("item/updateItemLikeStatus", isLiked, { root: true });
+      // item 모듈의 currentItem.data.isLiked 업데이트
+      dispatch("item/updateItemLikeStatus", isLiked, { root: true });
 
-        return isLiked;
-      })
-      .catch((error) => {
-        console.error("toggleItemLike 액션 에러:", error);
-        throw error;
-      });
+      return isLiked;
+    });
   },
 
   // 찜 목록 불러오기
-  fetchMyLikes({ commit }) {
-    return itemLikeApi.getMyLikes().then((response) => {
+  async fetchMyLikes({ commit, dispatch }) {
+    return dispatch("checkAuthAndExecute", async () => {
+      const response = await itemLikeApi.getMyLikes();
       console.log("찜 목록 API 응답:", response.data);
 
       const likedItems = response.data.data || [];
@@ -91,8 +136,16 @@ const actions = {
   },
 
   // 특정 아이템 찜 상태 확인
-  checkItemLikeStatus({ commit, dispatch }, itemId) {
-    return itemLikeApi.getItemLikeStatus(itemId).then((response) => {
+  async checkItemLikeStatus({ commit, dispatch, getters }, itemId) {
+    // 인증되지 않은 사용자는 찜 상태를 false로 설정
+    if (!getters.isUserAuthenticated) {
+      commit("SET_CURRENT_ITEM_LIKED", false);
+      dispatch("item/updateItemLikeStatus", false, { root: true });
+      return false;
+    }
+
+    return dispatch("checkAuthAndExecute", async () => {
+      const response = await itemLikeApi.getItemLikeStatus(itemId);
       console.log("아이템 찜 상태 API 응답:", response.data);
 
       // 응답 데이터 분석
@@ -137,27 +190,23 @@ const actions = {
     });
   },
 
-  // checkItemLikeStatus({ commit, dispatch }, itemId) {
-  //   return itemLikeApi.getItemLikeStatus(itemId).then((response) => {
-  //     console.log("아이템 찜 상태 API 응답:", response.data);
+  // 로그아웃 시 찜 목록 초기화
+  clearLikedItems({ commit }) {
+    commit("CLEAR_LIKED_ITEMS");
+  },
 
-  //     let isLiked;
-  //     if (typeof response.data.data === "boolean") {
-  //       isLiked = response.data.data;
-  //     } else if (response.data.data && typeof response.data.data === "object") {
-  //       isLiked = response.data.data.liked || false;
-  //     } else {
-  //       isLiked = false;
-  //     }
-
-  //     commit("SET_CURRENT_ITEM_LIKED", isLiked);
-
-  //     // item 모듈의 currentItem.data.isLiked 업데이트 위해 추가
-  //     dispatch("item/updateItemLikeStatus", isLiked, { root: true });
-
-  //     return response.data.data;
-  //   });
-  // },
+  // 사용자 변경 시 찜 목록 다시 로드
+  async refreshLikedItems({ dispatch, getters }) {
+    if (getters.isUserAuthenticated) {
+      try {
+        await dispatch("fetchMyLikes");
+      } catch (error) {
+        console.error("찜 목록 새로고침 실패:", error);
+      }
+    } else {
+      dispatch("clearLikedItems");
+    }
+  },
 };
 
 export default {
@@ -165,4 +214,5 @@ export default {
   state,
   mutations,
   actions,
+  getters,
 };

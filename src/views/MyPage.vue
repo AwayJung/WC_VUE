@@ -42,9 +42,8 @@
 
           <LikesTab
             v-if="activeTab === 'likes'"
-            :likes-data="likesData"
             @navigate-items="handleNavigateItems"
-            @toggle-like="handleToggleLike"
+            @update-stats="handleUpdateStats"
           />
 
           <SupportTab v-if="activeTab === 'support'" />
@@ -52,7 +51,7 @@
       </div>
     </div>
 
-    <!-- 프로필 수정 모달 (props도 제거) -->
+    <!-- 프로필 수정 모달 -->
     <ProfileEditModal
       :visible="showProfileEdit"
       @close="showProfileEdit = false"
@@ -62,7 +61,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from "vuex";
+import { mapGetters, mapActions, mapState } from "vuex";
 import TheHeader from "@/components/layout/TheHeader.vue";
 import ProfileCard from "@/components/mypage/ProfileCard.vue";
 import StatsCards from "@/components/mypage/StatsCards.vue";
@@ -96,7 +95,6 @@ export default {
         { id: "support", name: "고객지원" },
       ],
 
-      likesData: [],
       userStats: {
         sales: 0,
         likes: 0,
@@ -108,6 +106,7 @@ export default {
 
   computed: {
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+    ...mapState("itemLike", ["likedItems"]),
 
     // 현재 사용자의 판매상품만 필터링
     mySalesData() {
@@ -131,8 +130,32 @@ export default {
     },
   },
 
+  watch: {
+    // 탭 변경 감지
+    activeTab(newTab, oldTab) {
+      console.log(`탭 변경: ${oldTab} → ${newTab}`);
+
+      // 관심목록 탭으로 변경 시 찜 목록 새로고침
+      if (newTab === "likes") {
+        this.refreshLikesData();
+      }
+    },
+
+    // 찜 목록 변경 감지하여 통계 업데이트
+    likedItems: {
+      handler(newItems) {
+        if (newItems && Array.isArray(newItems)) {
+          this.userStats.likes = newItems.length;
+          console.log("찜 목록 통계 업데이트:", newItems.length);
+        }
+      },
+      immediate: true,
+    },
+  },
+
   methods: {
     ...mapActions("item", ["fetchItems"]),
+    ...mapActions("itemLike", ["fetchMyLikes", "refreshLikedItems"]),
 
     handleEditProfile() {
       this.showProfileEdit = true;
@@ -147,7 +170,7 @@ export default {
       this.$router.push("/items/create");
     },
 
-    // 내 판매상품 전체보기 (새로 추가)
+    // 내 판매상품 전체보기
     handleViewAllSales() {
       this.$router.push({
         path: "/items",
@@ -160,14 +183,16 @@ export default {
     },
 
     handleNavigateItems() {
-      // 전체 아이템 목록으로 이동 (기존 관심목록 기능)
+      // 전체 아이템 목록으로 이동
       this.$router.push("/items");
     },
 
-    handleToggleLike(itemId) {
-      console.log("찜 해제:", itemId);
-      // 실제로는 API 호출하여 찜 해제
-      this.removeLikeItem(itemId);
+    // 통계 업데이트 핸들러
+    handleUpdateStats(statsUpdate) {
+      console.log("통계 업데이트:", statsUpdate);
+
+      // 전달받은 통계로 업데이트
+      Object.assign(this.userStats, statsUpdate);
     },
 
     async handleSaveProfile(profileData) {
@@ -218,53 +243,48 @@ export default {
       }
     },
 
-    async fetchLikesData() {
+    async refreshLikesData() {
       try {
-        console.log("관심목록 데이터 조회");
-        // 실제 API 호출
-        // const response = await likesApi.getLikesList(this.currentUser.userId);
-        // this.likesData = response.data;
+        console.log("=== 찜 목록 새로고침 시작 ===");
+
+        if (this.isAuthenticated) {
+          // Vuex action을 통해 찜 목록 새로고침
+          await this.refreshLikedItems();
+          console.log("찜 목록 새로고침 완료");
+        }
       } catch (error) {
-        console.error("관심목록 데이터 조회 실패:", error);
+        console.error("찜 목록 새로고침 실패:", error);
       }
     },
 
     async fetchUserStats() {
       try {
         console.log("사용자 통계 조회");
-        // 실제 API 호출
+
+        // 판매상품 통계
+        this.userStats.sales = this.mySalesData.length;
+
+        // 찜 목록 통계 (Vuex에서 가져오기)
+        if (this.likedItems && Array.isArray(this.likedItems)) {
+          this.userStats.likes = this.likedItems.length;
+        }
+
+        // 실제 API 호출 예시
         // const response = await userApi.getUserStats(this.currentUser.userId);
         // this.userStats = response.data;
 
-        // 임시로 내 판매상품 개수 업데이트
-        this.userStats.sales = this.mySalesData.length;
+        console.log("현재 통계:", this.userStats);
       } catch (error) {
         console.error("사용자 통계 조회 실패:", error);
-      }
-    },
-
-    async removeLikeItem(itemId) {
-      try {
-        // 실제 API 호출
-        // await likesApi.removeLike(itemId);
-
-        // 로컬 데이터에서 제거
-        this.likesData = this.likesData.filter((item) => item.id !== itemId);
-
-        // 통계 업데이트
-        if (this.userStats.likes > 0) {
-          this.userStats.likes--;
-        }
-
-        console.log("찜 해제 완료:", itemId);
-      } catch (error) {
-        console.error("찜 해제 실패:", error);
-        alert("찜 해제에 실패했습니다.");
       }
     },
   },
 
   async created() {
+    console.log("=== MyPage 생성 ===");
+    console.log("인증 상태:", this.isAuthenticated);
+    console.log("현재 사용자:", this.currentUser);
+
     // 인증 체크
     if (!this.isAuthenticated) {
       alert("로그인이 필요합니다.");
@@ -274,13 +294,22 @@ export default {
 
     // 초기 데이터 로딩
     try {
-      await Promise.all([this.fetchAllItems(), this.fetchLikesData()]);
+      await Promise.all([this.fetchAllItems(), this.refreshLikesData()]);
 
       // 아이템 로드 후 통계 업데이트
       await this.fetchUserStats();
+
+      console.log("=== MyPage 초기화 완료 ===");
     } catch (error) {
       console.error("초기 데이터 로딩 실패:", error);
     }
+  },
+
+  mounted() {
+    console.log("=== MyPage 마운트 완료 ===");
+    console.log("현재 탭:", this.activeTab);
+    console.log("찜한 상품 수:", this.likedItems?.length || 0);
+    console.log("============================");
   },
 };
 </script>

@@ -123,12 +123,12 @@
       </div>
 
       <!-- 더보기 버튼 -->
-      <div v-if="salesData.length > 3" class="text-center pt-4">
+      <div v-if="salesData.length > 4" class="text-center pt-4">
         <button
           @click="handleViewAllSales"
           class="text-orange-500 hover:text-orange-600 font-medium text-sm"
         >
-          더보기 ({{ salesData.length - 3 }}개 상품)
+          더보기 ({{ salesData.length - 4 }}개 상품)
         </button>
       </div>
     </div>
@@ -165,6 +165,8 @@
 </template>
 
 <script>
+import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
+
 export default {
   name: "SalesTab",
   props: {
@@ -180,9 +182,9 @@ export default {
   emits: ["filter-change", "create-item", "view-all-sales"],
 
   computed: {
-    // 처음 3개 상품만 표시
+    // 처음 4개 상품만 표시
     displayedItems() {
-      return this.salesData.slice(0, 3);
+      return this.salesData.slice(0, 4);
     },
   },
 
@@ -216,62 +218,7 @@ export default {
     },
 
     getItemImage(item) {
-      // 다양한 이미지 경로 시도
-      let image = null;
-
-      // 직접 속성에서 찾기
-      image = item.image || item.imageUrl || item.thumbnail || item.photo;
-
-      // data 객체에서 찾기
-      if (!image && item.data) {
-        image =
-          item.data.image ||
-          item.data.imageUrl ||
-          item.data.thumbnail ||
-          item.data.photo;
-      }
-
-      // images 배열에서 첫 번째 이미지 가져오기
-      if (
-        !image &&
-        item.images &&
-        Array.isArray(item.images) &&
-        item.images.length > 0
-      ) {
-        image = item.images[0];
-      }
-
-      if (
-        !image &&
-        item.data &&
-        item.data.images &&
-        Array.isArray(item.data.images) &&
-        item.data.images.length > 0
-      ) {
-        image = item.data.images[0];
-      }
-
-      // 이미지가 있다면 절대 경로로 변환
-      if (image) {
-        // 이미 절대 URL인 경우
-        if (image.startsWith("http://") || image.startsWith("https://")) {
-          return image;
-        }
-        // 상대 경로인 경우 API 서버 베이스 URL 추가
-        if (image.startsWith("/")) {
-          // 여기서 실제 API 서버 URL로 변경하세요
-          return `${
-            process.env.VUE_APP_API_BASE_URL || "http://localhost:8080"
-          }${image}`;
-        }
-        // 파일명만 있는 경우
-        return `${
-          process.env.VUE_APP_API_BASE_URL || "http://localhost:8080"
-        }/uploads/${image}`;
-      }
-
-      // 기본 이미지
-      return require("@/assets/images/carrot_profile_default.jpg");
+      return getItemImageUrl(item);
     },
 
     getItemPrice(item) {
@@ -300,9 +247,7 @@ export default {
 
     // 이미지 로딩 이벤트 핸들러
     handleImageError(event) {
-      console.log("이미지 로딩 실패:", event.target.src);
-      // 기본 이미지로 대체
-      event.target.src = require("@/assets/images/carrot_profile_default.jpg");
+      handleImageError(event);
     },
 
     handleImageLoad(event) {

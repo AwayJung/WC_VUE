@@ -97,6 +97,7 @@ export default {
     return {
       showMenu: false,
       isMyItem: false,
+      isToggling: false, // 중복 클릭 방지용 플래그
     };
   },
 
@@ -104,6 +105,7 @@ export default {
     ...mapState("item", ["loading", "error"]),
     ...mapGetters("item", ["getCurrentItem"]),
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+    ...mapState("itemLike", ["currentItemLiked"]),
 
     currentItem() {
       return this.getCurrentItem || null;
@@ -113,11 +115,15 @@ export default {
     currentUserId() {
       return this.currentUser?.userId || null;
     },
+
+    // 현재 아이템의 찜 상태
+    isCurrentItemLiked() {
+      return this.currentItemLiked;
+    },
   },
 
   methods: {
     ...mapActions("item", ["fetchItem", "deleteItem", "updateItem"]),
-    // itemLike 액션 추가
     ...mapActions("itemLike", ["toggleItemLike", "checkItemLikeStatus"]),
 
     async loadItemData() {
@@ -131,7 +137,7 @@ export default {
           console.log(this.currentItem);
           this.checkIfMyItem();
 
-          // 로그인된 사용자만 찜 상태 확인
+          // 로그인된 사용자만 찜 상태 확인 (토글 아님!)
           if (this.isAuthenticated) {
             await this.loadItemLikeStatus(itemId);
           }
@@ -141,12 +147,13 @@ export default {
       }
     },
 
-    // 찜 상태 확인 함수 추가
+    // 찜 상태 확인만 하는 함수 (토글 X)
     async loadItemLikeStatus(itemId) {
       try {
         console.log("찜 상태 확인 시작:", itemId);
-        const response = await this.checkItemLikeStatus(itemId);
-        console.log("찜 상태 확인 결과:", response);
+        // checkItemLikeStatus는 상태만 확인하고 변경하지 않음
+        const isLiked = await this.checkItemLikeStatus(itemId);
+        console.log("찜 상태 확인 결과:", isLiked);
       } catch (error) {
         console.error("찜 상태 확인 실패:", error);
       }
@@ -269,39 +276,47 @@ export default {
       this.$router.push(`/purchase/${this.currentItem.id}`);
     },
 
-    // handleLike 함수 수정
-    async handleLike({ isLiked }) {
-      try {
-        // 로그인 체크
-        if (!this.isAuthenticated) {
-          alert("로그인이 필요합니다.");
-          this.$router.push("/login");
-          return;
-        }
+    // 찜하기 토글 함수 - 중복 호출 방지 로직 추가
+    async handleLike() {
+      // 이미 처리 중이면 무시
+      if (this.isToggling) {
+        console.log("이미 찜하기 처리 중입니다.");
+        return;
+      }
 
+      // 로그인 체크
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        this.$router.push("/login");
+        return;
+      }
+
+      this.isToggling = true;
+
+      try {
         console.log("===== itemDetailPage/handleLike 시작 =====");
         console.log("현재 사용자 ID:", this.currentUserId);
-        console.log("현재 찜 상태:", isLiked);
+        console.log("현재 찜 상태:", this.isCurrentItemLiked);
 
-        // 실제 찜 상태 토글 호출 추가
         const itemId = this.$route.params.id;
         const result = await this.toggleItemLike(itemId);
+
         console.log("찜하기 결과:", result);
+        console.log("===== itemDetailPage/handleLike 완료 =====");
       } catch (error) {
         console.error("찜하기 처리 실패:", error);
         this.$toast?.error?.("찜하기 처리에 실패했습니다.") ||
           alert("찜하기 처리에 실패했습니다.");
+      } finally {
+        // 500ms 후 다시 클릭 가능하도록 설정
+        setTimeout(() => {
+          this.isToggling = false;
+        }, 500);
       }
     },
 
-    async handleUpdateLike() {
-      try {
-        await this.handleLike();
-      } catch (error) {
-        console.error("좋아요 업데이트 실패:", error);
-        this.$toast.error("좋아요 처리에 실패했습니다.");
-      }
-    },
+    // 불필요한 함수 제거됨
+    // handleUpdateLike() 함수 삭제
 
     async handleChat() {
       console.log("handleChat 호출됨");
@@ -368,6 +383,7 @@ export default {
     console.log("현재 사용자:", this.currentUser);
     console.log("사용자 ID:", this.currentUserId);
     console.log("내 상품 여부:", this.isMyItem);
+    console.log("현재 찜 상태:", this.isCurrentItemLiked);
     console.log("================================");
   },
 

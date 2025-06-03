@@ -2,8 +2,19 @@
   <div class="space-y-6">
     <h3 class="text-xl font-semibold text-gray-900">관심목록</h3>
 
+    <!-- 로딩 상태 -->
+    <div v-if="loading" class="text-center py-16">
+      <div
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"
+      ></div>
+      <p class="text-gray-500">관심목록을 불러오는 중...</p>
+    </div>
+
     <!-- 빈 상태 -->
-    <div v-if="!likesData || likesData.length === 0" class="text-center py-16">
+    <div
+      v-else-if="!likesData || likesData.length === 0"
+      class="text-center py-16"
+    >
       <svg
         class="w-24 h-24 text-gray-300 mx-auto mb-6"
         fill="currentColor"
@@ -29,24 +40,28 @@
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="item in likesData"
-        :key="item.id"
+        :key="item.itemId"
         class="bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
         @click="handleItemClick(item)"
       >
         <!-- 이미지 영역 -->
         <div class="relative">
           <img
-            :src="
-              item.image ||
-              'https://via.placeholder.com/300x200?text=상품이미지'
-            "
+            :src="getItemImage(item)"
             :alt="item.name"
             class="w-full h-48 object-cover"
+            @error="handleImageError"
           />
           <!-- 찜 버튼 -->
           <button
             @click.stop="handleToggleLike(item)"
-            class="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors"
+            :disabled="isTogglingItem(item.itemId)"
+            :class="[
+              'absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors',
+              isTogglingItem(item.itemId)
+                ? 'opacity-50 cursor-not-allowed'
+                : '',
+            ]"
           >
             <svg
               class="w-5 h-5 text-red-500"
@@ -58,14 +73,6 @@
               />
             </svg>
           </button>
-
-          <!-- 상태 배지 (판매완료 등) -->
-          <div
-            v-if="item.status && item.status !== 'selling'"
-            class="absolute top-3 left-3 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded"
-          >
-            {{ getStatusText(item.status) }}
-          </div>
         </div>
 
         <!-- 상품 정보 -->
@@ -75,9 +82,7 @@
           >
             {{ item.name }}
           </h4>
-          <p class="text-sm text-gray-500 mb-2">
-            {{ item.location }}
-          </p>
+          <p class="text-sm text-gray-500 mb-2"></p>
           <div class="flex items-center justify-between">
             <p class="text-lg font-bold text-orange-500">
               {{ formatPrice(item.price) }}원
@@ -122,44 +127,123 @@
 </template>
 
 <script>
+import { mapState, mapActions } from "vuex";
+import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
+
 export default {
   name: "LikesTab",
-  props: {
-    likesData: {
-      type: Array,
-      default: () => [],
+
+  data() {
+    return {
+      loading: false,
+      togglingItems: new Set(), // 현재 토글 중인 아이템들 추적
+    };
+  },
+
+  computed: {
+    ...mapState("itemLike", ["likedItems"]),
+
+    // Vuex에서 가져온 실제 찜 목록 데이터 사용
+    likesData() {
+      return this.likedItems || [];
     },
   },
-  emits: ["navigate-items", "toggle-like"],
+
+  emits: ["navigate-items", "update-stats"],
 
   methods: {
+    ...mapActions("itemLike", ["fetchMyLikes", "toggleItemLike"]),
+
+    async loadLikesData() {
+      console.log("=== LikesTab 데이터 로드 시작 ===");
+
+      this.loading = true;
+      try {
+        await this.fetchMyLikes();
+        console.log("찜 목록 로드 완료:", this.likesData?.length || 0, "개");
+
+        // 부모 컴포넌트에 통계 업데이트 알림
+        this.$emit("update-stats", { likes: this.likesData.length });
+      } catch (error) {
+        console.error("찜 목록 로드 실패:", error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
     handleNavigateItems() {
       this.$emit("navigate-items");
     },
 
     handleItemClick(item) {
-      this.$router.push(`/items/${item.id}`);
+      console.log("상품 상세페이지로 이동:", item.itemId);
+      this.$router.push(`/items/${item.itemId}`);
     },
 
-    handleToggleLike(item) {
+    async handleToggleLike(item) {
+      // 이미 해당 아이템이 처리 중이면 무시
+      if (this.togglingItems.has(item.itemId)) {
+        console.log("이미 해당 아이템 토글 처리 중:", item.itemId);
+        return;
+      }
+
       // 찜 해제 확인
-      if (confirm("관심목록에서 제거하시겠습니까?")) {
-        this.$emit("toggle-like", item.id);
+      if (!confirm("관심목록에서 제거하시겠습니까?")) {
+        return;
+      }
+
+      console.log("=== 찜 해제 시작 ===");
+      console.log("아이템 ID:", item.itemId);
+      console.log("아이템 이름:", item.name);
+
+      // 토글 중인 아이템 목록에 추가
+      this.togglingItems.add(item.itemId);
+
+      try {
+        const result = await this.toggleItemLike(item.itemId);
+        console.log("찜 해제 성공:", result);
+
+        // 부모 컴포넌트에 통계 업데이트 알림
+        this.$emit("update-stats", { likes: this.likesData.length });
+      } catch (error) {
+        console.error("찜 해제 실패:", error);
+        alert("관심목록 제거에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        // 500ms 후 토글 중인 목록에서 제거
+        setTimeout(() => {
+          this.togglingItems.delete(item.itemId);
+        }, 500);
+
+        console.log("=== 찜 해제 종료 ===");
       }
     },
 
-    getStatusText(status) {
-      const texts = {
-        selling: "판매중",
-        reserved: "예약중",
-        sold: "판매완료",
-      };
-      return texts[status] || "판매중";
+    // 특정 아이템이 토글 중인지 확인
+    isTogglingItem(itemId) {
+      return this.togglingItems.has(itemId);
+    },
+
+    getItemImage(item) {
+      return getItemImageUrl(item);
+    },
+
+    handleImageError(event) {
+      handleImageError(event);
     },
 
     formatPrice(price) {
       return price ? price.toLocaleString() : "0";
     },
+  },
+
+  async created() {
+    // 컴포넌트 생성 시 찜 목록 로드
+    await this.loadLikesData();
+  },
+
+  // 탭이 활성화될 때마다 데이터 새로고침
+  async activated() {
+    await this.loadLikesData();
   },
 };
 </script>
@@ -170,5 +254,18 @@ export default {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
