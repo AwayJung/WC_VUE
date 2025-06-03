@@ -228,7 +228,6 @@ export default {
       this.itemId = null;
       this.$router.replace({
         name: "ChatRoomList",
-        // userId 파라미터 제거 - Vuex에서 관리
       });
     },
   },

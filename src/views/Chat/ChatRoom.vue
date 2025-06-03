@@ -21,6 +21,13 @@
       <h2 class="ml-2 text-lg">채팅방</h2>
     </div>
 
+    <!-- 상품 정보 컴포넌트 -->
+    <ChatItemInfo
+      :item-id="itemId"
+      :is-authenticated="isAuthenticated"
+      @item-click="goToItemDetail"
+    />
+
     <!-- 로그인 필요 메시지 -->
     <div
       v-if="!isAuthenticated"
@@ -37,98 +44,25 @@
       </div>
     </div>
 
-    <!-- 채팅 메시지 영역 -->
-    <div
+    <!-- 채팅 메시지 목록 컴포넌트 -->
+    <ChatMessageList
       v-else
-      class="flex-1 overflow-y-auto bg-gray-50"
-      ref="messageContainer"
-    >
-      <div
-        v-for="message in messages"
-        :key="message.id || message.timestamp"
-        class="px-4 py-1"
-      >
-        <div
-          :class="[
-            'flex',
-            message.senderId === currentUserId
-              ? 'justify-end'
-              : 'justify-start',
-          ]"
-        >
-          <div
-            :class="[
-              'max-w-[70%] rounded-3xl px-4 py-2.5',
-              message.senderId === currentUserId
-                ? 'bg-orange-500 text-white'
-                : 'bg-white text-gray-900',
-            ]"
-          >
-            <p class="text-sm leading-5">{{ message.content }}</p>
-          </div>
-        </div>
-        <div
-          :class="[
-            'text-xs text-gray-400 mt-1',
-            message.senderId === currentUserId
-              ? 'text-right mr-1'
-              : 'text-left ml-1',
-          ]"
-        >
-          {{ formatTime(message.timestamp) }}
-        </div>
-      </div>
-    </div>
+      :messages="messages"
+      :current-user-id="currentUserId"
+      @message-click="handleMessageClick"
+      @message-options="handleMessageOptions"
+      @message-reaction="handleMessageReaction"
+      ref="messageList"
+    />
 
-    <!-- 메시지 입력 영역 -->
-    <div
-      v-if="isAuthenticated"
-      class="border-t bg-white px-2 py-2 flex items-center gap-2"
-    >
-      <button class="w-10 h-10 flex items-center justify-center text-gray-400">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-      </button>
-      <input
-        v-model="newMessage"
-        @keyup.enter="sendMessage"
-        type="text"
-        placeholder="메시지를 입력하세요..."
-        class="flex-1 bg-gray-50 rounded-full px-4 py-2.5 text-sm focus:outline-none border border-gray-200"
-      />
-      <button
-        @click="sendMessage"
-        :disabled="!isConnected"
-        class="w-10 h-10 flex items-center justify-center text-gray-500"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6"
-          viewBox="0 0 24 24"
-          fill="none"
-        >
-          <path
-            d="M20 12L4 4L6 12L4 20L20 12Z"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-    </div>
+    <!-- 메시지 입력 컴포넌트 -->
+    <ChatInputArea
+      :is-connected="isConnected"
+      :is-authenticated="isAuthenticated"
+      @send-message="sendMessage"
+      @add-action="handleAddAction"
+      ref="inputArea"
+    />
   </div>
 </template>
 
@@ -136,9 +70,19 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { mapGetters } from "vuex";
+import ChatItemInfo from "@/components/chat/ChatItemInfo.vue";
+import ChatMessageList from "@/components/chat/ChatMessageList.vue";
+import ChatInputArea from "@/components/chat/ChatInputArea.vue";
 
 export default {
   name: "ChatRoom",
+
+  components: {
+    ChatItemInfo,
+    ChatMessageList,
+    ChatInputArea,
+  },
+
   props: {
     roomId: {
       type: [String, Number],
@@ -153,7 +97,6 @@ export default {
   data() {
     return {
       messages: [],
-      newMessage: "",
       stompClient: null,
       isConnected: false,
       connectionStatus: "disconnected",
@@ -212,7 +155,7 @@ export default {
         heartbeatOutgoing: 4000,
         connectHeaders: {
           host: "localhost:8080",
-          userId: this.currentUserId?.toString(), // 실제 사용자 ID 추가
+          userId: this.currentUserId?.toString(),
         },
       });
 
@@ -270,7 +213,7 @@ export default {
         // 자신이 보낸 메시지는 이미 messages 배열에 추가되어 있으므로 건너뜀
         if (receivedMessage.senderId !== this.currentUserId) {
           this.messages.push(receivedMessage);
-          this.scrollToBottom();
+          // MessageList 컴포넌트가 자동으로 스크롤 처리
         }
       } catch (error) {
         console.error("[STOMP] 메시지 파싱 에러:", error);
@@ -308,14 +251,11 @@ export default {
       }
     },
 
-    async sendMessage() {
-      if (
-        !this.newMessage.trim() ||
-        !this.isConnected ||
-        !this.isAuthenticated
-      ) {
+    // ChatInputArea에서 메시지 전송 이벤트 받음
+    async sendMessage(messageContent) {
+      if (!messageContent || !this.isConnected || !this.isAuthenticated) {
         console.log("[메시지 전송] 조건 불충족:", {
-          hasMessage: !!this.newMessage.trim(),
+          hasMessage: !!messageContent,
           isConnected: this.isConnected,
           isAuthenticated: this.isAuthenticated,
         });
@@ -325,8 +265,8 @@ export default {
       const message = {
         type: "TALK",
         roomId: this.roomId,
-        senderId: this.currentUserId, // 실제 사용자 ID 사용
-        content: this.newMessage,
+        senderId: this.currentUserId,
+        content: messageContent,
         timestamp: new Date().toISOString(),
         itemId: this.itemId,
       };
@@ -335,10 +275,9 @@ export default {
         // 메시지를 로컬 messages 배열에 먼저 추가
         this.messages.push({
           ...message,
-          senderId: this.currentUserId, // 로컬 표시용 senderId 추가
+          senderId: this.currentUserId,
         });
 
-        // headers 객체를 생성하고, itemId가 있을 경우에만 추가
         const headers = {
           "content-type": "application/json",
           userId: this.currentUserId?.toString(),
@@ -347,9 +286,6 @@ export default {
 
         console.log("전송할 메시지:", message);
         console.log("전송 헤더:", headers);
-        console.log("현재 메시지 수:", this.messages.length);
-        console.log("itemId prop:", this.itemId);
-        console.log("사용자 ID:", this.currentUserId);
 
         await this.stompClient.publish({
           destination: `/app/chat/${this.roomId}`,
@@ -357,14 +293,9 @@ export default {
           headers: headers,
         });
 
-        // 전송 성공 로그
         console.log("메시지 전송 성공");
-
-        this.newMessage = "";
-        this.scrollToBottom();
       } catch (error) {
         console.error("[STOMP] 메시지 전송 실패:", error);
-        console.error("실패한 메시지:", message);
         // 전송 실패시 로컬에 추가한 메시지 제거
         this.messages.pop();
         alert("메시지 전송에 실패했습니다. 다시 시도해주세요.");
@@ -380,7 +311,7 @@ export default {
       const message = {
         type: type,
         roomId: this.roomId,
-        senderId: this.currentUserId, // 실제 사용자 ID 사용
+        senderId: this.currentUserId,
         timestamp: new Date().toISOString(),
       };
 
@@ -392,29 +323,6 @@ export default {
         headers: {
           userId: this.currentUserId?.toString(),
         },
-      });
-    },
-
-    formatTime(timestamp) {
-      if (!timestamp) return "";
-      try {
-        return new Date(timestamp).toLocaleTimeString("ko-KR", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        });
-      } catch (error) {
-        console.error("시간 포맷 에러:", error);
-        return "";
-      }
-    },
-
-    scrollToBottom() {
-      this.$nextTick(() => {
-        const container = this.$refs.messageContainer;
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
       });
     },
 
@@ -436,7 +344,6 @@ export default {
           this.roomId
         );
 
-        // 채팅 기록이 있고, 데이터가 배열이며, 내용이 있는 경우에만 메시지를 표시
         if (
           response &&
           response.data &&
@@ -448,16 +355,50 @@ export default {
             "[채팅 히스토리] 로드 완료:",
             this.messages.length + "개"
           );
-          this.scrollToBottom();
         } else {
-          // 채팅 기록이 없는 경우 빈 배열로 초기화
           this.messages = [];
           console.log("[채팅 히스토리] 기록 없음");
         }
       } catch (error) {
         console.error("채팅 히스토리 로딩 실패:", error);
-        // 에러 발생시에도 빈 배열로 초기화
         this.messages = [];
+      }
+    },
+
+    // 상품 상세 페이지로 이동 (ChatItemInfo에서 이벤트 받음)
+    goToItemDetail(itemId) {
+      if (itemId) {
+        console.log("[라우팅] 상품 상세 페이지로 이동:", itemId);
+        this.$router.push(`/items/${itemId}`);
+      }
+    },
+
+    // 메시지 관련 이벤트 핸들러들
+    handleMessageClick(message) {
+      console.log("[메시지 클릭]", message);
+      // 메시지 클릭 시 동작 (확장 가능)
+    },
+
+    handleMessageOptions(message) {
+      console.log("[메시지 옵션]", message);
+      // 메시지 옵션 메뉴 표시 (확장 가능)
+    },
+
+    handleMessageReaction(data) {
+      console.log("[메시지 반응]", data);
+      // 메시지 반응 처리 (확장 가능)
+    },
+
+    // ChatInputArea 이벤트 핸들러들
+    handleAddAction() {
+      console.log("[추가 액션] 파일 첨부 등");
+      // 파일 첨부 등 추가 기능 (확장 가능)
+    },
+
+    // 외부에서 입력창 포커스 (유틸리티)
+    focusInput() {
+      if (this.$refs.inputArea) {
+        this.$refs.inputArea.focus();
       }
     },
   },
@@ -481,7 +422,6 @@ export default {
   },
 
   mounted() {
-    // 마운트 후 로그인 정보 재확인
     console.log("=== ChatRoom 마운트 완료 ===");
     console.log("인증 상태:", this.isAuthenticated);
     console.log("사용자 ID:", this.currentUserId);
@@ -495,31 +435,22 @@ export default {
       this.sendSystemMessage("LEAVE");
       setTimeout(() => {
         this.stompClient.deactivate();
-      }, 100); // 시스템 메시지 전송 후 연결 해제
+      }, 100);
     } else if (this.stompClient) {
       this.stompClient.deactivate();
     }
   },
 
   watch: {
-    messages: {
-      deep: true,
-      handler() {
-        this.scrollToBottom();
-      },
-    },
-
     // 로그인 상태 변경 감지
     isAuthenticated(newVal, oldVal) {
       console.log("[Auth 상태 변경]", { from: oldVal, to: newVal });
 
       if (newVal && !oldVal) {
-        // 로그인됨 - 채팅 기능 활성화
         console.log("로그인됨 - 채팅 기능 활성화");
         this.loadChatHistory();
         this.initWebSocket();
       } else if (!newVal && oldVal) {
-        // 로그아웃됨 - 채팅 기능 비활성화
         console.log("로그아웃됨 - 채팅 기능 비활성화");
         if (this.stompClient) {
           this.stompClient.deactivate();
@@ -533,7 +464,6 @@ export default {
     currentUserId(newVal, oldVal) {
       if (newVal !== oldVal && this.isAuthenticated) {
         console.log("[사용자 변경]", { from: oldVal, to: newVal });
-        // 기존 연결 해제 후 새로운 사용자로 재연결
         if (this.stompClient) {
           this.stompClient.deactivate();
         }
