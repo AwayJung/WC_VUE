@@ -1,22 +1,24 @@
 <template>
   <div>
-    <MarketHeader />
+    <MarketHeader :isLoggedIn="isAuthenticated" />
 
     <div class="container mx-auto px-4 py-6 max-w-5xl">
       <div class="mb-6">
         <div class="inline-flex rounded-md shadow-sm">
           <button
-            class="px-5 py-2 text-sm font-medium bg-gray-200 text-gray-800 rounded-l-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            class="px-5 py-2 text-sm font-medium bg-orange-500 text-white rounded-l-lg hover:bg-orange-600 focus:outline-none"
           >
-            전체
+            관심목록
           </button>
           <button
-            class="px-5 py-2 text-sm font-medium bg-white text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            @click="$router.push('/items')"
+            class="px-5 py-2 text-sm font-medium bg-white text-gray-600 hover:bg-gray-100 focus:outline-none"
           >
             물품 목록
           </button>
           <button
-            class="px-5 py-2 text-sm font-medium bg-white text-gray-600 rounded-r-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            @click="$router.push('/mypage')"
+            class="px-5 py-2 text-sm font-medium bg-white text-gray-600 rounded-r-lg hover:bg-gray-100 focus:outline-none"
           >
             마이 페이지
           </button>
@@ -43,7 +45,6 @@
           </div>
         </div>
 
-        <!-- 찜 목록 -->
         <div
           v-else
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -152,11 +153,12 @@ export default {
     console.log("찜한 상품 목록:", this.likedItems);
     console.log("======================================");
 
-    // 로그인 상태 체크 후 처리
+    //  로그인 상태 체크 후 처리
     this.checkAuthAndLoad();
   },
 
   mounted() {
+    // 마운트 후 데이터 확인
     console.log("=== ItemLikesPage 마운트 완료 ===");
     console.log("인증 상태:", this.isAuthenticated);
     console.log("사용자 ID:", this.currentUserId);

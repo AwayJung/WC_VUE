@@ -21,8 +21,6 @@
               class="text-base text-gray-400 font-medium hover:text-orange-500"
               >인기 매물</router-link
             >
-            <a href="#" class="text-base text-gray-400">동네 업체</a>
-            <a href="#" class="text-base text-gray-400">동네 생활</a>
           </div>
         </div>
 
