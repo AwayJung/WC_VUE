@@ -32,57 +32,232 @@
             </svg>
           </button>
 
-          <!-- 메뉴 버튼 -->
-          <button class="p-2" v-if="!isLoggedIn" @click="$emit('toggle-menu')">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <!-- 메뉴 버튼 (미로그인 시) -->
+          <div class="relative" v-if="!isLoggedIn">
+            <button
+              class="p-2"
+              @click="toggleGuestMenu"
+              :class="{ 'bg-gray-100 rounded': showGuestMenu }"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
 
-          <!-- 공유  버튼 (로그인 시) -->
-          <button class="p-2" v-if="isLoggedIn" @click="shareContent">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <!-- 미로그인 드롭다운 메뉴 -->
+            <div
+              v-if="showGuestMenu"
+              class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border py-2 z-50"
+              @click.stop
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-              />
-            </svg>
-          </button>
+              <router-link
+                to="/login"
+                class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                @click="closeAllMenus"
+              >
+                <svg
+                  class="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                  />
+                </svg>
+                로그인
+              </router-link>
+              <router-link
+                to="/signup"
+                class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                @click="closeAllMenus"
+              >
+                <svg
+                  class="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                  />
+                </svg>
+                회원가입
+              </router-link>
+              <div class="border-t border-gray-100 my-1"></div>
 
-          <!-- 메뉴 버튼 (로그인 시) -->
-          <button class="p-2" v-if="isLoggedIn" @click="$emit('toggle-menu')">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-              />
-            </svg>
-          </button>
+              <a
+                href="notice"
+                class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                @click="closeAllMenus"
+              >
+                <svg
+                  class="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                공지사항
+              </a>
+            </div>
+          </div>
+
+          <!-- 로그인 시 버튼들 -->
+          <div v-if="isLoggedIn" class="flex items-center space-x-3">
+            <!-- 공유 버튼 -->
+            <button class="p-2" @click="shareContent">
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                />
+              </svg>
+            </button>
+
+            <!-- 사용자 메뉴 버튼 -->
+            <div class="relative">
+              <button
+                class="p-2"
+                @click="toggleUserMenu"
+                :class="{ 'bg-gray-100 rounded': showUserMenu }"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                  />
+                </svg>
+              </button>
+
+              <!-- 사용자 드롭다운 메뉴 -->
+              <div
+                v-if="showUserMenu"
+                class="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border py-2 z-50"
+                @click.stop
+              >
+                <router-link
+                  to="/mypage"
+                  class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  @click="closeAllMenus"
+                >
+                  <svg
+                    class="w-5 h-5 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                  내 프로필
+                </router-link>
+                <router-link
+                  to="/items/create"
+                  class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  @click="closeAllMenus"
+                >
+                  <svg
+                    class="w-5 h-5 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  상품 등록
+                </router-link>
+                <router-link
+                  to="/chat"
+                  class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                  @click="closeAllMenus"
+                >
+                  <svg
+                    class="w-5 h-5 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  채팅
+                </router-link>
+                <div class="border-t border-gray-100 my-1"></div>
+
+                <div class="border-t border-gray-100 my-1"></div>
+                <button
+                  @click="handleLogout"
+                  class="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                >
+                  <svg
+                    class="w-5 h-5 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
+                  로그아웃
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -99,6 +274,13 @@
 
     <!-- 실제 헤더 높이만큼 공간 확보-->
     <div ref="headerSpacer" class="w-full"></div>
+
+    <!-- 메뉴 바깥 클릭 시 닫기 위한 오버레이 -->
+    <div
+      v-if="showGuestMenu || showUserMenu"
+      class="fixed inset-0 z-40"
+      @click="closeAllMenus"
+    ></div>
   </div>
 </template>
 
@@ -121,31 +303,29 @@ export default {
       showSearchBar: false,
       currentSearchQuery: "",
       headerObserver: null,
+
+      // 메뉴 상태
+      showGuestMenu: false,
+      showUserMenu: false,
     };
   },
   mounted() {
-    // ResizeObserver 설정
     this.setupHeaderObserver();
-
-    // 초기 높이 설정
     this.$nextTick(() => {
       this.updateHeaderHeight();
     });
   },
   beforeDestroy() {
-    // ResizeObserver 정리
     if (this.headerObserver) {
       this.headerObserver.disconnect();
     }
   },
   watch: {
-    // 검색창 상태 변경 감시
     showSearchBar() {
       this.$nextTick(() => {
         this.updateHeaderHeight();
       });
     },
-    // 검색어 변경 감시
     currentSearchQuery() {
       this.$nextTick(() => {
         this.updateHeaderHeight();
@@ -153,6 +333,7 @@ export default {
     },
   },
   methods: {
+    // 기존 메서드들...
     setupHeaderObserver() {
       if (typeof ResizeObserver !== "undefined") {
         this.headerObserver = new ResizeObserver((entries) => {
@@ -163,7 +344,6 @@ export default {
           }
         });
 
-        // 헤더 요소 관찰 시작
         const headerEl = this.$el.querySelector("header");
         if (headerEl) {
           this.headerObserver.observe(headerEl);
@@ -172,10 +352,7 @@ export default {
     },
 
     shareContent() {
-      // 현재 페이지 URL 가져오기
       const url = window.location.href;
-
-      // 공유 기능 지원 확인
       if (navigator.share) {
         navigator
           .share({
@@ -186,7 +363,6 @@ export default {
             console.error("공유하기 에러:", error);
           });
       } else {
-        // 기본 클립보드 복사 대체 기능
         navigator.clipboard
           .writeText(url)
           .then(() => {
@@ -198,7 +374,6 @@ export default {
       }
     },
 
-    // 헤더 높이 업데이트
     updateHeaderHeight() {
       const headerEl = this.$el.querySelector("header");
       const spacerEl = this.$refs.headerSpacer;
@@ -210,33 +385,23 @@ export default {
       }
     },
 
-    // 검색창 토글 (보이기/숨기기)
     toggleSearchBar() {
       this.showSearchBar = !this.showSearchBar;
-
-      // 검색창을 닫을 때만 검색어 초기화 및 이벤트 발생
       if (!this.showSearchBar) {
         this.hideSearchBar();
       }
     },
 
-    // 검색창 숨기기
     hideSearchBar() {
       if (this.showSearchBar) {
         this.showSearchBar = false;
       }
-
-      // 검색어 초기화
       this.currentSearchQuery = "";
-
-      // 검색어 초기화 이벤트 발생 (라우터 관련 코드는 부모에서 처리 안 하도록 특별 이벤트 발생)
       this.$emit("search-clear-no-route");
     },
 
     onSearch(query) {
       this.currentSearchQuery = query;
-
-      // 현재 라우트와 같은 경우 NavigationDuplicated 에러 방지
       const currentQuery = this.$route.query.q || "";
       if (currentQuery === query) {
         return;
@@ -258,9 +423,31 @@ export default {
 
     onSearchClear() {
       this.currentSearchQuery = "";
-
-      // 부모 컴포넌트에서는 이 이벤트를 받아서 라우터 조작을 하지 않도록 안내 필요
       this.$emit("search-clear-no-route");
+    },
+
+    // 새로운 메뉴 메서드들
+    toggleGuestMenu() {
+      this.showGuestMenu = !this.showGuestMenu;
+      this.showUserMenu = false;
+    },
+
+    toggleUserMenu() {
+      this.showUserMenu = !this.showUserMenu;
+      this.showGuestMenu = false;
+    },
+
+    closeAllMenus() {
+      this.showGuestMenu = false;
+      this.showUserMenu = false;
+    },
+
+    handleLogout() {
+      this.closeAllMenus();
+      // 로그아웃 로직 (Vuex store 등)
+      this.$store.dispatch("auth/logout");
+      this.$router.push("/");
+      alert("로그아웃되었습니다.");
     },
   },
 };
