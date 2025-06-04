@@ -73,8 +73,9 @@
           >
             {{ getItemTitle(item) }}
           </h4>
+          <!-- 🟢 핵심 변경: formatDate → formatTimeAgo -->
           <p class="text-gray-500 mb-2">
-            {{ formatDate(getItemCreatedAt(item)) }}
+            {{ formatTimeAgo(getItemCreatedAt(item)) }}
           </p>
           <p class="text-xl font-bold text-orange-500">
             {{ formatPrice(getItemPrice(item)) }}원
@@ -133,7 +134,7 @@
       </div>
     </div>
 
-    <!-- 빈 상태 -->
+    <!-- 🎯 빈 상태 -->
     <div v-else class="text-center py-16">
       <svg
         class="w-24 h-24 text-gray-300 mx-auto mb-6"
@@ -166,9 +167,14 @@
 
 <script>
 import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
+import { timeUtilsMixin } from "@/utils/timeUtils";
 
 export default {
   name: "SalesTab",
+
+  // timeUtilsMixin 사용
+  mixins: [timeUtilsMixin],
+
   props: {
     salesData: {
       type: Array,
@@ -179,10 +185,10 @@ export default {
       default: "all",
     },
   },
+
   emits: ["filter-change", "create-item", "view-all-sales"],
 
   computed: {
-    // 처음 4개 상품만 표시
     displayedItems() {
       return this.salesData.slice(0, 4);
     },
@@ -206,7 +212,7 @@ export default {
       this.$router.push(`/items/${itemId}`);
     },
 
-    // 아이템 데이터 구조에 맞게 값 추출하는 헬퍼 메서드들
+    // 데이터 추출 헬퍼 메서드들
     getItemId(item) {
       return item.itemId || (item.data && item.data.itemId) || item.id;
     },
@@ -245,7 +251,7 @@ export default {
       return item.viewCount || (item.data && item.data.viewCount) || 0;
     },
 
-    // 이미지 로딩 이벤트 핸들러
+    // 이미지 관련
     handleImageError(event) {
       handleImageError(event);
     },
@@ -254,6 +260,7 @@ export default {
       console.log("이미지 로딩 성공:", event.target.src);
     },
 
+    // 상태 관련
     getStatusClass(status) {
       const classes = {
         selling: "bg-green-100 text-green-800",
@@ -274,20 +281,6 @@ export default {
 
     formatPrice(price) {
       return price ? price.toLocaleString() : "0";
-    },
-
-    formatDate(dateString) {
-      if (!dateString) return "";
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffTime = Math.abs(now - date);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 1) return "오늘";
-      if (diffDays === 2) return "어제";
-      if (diffDays <= 7) return `${diffDays - 1}일 전`;
-
-      return `${date.getMonth() + 1}월 ${date.getDate()}일`;
     },
   },
 };

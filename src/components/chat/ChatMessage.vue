@@ -10,6 +10,12 @@
             : 'bg-white text-gray-900 shadow-sm border border-gray-100',
         ]"
       >
+        <!-- 🔍 디버깅용 표시 -->
+        <div v-if="true" class="text-xs opacity-50 mb-1">
+          {{ isOwnMessage ? "내 메시지 (우측)" : "상대방 메시지 (좌측)" }} - ID:
+          {{ message.senderId }}
+        </div>
+
         <!-- 메시지 내용 -->
         <p class="text-base leading-6 break-words">{{ message.content }}</p>
       </div>
@@ -46,9 +52,40 @@ export default {
   },
 
   computed: {
-    // 자신의 메시지인지 확인
+    // 자신의 메시지인지 확인 (타입 안전 비교)
     isOwnMessage() {
-      return this.message.senderId === this.currentUserId;
+      // 더 안전한 비교 - null/undefined/0 체크 포함
+      const messageSenderId = this.message?.senderId;
+      const currentUserId = this.currentUserId;
+
+      // currentUserId가 유효하지 않으면 false
+      if (currentUserId == null || currentUserId === 0) {
+        console.log("[ChatMessage] currentUserId 무효:", currentUserId);
+        return false;
+      }
+
+      // messageSenderId가 유효하지 않으면 false
+      if (messageSenderId == null) {
+        console.log("[ChatMessage] messageSenderId 무효:", messageSenderId);
+        return false;
+      }
+
+      // 문자열로 변환하여 비교 (더 안전)
+      const messageId = String(messageSenderId);
+      const userId = String(currentUserId);
+
+      // 🔍 안전 비교 로그
+      const isOwn = messageId === userId;
+      console.log("[ChatMessage 안전 비교]", {
+        messageContent: this.message.content,
+        messageSenderId,
+        messageId,
+        currentUserId,
+        userId,
+        isOwn,
+      });
+
+      return isOwn;
     },
   },
 

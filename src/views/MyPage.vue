@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 flex flex-col">
     <TheHeader />
 
-    <div class="max-w-6xl mx-auto px-4 py-8">
+    <main class="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
       <ProfileCard @edit-profile="handleEditProfile" />
 
       <!-- 통계 카드들 -->
@@ -49,7 +49,8 @@
           <SupportTab v-if="activeTab === 'support'" />
         </div>
       </div>
-    </div>
+    </main>
+    <TheFooter />
 
     <!-- 프로필 수정 모달 -->
     <ProfileEditModal
@@ -69,6 +70,7 @@ import ProfileEditModal from "@/components/mypage/ProfileEditModal.vue";
 import SalesTab from "@/components/mypage/SalesTab.vue";
 import LikesTab from "@/components/mypage/LikesTab.vue";
 import SupportTab from "@/components/mypage/SupportTab.vue";
+import TheFooter from "@/components/layout/TheFooter.vue";
 
 export default {
   name: "MyPage",
@@ -80,6 +82,7 @@ export default {
     SalesTab,
     LikesTab,
     SupportTab,
+    TheFooter,
   },
 
   data() {
@@ -199,19 +202,6 @@ export default {
       try {
         console.log("프로필 저장:", profileData);
 
-        // 실제 API 호출 예시
-        // const formData = new FormData();
-        // formData.append('nickname', profileData.nickname);
-        // formData.append('bio', profileData.bio);
-        // if (profileData.profileImage) {
-        //   formData.append('profileImage', profileData.profileImage);
-        // }
-        //
-        // const response = await userApi.updateProfile(formData);
-        //
-        // // Vuex 스토어 업데이트
-        // this.$store.commit('auth/UPDATE_USER_PROFILE', response.data);
-
         this.showProfileEdit = false;
         alert("프로필이 수정되었습니다.");
       } catch (error) {
@@ -227,7 +217,6 @@ export default {
         // Vuex store에서 아이템 가져오기
         await this.fetchItems();
 
-        // store에서 데이터 구조에 맞게 가져오기
         const items = this.$store.state.item.items;
         if (items && items.data) {
           if (Array.isArray(items.data)) {
@@ -269,10 +258,6 @@ export default {
           this.userStats.likes = this.likedItems.length;
         }
 
-        // 실제 API 호출 예시
-        // const response = await userApi.getUserStats(this.currentUser.userId);
-        // this.userStats = response.data;
-
         console.log("현재 통계:", this.userStats);
       } catch (error) {
         console.error("사용자 통계 조회 실패:", error);
@@ -303,13 +288,6 @@ export default {
     } catch (error) {
       console.error("초기 데이터 로딩 실패:", error);
     }
-  },
-
-  mounted() {
-    console.log("=== MyPage 마운트 완료 ===");
-    console.log("현재 탭:", this.activeTab);
-    console.log("찜한 상품 수:", this.likedItems?.length || 0);
-    console.log("============================");
   },
 };
 </script>

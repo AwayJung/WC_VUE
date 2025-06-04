@@ -110,7 +110,20 @@ export default {
 
     // 현재 사용자 ID
     currentUserId() {
-      return this.currentUser?.userId || null;
+      const userId = this.currentUser?.userId;
+
+      // 🔍 현재 사용자 ID 타입 확인
+      console.log("[현재 사용자 ID]", {
+        userId,
+        type: typeof userId,
+        currentUser: this.currentUser,
+        isAuthenticated: this.isAuthenticated,
+      });
+
+      // userId가 유효하지 않으면 null 반환 (0 대신)
+      return userId !== null && userId !== undefined && userId !== 0
+        ? userId
+        : null;
     },
 
     connectionStatusClass() {
@@ -210,6 +223,15 @@ export default {
         const receivedMessage = JSON.parse(message.body);
         console.log("[STOMP] 메시지 수신:", receivedMessage);
 
+        // 🔍 수신된 메시지 senderId 타입 확인
+        console.log("[수신 메시지 타입 확인]", {
+          receivedSenderId: receivedMessage.senderId,
+          receivedSenderIdType: typeof receivedMessage.senderId,
+          currentUserId: this.currentUserId,
+          currentUserIdType: typeof this.currentUserId,
+          같은지: receivedMessage.senderId === this.currentUserId,
+        });
+
         // 자신이 보낸 메시지는 이미 messages 배열에 추가되어 있으므로 건너뜀
         if (receivedMessage.senderId !== this.currentUserId) {
           this.messages.push(receivedMessage);
@@ -276,6 +298,13 @@ export default {
         this.messages.push({
           ...message,
           senderId: this.currentUserId,
+        });
+
+        // 🔍 전송하는 메시지 senderId 타입 확인
+        console.log("[전송 메시지 타입 확인]", {
+          senderId: message.senderId,
+          senderIdType: typeof message.senderId,
+          content: message.content,
         });
 
         const headers = {
@@ -350,7 +379,25 @@ export default {
           Array.isArray(response.data) &&
           response.data.length > 0
         ) {
-          this.messages = response.data;
+          // 🔧 히스토리 메시지들의 senderId를 숫자로 강제 변환
+          this.messages = response.data.map((msg) => ({
+            ...msg,
+            senderId: Number(msg.senderId), // 강제로 숫자 변환
+          }));
+
+          // 🔍 히스토리 메시지들의 senderId 타입 확인
+          console.log("[채팅 히스토리] 타입 변환 후 확인:");
+          this.messages.forEach((msg, index) => {
+            console.log(`히스토리 메시지 ${index}:`, {
+              content: msg.content,
+              senderId: msg.senderId,
+              senderIdType: typeof msg.senderId,
+              currentUserId: this.currentUserId,
+              currentUserIdType: typeof this.currentUserId,
+              비교결과: msg.senderId === this.currentUserId,
+            });
+          });
+
           console.log(
             "[채팅 히스토리] 로드 완료:",
             this.messages.length + "개"
