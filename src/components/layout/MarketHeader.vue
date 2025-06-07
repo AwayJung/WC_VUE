@@ -15,8 +15,8 @@
         </div>
 
         <div class="flex items-center space-x-3">
-          <!-- 검색 버튼 -->
-          <button class="p-2" @click="toggleSearchBar">
+          <!-- 검색 버튼 (조건부 표시) -->
+          <button v-if="showSearchButton" class="p-2" @click="toggleSearchBar">
             <svg
               class="w-6 h-6"
               fill="none"
@@ -127,8 +127,8 @@
 
           <!-- 로그인 시 버튼들 -->
           <div v-if="isLoggedIn" class="flex items-center space-x-3">
-            <!-- 공유 버튼 -->
-            <button class="p-2" @click="shareContent">
+            <!-- 공유 버튼 (조건부 표시) -->
+            <button v-if="showShareButton" class="p-2" @click="shareContent">
               <svg
                 class="w-6 h-6"
                 fill="none"
@@ -296,6 +296,14 @@ export default {
     isLoggedIn: {
       type: Boolean,
       default: false,
+    },
+    showSearchButton: {
+      type: Boolean,
+      default: true,
+    },
+    showShareButton: {
+      type: Boolean,
+      default: true,
     },
   },
   data() {

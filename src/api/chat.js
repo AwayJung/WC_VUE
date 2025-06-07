@@ -20,3 +20,7 @@ export const fetchMessages = (roomId) => {
 export const createChatRoom = (itemId, userId) => {
   return chatApi.post(`/api/chat/create-room`, { itemId, userId });
 };
+
+export const deleteChatRoom = (roomId) => {
+  return chatApi.delete(`/api/chat/rooms/${roomId}`);
+};

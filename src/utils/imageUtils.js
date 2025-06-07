@@ -1,5 +1,3 @@
-// utils/imageUtils.js
-
 /**
  * 이미지 URL을 절대 경로로 변환하는 유틸리티 함수
  */

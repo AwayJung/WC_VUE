@@ -73,7 +73,7 @@
           >
             {{ getItemTitle(item) }}
           </h4>
-          <!-- 🟢 핵심 변경: formatDate → formatTimeAgo -->
+
           <p class="text-gray-500 mb-2">
             {{ formatTimeAgo(getItemCreatedAt(item)) }}
           </p>
