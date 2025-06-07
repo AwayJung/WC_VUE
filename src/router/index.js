@@ -11,6 +11,7 @@ import ItemDetailPage from "@/views/Item/ItemDetailPage.vue";
 import ItemUpdatePage from "@/views/Item/ItemUpdatePage.vue";
 import ItemLikesPage from "@/views/Item/ItemLikesPage.vue";
 import MyPage from "@/views/MyPage.vue";
+import Notice from "@/views/Notice.vue";
 Vue.use(VueRouter);
 
 const routes = [
@@ -79,6 +80,11 @@ const routes = [
     path: "/favorites",
     name: "ItemLikes",
     component: ItemLikesPage,
+  },
+  {
+    path: '/notice',
+    name: 'Notice',
+    component: Notice,
   },
 ];
 
