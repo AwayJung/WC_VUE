@@ -1,56 +1,11 @@
 <template>
   <div class="flex flex-col h-screen bg-white">
     <!-- 헤더 -->
-    <div class="px-4 py-3 flex items-center justify-between border-b">
-      <h1 class="text-xl font-bold">채팅</h1>
-      <div class="flex items-center space-x-4">
-        <button class="p-2">
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-            />
-          </svg>
-        </button>
-        <button class="p-2">
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-            />
-          </svg>
-        </button>
-        <button class="p-2">
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
+    <MarketHeader
+      :isLoggedIn="isAuthenticated"
+      :showSearchButton="false"
+      :showShareButton="false"
+    />
 
     <!-- 로그인된 사용자만 채팅 목록 표시 -->
     <div v-if="isAuthenticated">
@@ -177,6 +132,7 @@
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
 import BottomNavigation from "@/components/layout/BottomNavigation.vue";
+import MarketHeader from "@/components/layout/MarketHeader.vue";
 import { timeUtilsMixin } from "@/utils/timeUtils";
 
 export default {
@@ -184,6 +140,7 @@ export default {
   mixins: [timeUtilsMixin],
   components: {
     BottomNavigation,
+    MarketHeader,
   },
   data() {
     return {

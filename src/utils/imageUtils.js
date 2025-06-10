@@ -67,22 +67,15 @@ export const getImageUrl = (imagePath) => {
 };
 
 /**
- * 플레이스홀더 이미지 URL 반환
+ * 플레이스홀더 이미지 URL 반환 (로컬 이미지만 사용)
  * @returns {string} - 플레이스홀더 이미지 URL
  */
 export const getPlaceholderImage = () => {
-  try {
-    // 로컬 placeholder 이미지 사용
-    return require("@/assets/images/default-placeholder.png");
-  } catch (error) {
-    console.warn("로컬 placeholder 이미지 없음, 온라인 placeholder 사용");
-    // 로컬 이미지가 없으면 온라인 placeholder 사용
-    return "https://via.placeholder.com/300x200?text=상품이미지";
-  }
+  return require("@/assets/images/default-placeholder.png");
 };
 
 /**
- * 이미지 로드 에러 처리 핸들러
+ * 이미지 로드 에러 처리 핸들러 (로컬 이미지만 사용)
  * @param {Event} event - 이미지 로드 에러 이벤트
  */
 export const handleImageError = (event) => {
@@ -95,13 +88,7 @@ export const handleImageError = (event) => {
 
   console.warn("이미지 로드 실패:", img.src);
 
-  try {
-    // 로컬 placeholder 이미지로 변경
-    img.src = require("@/assets/images/default-placeholder.png");
-    img.alt = "이미지 없음";
-  } catch (error) {
-    console.error("로컬 placeholder 이미지 로드 실패:", error);
-    // 로컬 이미지도 실패하면 온라인 placeholder 사용
-    img.src = "https://via.placeholder.com/300x200?text=이미지없음";
-  }
+  // 로컬 placeholder 이미지로 변경
+  img.src = require("@/assets/images/default-placeholder.png");
+  img.alt = "이미지 없음";
 };

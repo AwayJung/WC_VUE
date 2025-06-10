@@ -2,8 +2,8 @@
   <!-- 채팅 메시지 영역 -->
   <div class="flex-1 overflow-y-auto bg-gray-50" ref="messageContainer">
     <ChatMessage
-      v-for="message in messages"
-      :key="message.id || message.timestamp"
+      v-for="(message, index) in messages"
+      :key="`msg-${currentUserId}-${message.id || message.timestamp}-${index}`"
       :message="message"
       :current-user-id="currentUserId"
       :show-status="true"
@@ -46,11 +46,28 @@ export default {
         this.scrollToBottom();
       },
     },
+
+    // currentUserId 변경 시 강제 리렌더링을 위한 감시자
+    currentUserId(newVal, oldVal) {
+      console.log("[ChatMessageList] currentUserId 변경:", {
+        from: oldVal,
+        to: newVal,
+      });
+      // Vue의 $forceUpdate로 강제 리렌더링
+      this.$nextTick(() => {
+        this.$forceUpdate();
+      });
+    },
   },
 
   mounted() {
     // 컴포넌트 마운트 후 스크롤을 맨 아래로
     this.scrollToBottom();
+
+    console.log("[ChatMessageList] 마운트됨:", {
+      currentUserId: this.currentUserId,
+      messagesCount: this.messages.length,
+    });
   },
 
   methods: {

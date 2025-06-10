@@ -1,7 +1,12 @@
 <template>
   <div class="flex flex-col h-screen bg-white">
+    <MarketHeader
+      :isLoggedIn="isAuthenticated"
+      :showSearchButton="false"
+      :showShareButton="false"
+    />
     <!-- 헤더 -->
-    <div class="bg-white px-4 py-3 flex items-center border-b">
+    <!-- <div class="bg-white px-4 py-3 flex items-center border-b">
       <button @click="goBack" class="text-gray-800 -ml-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -19,13 +24,21 @@
         </svg>
       </button>
       <h2 class="ml-2 text-lg">채팅방</h2>
-    </div>
+    </div> -->
 
     <!-- 상품 정보 컴포넌트 -->
-    <ChatItemInfo
+    <!-- <ChatItemInfo
       :item-id="itemId"
       :is-authenticated="isAuthenticated"
       @item-click="goToItemDetail"
+    /> -->
+
+    <ChatItemInfo
+      :item-id="itemId"
+      :is-authenticated="isAuthenticated"
+      @item-click="handleItemClick"
+      @item-loaded="handleItemLoaded"
+      @go-back="goBack"
     />
 
     <!-- 로그인 필요 메시지 -->
@@ -44,6 +57,16 @@
       </div>
     </div>
 
+    <!-- 사용자 정보 로딩 중 -->
+    <div
+      v-else-if="isAuthenticated && !currentUserId"
+      class="flex justify-center items-center h-full"
+    >
+      <div class="text-center">
+        <p class="text-gray-500 mb-4">사용자 정보를 불러오는 중...</p>
+      </div>
+    </div>
+
     <!-- 채팅 메시지 목록 컴포넌트 -->
     <ChatMessageList
       v-else
@@ -57,6 +80,7 @@
 
     <!-- 메시지 입력 컴포넌트 -->
     <ChatInputArea
+      v-if="isAuthenticated && currentUserId"
       :is-connected="isConnected"
       :is-authenticated="isAuthenticated"
       @send-message="sendMessage"
@@ -73,6 +97,7 @@ import { mapGetters } from "vuex";
 import ChatItemInfo from "@/components/chat/ChatItemInfo.vue";
 import ChatMessageList from "@/components/chat/ChatMessageList.vue";
 import ChatInputArea from "@/components/chat/ChatInputArea.vue";
+import MarketHeader from "@/components/layout/MarketHeader.vue";
 
 export default {
   name: "ChatRoom",
@@ -81,6 +106,7 @@ export default {
     ChatItemInfo,
     ChatMessageList,
     ChatInputArea,
+    MarketHeader,
   },
 
   props: {
@@ -108,22 +134,21 @@ export default {
   computed: {
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
 
-    // 현재 사용자 ID
+    // 현재 사용자 ID - 순수 computed (side effect 없음)
     currentUserId() {
       const userId = this.currentUser?.userId;
 
-      // 🔍 현재 사용자 ID 타입 확인
-      console.log("[현재 사용자 ID]", {
-        userId,
-        type: typeof userId,
-        currentUser: this.currentUser,
-        isAuthenticated: this.isAuthenticated,
-      });
+      if (userId === null || userId === undefined || userId === 0) {
+        console.log("[사용자 검증] userId가 없음:", userId);
+        return null;
+      }
 
-      // userId가 유효하지 않으면 null 반환 (0 대신)
-      return userId !== null && userId !== undefined && userId !== 0
-        ? userId
-        : null;
+      return userId;
+    },
+
+    // 사용자 정보 로딩 완료 여부
+    isUserLoaded() {
+      return this.isAuthenticated && this.currentUserId !== null;
     },
 
     connectionStatusClass() {
@@ -137,13 +162,61 @@ export default {
 
   methods: {
     goBack() {
+      console.log("[ChatRoom] 뒤로가기");
       this.$router.back();
+    },
+
+    // 상품 정보 로드 완료 핸들러
+    handleItemLoaded(itemData) {
+      console.log("[ChatRoom] 상품 정보 로드됨:", itemData);
+      // 필요시 상품 정보 저장
+      this.itemInfo = itemData;
+    },
+
+    // 상품 클릭 핸들러
+    handleItemClick(itemId) {
+      console.log("[ChatRoom] 상품 클릭:", itemId);
+      if (itemId) {
+        this.$router.push(`/items/${itemId}`);
+      }
+    },
+
+    // 🆕 사용자 정보 로딩 대기 메서드
+    async waitForUserInfo() {
+      // 사용자 정보가 이미 있으면 바로 리턴
+      if (this.currentUserId) {
+        console.log("[사용자 정보] 이미 로드됨:", this.currentUserId);
+        return;
+      }
+
+      console.log("[사용자 정보] 로딩 대기 중...");
+
+      // 최대 5초 동안 사용자 정보 로딩 대기
+      const maxWaitTime = 5000;
+      const checkInterval = 100;
+      let waitedTime = 0;
+
+      return new Promise((resolve, reject) => {
+        const checkUser = () => {
+          if (this.currentUserId) {
+            console.log("[사용자 정보] 로드 완료:", this.currentUserId);
+            resolve();
+          } else if (waitedTime >= maxWaitTime) {
+            console.error("[사용자 정보] 로딩 타임아웃");
+            reject(new Error("사용자 정보 로딩 타임아웃"));
+          } else {
+            waitedTime += checkInterval;
+            setTimeout(checkUser, checkInterval);
+          }
+        };
+        checkUser();
+      });
     },
 
     initWebSocket() {
       // 로그인되지 않은 경우 WebSocket 연결하지 않음
-      if (!this.isAuthenticated) {
-        console.log("[WebSocket] 로그인되지 않아 연결하지 않음");
+      if (!this.isAuthenticated || !this.currentUserId) {
+        console.log("[WebSocket] 연결 조건 불충족");
         return;
       }
 
@@ -168,7 +241,7 @@ export default {
         heartbeatOutgoing: 4000,
         connectHeaders: {
           host: "localhost:8080",
-          userId: this.currentUserId?.toString(),
+          userId: this.currentUserId.toString(),
         },
       });
 
@@ -210,7 +283,7 @@ export default {
         this.handleIncomingMessage,
         {
           id: `chat-sub-${this.roomId}`,
-          userId: this.currentUserId?.toString(),
+          userId: this.currentUserId.toString(),
         }
       );
 
@@ -275,11 +348,17 @@ export default {
 
     // ChatInputArea에서 메시지 전송 이벤트 받음
     async sendMessage(messageContent) {
-      if (!messageContent || !this.isConnected || !this.isAuthenticated) {
+      if (
+        !messageContent ||
+        !this.isConnected ||
+        !this.isAuthenticated ||
+        !this.currentUserId
+      ) {
         console.log("[메시지 전송] 조건 불충족:", {
           hasMessage: !!messageContent,
           isConnected: this.isConnected,
           isAuthenticated: this.isAuthenticated,
+          hasUserId: !!this.currentUserId,
         });
         return;
       }
@@ -289,7 +368,7 @@ export default {
         roomId: this.roomId,
         senderId: this.currentUserId,
         content: messageContent,
-        timestamp: new Date().toISOString(),
+        sentTime: new Date().toISOString(),
         itemId: this.itemId,
       };
 
@@ -309,7 +388,7 @@ export default {
 
         const headers = {
           "content-type": "application/json",
-          userId: this.currentUserId?.toString(),
+          userId: this.currentUserId.toString(),
           itemId: this.itemId?.toString() || this.$route.query.itemId,
         };
 
@@ -332,7 +411,7 @@ export default {
     },
 
     sendSystemMessage(type) {
-      if (!this.isConnected || !this.isAuthenticated) {
+      if (!this.isConnected || !this.isAuthenticated || !this.currentUserId) {
         console.log("[시스템 메시지] 전송 조건 불충족");
         return;
       }
@@ -350,7 +429,7 @@ export default {
         destination: `/app/chat/${this.roomId}`,
         body: JSON.stringify(message),
         headers: {
-          userId: this.currentUserId?.toString(),
+          userId: this.currentUserId.toString(),
         },
       });
     },
@@ -362,10 +441,17 @@ export default {
         return;
       }
 
+      // 🔧 사용자 ID 재확인
+      if (!this.currentUserId) {
+        console.warn("[채팅 히스토리] 사용자 ID 없음 - 히스토리 로딩 중단");
+        this.messages = [];
+        return;
+      }
+
       try {
         console.log("[채팅 히스토리] 로드 시작:", {
           roomId: this.roomId,
-          userId: this.currentUserId,
+          userId: this.currentUserId, // 이제 안전하게 존재함
         });
 
         const response = await this.$store.dispatch(
@@ -382,20 +468,23 @@ export default {
           // 🔧 히스토리 메시지들의 senderId를 숫자로 강제 변환
           this.messages = response.data.map((msg) => ({
             ...msg,
-            senderId: Number(msg.senderId), // 강제로 숫자 변환
+            senderId: Number(msg.senderId),
           }));
 
-          // 🔍 히스토리 메시지들의 senderId 타입 확인
-          console.log("[채팅 히스토리] 타입 변환 후 확인:");
+          // 🔍 현재 사용자 ID와 비교 검증
+          console.log("[채팅 히스토리] 메시지 소유권 검증:");
+          console.log(
+            "현재 사용자 ID:",
+            this.currentUserId,
+            typeof this.currentUserId
+          );
           this.messages.forEach((msg, index) => {
-            console.log(`히스토리 메시지 ${index}:`, {
-              content: msg.content,
-              senderId: msg.senderId,
-              senderIdType: typeof msg.senderId,
-              currentUserId: this.currentUserId,
-              currentUserIdType: typeof this.currentUserId,
-              비교결과: msg.senderId === this.currentUserId,
-            });
+            const isOwn = msg.senderId === this.currentUserId;
+            console.log(
+              `메시지 ${index}: senderId=${
+                msg.senderId
+              }, isOwn=${isOwn}, content=${msg.content?.substring(0, 20)}...`
+            );
           });
 
           console.log(
@@ -461,8 +550,18 @@ export default {
 
     // 로그인된 사용자만 채팅 기능 초기화
     if (this.isAuthenticated) {
-      await this.loadChatHistory();
-      this.initWebSocket();
+      try {
+        // 🔧 사용자 정보가 완전히 로드될 때까지 대기
+        await this.waitForUserInfo();
+
+        // 사용자 정보 로드 완료 후 채팅 기능 초기화
+        await this.loadChatHistory();
+        this.initWebSocket();
+      } catch (error) {
+        console.error("사용자 정보 로딩 실패:", error);
+        // 타임아웃 시 로그인 페이지로 이동
+        this.$router.push("/login");
+      }
     } else {
       console.log("로그인되지 않은 사용자 - 채팅 기능 비활성화");
     }
@@ -495,8 +594,10 @@ export default {
 
       if (newVal && !oldVal) {
         console.log("로그인됨 - 채팅 기능 활성화");
-        this.loadChatHistory();
-        this.initWebSocket();
+        this.waitForUserInfo().then(() => {
+          this.loadChatHistory();
+          this.initWebSocket();
+        });
       } else if (!newVal && oldVal) {
         console.log("로그아웃됨 - 채팅 기능 비활성화");
         if (this.stompClient) {
