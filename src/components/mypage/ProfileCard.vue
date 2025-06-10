@@ -14,7 +14,7 @@
             {{ displayName }}
           </h2>
           <div class="flex items-center space-x-4">
-            <span class="text-gray-600">가입일 {{ formatJoinDate() }}</span>
+            <span class="text-gray-600">가입일 • {{ formatJoinDate() }}</span>
           </div>
         </div>
       </div>
@@ -69,9 +69,8 @@ export default {
 
   methods: {
     formatJoinDate() {
-      // currentUser의 가입일 정보 포맷팅
-      if (this.currentUser?.createdAt) {
-        const date = new Date(this.currentUser.createdAt);
+      if (this.currentUser?.regDt) {
+        const date = new Date(this.currentUser.regDt);
         return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
       }
       return "";

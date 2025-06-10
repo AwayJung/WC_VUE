@@ -21,6 +21,11 @@
               class="text-base text-gray-400 font-medium hover:text-orange-500"
               >인기 매물</router-link
             >
+            <router-link
+              :to="{ name: 'ItemCreate' }"
+              class="text-base text-gray-400 font-medium hover:text-orange-500"
+              >물건 판매</router-link
+            >
           </div>
         </div>
 
@@ -82,7 +87,11 @@ export default {
   methods: {
     async handleLogout() {
       await this.$store.dispatch("auth/logout");
-      this.$router.push("/");
+      alert("로그아웃 되었습니다.");
+
+      if (this.$route.path !== "/") {
+        this.$router.push("/");
+      }
     },
   },
 };
