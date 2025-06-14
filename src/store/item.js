@@ -6,6 +6,7 @@ import {
   deleteItem,
   getItemsByCategory,
   getItemsOrderByViewCount,
+  changeItemStatus, // 새로 추가된 import
 } from "../api/item";
 
 const state = {
@@ -70,6 +71,23 @@ const mutations = {
       }
     }
   },
+  // 아이템 상태 업데이트 뮤테이션
+  UPDATE_ITEM_STATUS(state, { itemId, status }) {
+    console.log("🔄 mutation 실행:", { itemId, status });
+
+    if (state.currentItem) {
+      const currentItemId = state.currentItem.itemId;
+
+      if (currentItemId === itemId) {
+        console.log("🔄 currentItem 상태 변경");
+        if (state.currentItem.data) {
+          state.currentItem.data.status = status;
+        }
+        state.currentItem.status = status;
+        console.log("🔄 currentItem 상태 변경 완료");
+      }
+    }
+  },
 };
 
 // 공통 action 핸들러
@@ -113,6 +131,7 @@ const actions = {
     "아이템 목록을 불러오는데 실패했습니다.",
     "SET_ITEMS"
   ),
+
   async fetchPopularItems({ commit }) {
     commit("SET_LOADING", true);
     commit("SET_ERROR", null);
@@ -125,6 +144,7 @@ const actions = {
       commit("SET_LOADING", false);
     }
   },
+
   // 아이템 수정
   updateItem: createActionHandler(
     ({ itemId, itemData }) => updateItem(itemId, itemData),
@@ -173,6 +193,30 @@ const actions = {
     }
     return false;
   },
+
+  // 아이템 상태 변경 액션 (디버그 로그 추가)
+  async changeItemStatus({ commit }, { itemId, status, userId }) {
+    console.log("🏪 Vuex action 시작:", { itemId, status, userId });
+    commit("SET_LOADING", true);
+    try {
+      const response = await changeItemStatus(itemId, status, userId);
+      console.log("🏪 API 응답:", response.data);
+
+      // 성공시 로컬 상태 업데이트
+      console.log("🏪 mutation 호출 전");
+      commit("UPDATE_ITEM_STATUS", { itemId, status });
+      console.log("🏪 mutation 호출 후");
+
+      return response.data;
+    } catch (error) {
+      console.error("🏪 Vuex action 에러:", error);
+      commit("SET_ERROR", "아이템 상태 변경에 실패했습니다.");
+      throw error;
+    } finally {
+      commit("SET_LOADING", false);
+    }
+  },
+
   // 카테고리별 아이템 목록 조회 액션 추가
   fetchItemsByCategory: createActionHandler(
     (categoryId) => getItemsByCategory(categoryId),

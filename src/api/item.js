@@ -36,3 +36,16 @@ export const deleteItem = (itemId) => {
 export const getItemsOrderByViewCount = () => {
   return itemApi.get("/api/items/popular");
 };
+
+export const changeItemStatus = (itemId, status, userId) => {
+  return itemApi.put(
+    `/api/items/${itemId}/status`,
+    { status },
+    {
+      headers: {
+        userId: userId,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};

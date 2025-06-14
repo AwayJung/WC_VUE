@@ -2,8 +2,13 @@
   <div class="min-h-screen">
     <MarketHeader
       :is-logged-in="isAuthenticated"
+      :show-status-button="isMyItem"
+      :current-item-id="currentItem?.data?.itemId || $route.params.id"
+      :current-item-status="currentItem?.data?.status"
+      :current-item-seller-id="currentItem?.data?.sellerId"
       class="z-50"
       @toggle-menu="toggleMenu"
+      @status-changed="handleItemStatusChanged"
     />
 
     <!-- 로딩 상태 -->
@@ -126,6 +131,19 @@ export default {
     ...mapActions("item", ["fetchItem", "deleteItem", "updateItem"]),
     ...mapActions("itemLike", ["toggleItemLike", "checkItemLikeStatus"]),
 
+    handleItemStatusChanged({ itemId, newStatus }) {
+      console.log("헤더에서 상태 변경:", { itemId, newStatus });
+
+      // 현재 아이템 상태 업데이트
+      if (this.currentItem && this.currentItem.data) {
+        this.currentItem.data.status = newStatus;
+
+        // Vue 반응성 트리거
+        this.$forceUpdate();
+
+        console.log("아이템 상태 업데이트 완료:", newStatus);
+      }
+    },
     async loadItemData() {
       const itemId = this.$route.params.id;
       try {

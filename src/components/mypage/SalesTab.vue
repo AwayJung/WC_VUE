@@ -17,7 +17,6 @@
         >
           <option value="all">전체 보기</option>
           <option value="selling">판매중</option>
-          <option value="reserved">예약중</option>
           <option value="sold">판매완료</option>
         </select>
         <button
@@ -34,23 +33,23 @@
       <div
         v-for="item in displayedItems"
         :key="item.id"
-        class="flex items-center p-6 border border-gray-200 rounded-lg hover:shadow-lg transition-all cursor-pointer group"
-        @click="handleItemClick(item)"
+        class="flex items-center p-6 border border-gray-200 rounded-lg hover:shadow-lg transition-all group"
       >
         <div class="relative">
           <img
             :src="getItemImage(item)"
             :alt="getItemTitle(item)"
-            class="w-24 h-24 object-cover rounded-lg mr-6"
+            class="w-24 h-24 object-cover rounded-lg mr-6 cursor-pointer"
             @error="handleImageError"
-            @load="handleImageLoad"
+            @click="handleItemClick(item)"
           />
           <!-- 이미지 로딩 실패시 대체 아이콘 -->
           <div
             v-if="
               !getItemImage(item) || getItemImage(item).includes('placeholder')
             "
-            class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg mr-6"
+            class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg mr-6 cursor-pointer"
+            @click="handleItemClick(item)"
           >
             <svg
               class="w-8 h-8 text-gray-400"
@@ -67,7 +66,7 @@
             </svg>
           </div>
         </div>
-        <div class="flex-1">
+        <div class="flex-1 cursor-pointer" @click="handleItemClick(item)">
           <h4
             class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors"
           >
@@ -82,12 +81,43 @@
           </p>
         </div>
         <div class="text-right">
-          <span
+          <!-- 상태 표시 (클릭 가능) -->
+          <button
+            @click.stop="handleStatusToggle(item)"
             :class="getStatusClass(getItemStatus(item))"
-            class="inline-block px-3 py-1 text-sm font-medium rounded-full mb-3"
+            :disabled="statusChanging === getItemId(item)"
+            class="inline-block px-3 py-1 text-sm font-medium rounded-full mb-3 transition-colors hover:opacity-80 disabled:opacity-50 cursor-pointer"
           >
-            {{ getStatusText(getItemStatus(item)) }}
-          </span>
+            <span
+              v-if="statusChanging === getItemId(item)"
+              class="flex items-center"
+            >
+              <svg
+                class="animate-spin -ml-1 mr-2 h-3 w-3"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              변경중...
+            </span>
+            <span v-else>
+              {{ getStatusText(getItemStatus(item)) }}
+            </span>
+          </button>
+
           <div class="text-sm text-gray-500 space-y-1">
             <div class="flex items-center">
               <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
@@ -134,7 +164,7 @@
       </div>
     </div>
 
-    <!-- 🎯 빈 상태 -->
+    <!-- 빈 상태 -->
     <div v-else class="text-center py-16">
       <svg
         class="w-24 h-24 text-gray-300 mx-auto mb-6"
@@ -168,11 +198,10 @@
 <script>
 import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
 import { timeUtilsMixin } from "@/utils/timeUtils";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "SalesTab",
-
-  // timeUtilsMixin 사용
   mixins: [timeUtilsMixin],
 
   props: {
@@ -186,15 +215,24 @@ export default {
     },
   },
 
-  emits: ["filter-change", "create-item", "view-all-sales"],
+  emits: ["filter-change", "create-item", "view-all-sales", "status-changed"],
+
+  data() {
+    return {
+      statusChanging: null,
+    };
+  },
 
   computed: {
     displayedItems() {
       return this.salesData.slice(0, 4);
     },
+    ...mapGetters("auth", ["currentUser"]),
   },
 
   methods: {
+    ...mapActions("item", ["changeItemStatus"]),
+
     handleFilterChange(event) {
       this.$emit("filter-change", event.target.value);
     },
@@ -210,6 +248,39 @@ export default {
     handleItemClick(item) {
       const itemId = this.getItemId(item);
       this.$router.push(`/items/${itemId}`);
+    },
+
+    async handleStatusToggle(item) {
+      const currentStatus = this.getItemStatus(item);
+      const newStatus = currentStatus === "SELLING" ? "SOLD" : "SELLING";
+      const itemId = this.getItemId(item);
+      const userId = this.currentUser?.userId;
+
+      if (!userId) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      this.statusChanging = itemId;
+
+      try {
+        await this.changeItemStatus({
+          itemId,
+          status: newStatus,
+          userId,
+        });
+
+        // 로컬 salesData 즉시 업데이트
+        this.updateLocalItemStatus(itemId, newStatus);
+
+        // 부모 컴포넌트에 알림
+        this.$emit("status-changed", { itemId, newStatus });
+      } catch (error) {
+        console.error("상태 변경 실패:", error);
+        alert("상태 변경에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        this.statusChanging = null;
+      }
     },
 
     // 데이터 추출 헬퍼 메서드들
@@ -240,7 +311,7 @@ export default {
     },
 
     getItemStatus(item) {
-      return item.status || (item.data && item.data.status) || "selling";
+      return item.status || (item.data && item.data.status) || "SELLING";
     },
 
     getItemLikeCount(item) {
@@ -251,36 +322,46 @@ export default {
       return item.viewCount || (item.data && item.data.viewCount) || 0;
     },
 
-    // 이미지 관련
     handleImageError(event) {
       handleImageError(event);
     },
 
-    handleImageLoad(event) {
-      console.log("이미지 로딩 성공:", event.target.src);
-    },
-
-    // 상태 관련
     getStatusClass(status) {
       const classes = {
-        selling: "bg-green-100 text-green-800",
-        reserved: "bg-yellow-100 text-yellow-800",
-        sold: "bg-gray-100 text-gray-800",
+        SELLING: "bg-green-100 text-green-800 hover:bg-green-200",
+        SOLD: "bg-gray-100 text-gray-800 hover:bg-gray-200",
       };
-      return classes[status] || "bg-green-100 text-green-800";
+      return (
+        classes[status] || "bg-green-100 text-green-800 hover:bg-green-200"
+      );
     },
 
     getStatusText(status) {
       const texts = {
-        selling: "판매중",
-        reserved: "예약중",
-        sold: "판매완료",
+        SELLING: "판매중",
+        SOLD: "판매완료",
       };
       return texts[status] || "판매중";
     },
 
     formatPrice(price) {
       return price ? price.toLocaleString() : "0";
+    },
+
+    updateLocalItemStatus(itemId, newStatus) {
+      const item = this.salesData.find(
+        (item) => this.getItemId(item) === itemId
+      );
+
+      if (item) {
+        if (item.data) {
+          item.data.status = newStatus;
+        }
+        item.status = newStatus;
+
+        // Vue 반응성 트리거
+        this.$forceUpdate();
+      }
     },
   },
 };

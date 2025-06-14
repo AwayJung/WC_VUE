@@ -32,6 +32,41 @@
             </svg>
           </button>
 
+          <!-- 상태 변경 버튼 (자동으로 소유자만 표시) -->
+          <button
+            v-if="shouldShowStatusButton"
+            @click="handleStatusToggle"
+            :disabled="statusChanging"
+            :class="getStatusButtonClass(currentItemStatus)"
+            class="px-3 py-1 text-sm font-medium rounded-full transition-colors hover:opacity-80 disabled:opacity-50"
+          >
+            <span v-if="statusChanging" class="flex items-center">
+              <svg
+                class="animate-spin -ml-1 mr-2 h-3 w-3"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              변경중...
+            </span>
+            <span v-else>
+              {{ getStatusText(currentItemStatus) }}
+            </span>
+          </button>
+
           <!-- 메뉴 버튼 (미로그인 시) -->
           <div class="relative" v-if="!isLoggedIn">
             <button
@@ -127,23 +162,6 @@
 
           <!-- 로그인 시 버튼들 -->
           <div v-if="isLoggedIn" class="flex items-center space-x-3">
-            <!-- 공유 버튼 (조건부 표시) -->
-            <button v-if="showShareButton" class="p-2" @click="shareContent">
-              <svg
-                class="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                />
-              </svg>
-            </button>
-
             <!-- 사용자 메뉴 버튼 -->
             <div class="relative">
               <button
@@ -285,6 +303,7 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from "vuex";
 import SearchArea from "@/components/layout/SearchArea.vue";
 
 export default {
@@ -301,9 +320,22 @@ export default {
       type: Boolean,
       default: true,
     },
-    showShareButton: {
+    // 🔧 상태 변경 버튼 관련 props 추가
+    showStatusButton: {
       type: Boolean,
-      default: true,
+      default: false,
+    },
+    currentItemId: {
+      type: [String, Number],
+      default: null,
+    },
+    currentItemStatus: {
+      type: String,
+      default: null,
+    },
+    currentItemSellerId: {
+      type: [String, Number],
+      default: null,
     },
   },
   data() {
@@ -311,11 +343,38 @@ export default {
       showSearchBar: false,
       currentSearchQuery: "",
       headerObserver: null,
+      statusChanging: false, // 🔧 상태 변경 로딩
 
       // 메뉴 상태
       showGuestMenu: false,
       showUserMenu: false,
     };
+  },
+  computed: {
+    ...mapGetters("auth", ["currentUser"]),
+
+    // 🔧 자동으로 소유자인지 판단
+    isItemOwner() {
+      if (!this.currentUser?.userId || !this.currentItemSellerId) {
+        return false;
+      }
+
+      // 타입 안전한 비교
+      const currentUserId = String(this.currentUser.userId);
+      const sellerId = String(this.currentItemSellerId);
+
+      return currentUserId === sellerId;
+    },
+
+    // 🔧 상태 버튼 표시 여부 (자동 계산)
+    shouldShowStatusButton() {
+      return (
+        this.showStatusButton &&
+        this.isItemOwner &&
+        this.currentItemStatus &&
+        this.isLoggedIn
+      );
+    },
   },
   mounted() {
     this.setupHeaderObserver();
@@ -341,8 +400,60 @@ export default {
     },
   },
   methods: {
+    ...mapActions("item", ["changeItemStatus"]),
+
+    // 🔧 상태 변경 관련 메서드들
+    async handleStatusToggle() {
+      if (!this.currentItemId || !this.currentUser?.userId) {
+        alert("상태를 변경할 수 없습니다.");
+        return;
+      }
+
+      const newStatus =
+        this.currentItemStatus === "SELLING" ? "SOLD" : "SELLING";
+      this.statusChanging = true;
+
+      try {
+        await this.changeItemStatus({
+          itemId: this.currentItemId,
+          status: newStatus,
+          userId: this.currentUser.userId,
+        });
+
+        // 부모 컴포넌트에 상태 변경 알림
+        this.$emit("status-changed", {
+          itemId: this.currentItemId,
+          newStatus,
+        });
+      } catch (error) {
+        console.error("상태 변경 실패:", error);
+        alert("상태 변경에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        this.statusChanging = false;
+      }
+    },
+
+    getStatusButtonClass(status) {
+      const classes = {
+        SELLING: "bg-green-100 text-green-800 hover:bg-green-200",
+        SOLD: "bg-gray-100 text-gray-800 hover:bg-gray-200",
+      };
+      return (
+        classes[status] || "bg-green-100 text-green-800 hover:bg-green-200"
+      );
+    },
+
+    getStatusText(status) {
+      const texts = {
+        SELLING: "판매중",
+        SOLD: "판매완료",
+      };
+      return texts[status] || "판매중";
+    },
+
     // 기존 메서드들...
     setupHeaderObserver() {
+      // 헤더 높이 관찰 (데스크톱용)
       if (typeof ResizeObserver !== "undefined") {
         this.headerObserver = new ResizeObserver((entries) => {
           for (const entry of entries) {
@@ -434,7 +545,7 @@ export default {
       this.$emit("search-clear-no-route");
     },
 
-    // 새로운 메뉴 메서드들
+    // 메뉴 메서드들
     toggleGuestMenu() {
       this.showGuestMenu = !this.showGuestMenu;
       this.showUserMenu = false;
@@ -452,7 +563,6 @@ export default {
 
     handleLogout() {
       this.closeAllMenus();
-      // 로그아웃 로직 (Vuex store 등)
       this.$store.dispatch("auth/logout");
       this.$router.push("/");
       alert("로그아웃되었습니다.");
