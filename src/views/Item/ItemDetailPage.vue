@@ -25,8 +25,30 @@
     </div>
 
     <!-- 컨텐츠 영역 -->
-    <div v-else-if="currentItem" class="pt-16 pb-32">
-      <ItemImageSlide :item="currentItem || {}" />
+    <div
+      v-else-if="currentItem"
+      :class="['pt-16 pb-32 transition-all', getSoldCardClass(currentItem)]"
+    >
+      <!-- 이미지 슬라이드 (판매완료시 흑백 + 오버레이) -->
+      <div class="relative">
+        <ItemImageSlide
+          :item="currentItem || {}"
+          :class="['transition-all', getSoldImageClass(currentItem)]"
+        />
+
+        <!-- 판매완료 오버레이 -->
+        <div
+          v-if="shouldShowSoldOverlay(currentItem)"
+          :class="getSoldOverlayClass(currentItem)"
+        >
+          <div
+            class="bg-gray-700 text-white px-6 py-3 rounded-lg font-bold text-xl"
+          >
+            판매완료
+          </div>
+        </div>
+      </div>
+
       <ItemSellerInfo
         :item="currentItem"
         @click-chat="handleChatWithSeller"
@@ -86,6 +108,7 @@ import ItemDetailInfo from "@/components/Item/Detail/ItemDetailInfo.vue";
 import ItemImageSlide from "@/components/Item/Detail/ItemImageSlide.vue";
 import ItemSellerInfo from "@/components/Item/Detail/ItemSellerInfo.vue";
 import MarketHeader from "@/components/layout/MarketHeader.vue";
+import { soldItemMixin } from "@/utils/soldItemUtils"; // 추가
 
 export default {
   name: "ItemDetailPage",
@@ -97,6 +120,8 @@ export default {
     ItemActionButton,
     MarketHeader,
   },
+
+  mixins: [soldItemMixin], // 추가
 
   data() {
     return {
