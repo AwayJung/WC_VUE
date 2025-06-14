@@ -52,16 +52,24 @@
           <div
             v-for="item in likedItems"
             :key="item.itemId"
-            class="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+            :class="[
+              'border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200',
+              getSoldCardClass(item),
+            ]"
           >
             <div class="relative w-full h-48">
               <div
                 class="w-full h-full cursor-pointer overflow-hidden"
                 @click="goToItemDetail(item.itemId)"
               >
-                <ItemImageSlide
-                  :item="{ data: item }"
-                  class="h-full w-full object-cover"
+                <img
+                  :src="getItemImageUrl(item)"
+                  :alt="item.name || '상품이미지'"
+                  :class="[
+                    'h-full w-full object-cover transition-all',
+                    getSoldImageClass(item),
+                  ]"
+                  @error="handleImageError"
                 />
               </div>
 
@@ -93,15 +101,32 @@
               @click="goToItemDetail(item.itemId)"
             >
               <div class="flex justify-between items-start">
-                <h2 class="text-lg font-semibold mb-2 truncate">
+                <h2
+                  :class="[
+                    'text-lg font-semibold mb-2 truncate',
+                    getSoldTitleClass(item),
+                  ]"
+                >
                   {{ item.name || "상품명" }}
                 </h2>
-                <ItemLikeCount :count="item.likeCount || 1" />
+                <ItemLikeCount :count="item.likeCount" />
               </div>
 
-              <p class="text-gray-900 font-bold mb-2">
+              <p :class="['font-bold mb-2', getSoldPriceClass(item)]">
                 {{ formatPrice(item.price) }}원
               </p>
+
+              <!-- 상태 배지 -->
+              <div class="flex items-center justify-between">
+                <span
+                  :class="[
+                    'inline-block px-2 py-1 text-xs font-medium rounded-full',
+                    getSoldBadgeClass(item),
+                  ]"
+                >
+                  {{ getStatusText(item) }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -116,17 +141,18 @@
 import { mapState, mapActions, mapGetters } from "vuex";
 import MarketHeader from "@/components/layout/MarketHeader.vue";
 import BottomNavigation from "@/components/layout/BottomNavigation.vue";
-import ItemImageSlide from "@/components/Item/Detail/ItemImageSlide.vue";
 import ItemLikeCount from "@/components/Item/ItemLikeCount.vue";
+import { soldItemMixin } from "@/utils/soldItemUtils";
+import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
 
 export default {
   name: "ItemLikesPage",
   components: {
     MarketHeader,
     BottomNavigation,
-    ItemImageSlide,
     ItemLikeCount,
   },
+  mixins: [soldItemMixin], // 추가
 
   data() {
     return {
@@ -285,6 +311,15 @@ export default {
       return price
         ? price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
         : "0";
+    },
+
+    // imageUtils에서 가져온 함수들
+    getItemImageUrl(item) {
+      return getItemImageUrl(item);
+    },
+
+    handleImageError(event) {
+      handleImageError(event);
     },
   },
 };

@@ -32,43 +32,70 @@
     <div v-if="salesData && salesData.length > 0" class="space-y-4">
       <div
         v-for="item in displayedItems"
-        :key="item.id"
-        class="flex items-center p-6 border border-gray-200 rounded-lg hover:shadow-lg transition-all group"
+        :key="getItemId(item)"
+        :class="[
+          'flex items-center p-6 border border-gray-200 rounded-lg hover:shadow-lg transition-all group',
+          getSoldCardClass(item),
+        ]"
       >
         <div class="relative">
-          <img
-            :src="getItemImage(item)"
-            :alt="getItemTitle(item)"
-            class="w-24 h-24 object-cover rounded-lg mr-6 cursor-pointer"
-            @error="handleImageError"
-            @click="handleItemClick(item)"
-          />
-          <!-- 이미지 로딩 실패시 대체 아이콘 -->
-          <div
-            v-if="
-              !getItemImage(item) || getItemImage(item).includes('placeholder')
-            "
-            class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg mr-6 cursor-pointer"
-            @click="handleItemClick(item)"
-          >
-            <svg
-              class="w-8 h-8 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <!-- 판매완료 오버레이가 있는 이미지 컨테이너 -->
+          <div class="relative w-24 h-24 mr-6">
+            <img
+              :src="getItemImage(item)"
+              :alt="getItemTitle(item)"
+              :class="[
+                'w-full h-full object-cover rounded-lg cursor-pointer transition-all',
+                getSoldImageClass(item),
+              ]"
+              @error="handleImageError"
+              @click="handleItemClick(item)"
+            />
+
+            <!-- 판매완료 오버레이 -->
+            <div
+              v-if="shouldShowSoldOverlay(item)"
+              :class="getSoldOverlayClass(item)"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              ></path>
-            </svg>
+              <div :class="getSoldOverlayBadgeClass(item)">판매완료</div>
+            </div>
+
+            <!-- 이미지 로딩 실패시 대체 아이콘 -->
+            <div
+              v-if="
+                !getItemImage(item) ||
+                getItemImage(item).includes('placeholder')
+              "
+              :class="[
+                'absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg cursor-pointer',
+                getSoldImageClass(item),
+              ]"
+              @click="handleItemClick(item)"
+            >
+              <svg
+                class="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+            </div>
           </div>
         </div>
+
         <div class="flex-1 cursor-pointer" @click="handleItemClick(item)">
+          <!-- 제목 (판매완료시 회색) -->
           <h4
-            class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors"
+            :class="[
+              'text-lg font-semibold mb-2 group-hover:text-orange-600 transition-colors',
+              getSoldTitleClass(item),
+            ]"
           >
             {{ getItemTitle(item) }}
           </h4>
@@ -76,17 +103,22 @@
           <p class="text-gray-500 mb-2">
             {{ formatTimeAgo(getItemCreatedAt(item)) }}
           </p>
-          <p class="text-xl font-bold text-orange-500">
+
+          <!-- 가격 (판매완료시 회색) -->
+          <p :class="['text-xl font-bold', getSoldPriceClass(item)]">
             {{ formatPrice(getItemPrice(item)) }}원
           </p>
         </div>
+
         <div class="text-right">
           <!-- 상태 표시 (클릭 가능) -->
           <button
             @click.stop="handleStatusToggle(item)"
-            :class="getStatusClass(getItemStatus(item))"
+            :class="[
+              'inline-block px-3 py-1 text-sm font-medium rounded-full mb-3 transition-colors hover:opacity-80 disabled:opacity-50 cursor-pointer',
+              getSoldBadgeClass(item),
+            ]"
             :disabled="statusChanging === getItemId(item)"
-            class="inline-block px-3 py-1 text-sm font-medium rounded-full mb-3 transition-colors hover:opacity-80 disabled:opacity-50 cursor-pointer"
           >
             <span
               v-if="statusChanging === getItemId(item)"
@@ -114,7 +146,7 @@
               변경중...
             </span>
             <span v-else>
-              {{ getStatusText(getItemStatus(item)) }}
+              {{ getStatusText(item) }}
             </span>
           </button>
 
@@ -157,7 +189,7 @@
       <div v-if="salesData.length > 4" class="text-center pt-4">
         <button
           @click="handleViewAllSales"
-          class="text-orange-500 hover:text-orange-600 font-medium text-sm"
+          class="text-orange-500 hover:text-orange-600 font-medium text-sm transition-colors"
         >
           더보기 ({{ salesData.length - 4 }}개 상품)
         </button>
@@ -198,11 +230,12 @@
 <script>
 import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
 import { timeUtilsMixin } from "@/utils/timeUtils";
+import { soldItemMixin } from "@/utils/soldItemUtils"; // 새로 추가
 import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "SalesTab",
-  mixins: [timeUtilsMixin],
+  mixins: [timeUtilsMixin, soldItemMixin], // soldItemMixin 추가
 
   props: {
     salesData: {
@@ -326,24 +359,6 @@ export default {
       handleImageError(event);
     },
 
-    getStatusClass(status) {
-      const classes = {
-        SELLING: "bg-green-100 text-green-800 hover:bg-green-200",
-        SOLD: "bg-gray-100 text-gray-800 hover:bg-gray-200",
-      };
-      return (
-        classes[status] || "bg-green-100 text-green-800 hover:bg-green-200"
-      );
-    },
-
-    getStatusText(status) {
-      const texts = {
-        SELLING: "판매중",
-        SOLD: "판매완료",
-      };
-      return texts[status] || "판매중";
-    },
-
     formatPrice(price) {
       return price ? price.toLocaleString() : "0";
     },
@@ -366,3 +381,7 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* 기본 스타일 유지 */
+</style>

@@ -37,90 +37,128 @@
     </div>
 
     <!-- 관심 상품 그리드 -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div
-        v-for="item in likesData"
-        :key="item.itemId"
-        class="bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
-        @click="handleItemClick(item)"
-      >
-        <!-- 이미지 영역 -->
-        <div class="relative">
-          <img
-            :src="getItemImage(item)"
-            :alt="item.name"
-            class="w-full h-48 object-cover"
-            @error="handleImageError"
-          />
-          <!-- 찜 버튼 -->
-          <button
-            @click.stop="handleToggleLike(item)"
-            :disabled="isTogglingItem(item.itemId)"
-            :class="[
-              'absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors',
-              isTogglingItem(item.itemId)
-                ? 'opacity-50 cursor-not-allowed'
-                : '',
-            ]"
-          >
-            <svg
-              class="w-5 h-5 text-red-500"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-              />
-            </svg>
-          </button>
-        </div>
+    <div v-else class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          v-for="item in displayedLikes"
+          :key="item.itemId"
+          :class="[
+            'bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer group sold-item-transition',
+            getSoldCardClass(item),
+          ]"
+          @click="handleItemClick(item)"
+        >
+          <!-- 이미지 영역 -->
+          <div class="relative">
+            <img
+              :src="getItemImage(item)"
+              :alt="item.name"
+              :class="[
+                'w-full h-48 object-cover sold-item-transition',
+                getSoldImageClass(item),
+              ]"
+              @error="handleImageError"
+            />
 
-        <!-- 상품 정보 -->
-        <div class="p-4">
-          <h4
-            class="font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors line-clamp-2"
-          >
-            {{ item.name }}
-          </h4>
-          <p class="text-sm text-gray-500 mb-2"></p>
-          <div class="flex items-center justify-between">
-            <p class="text-lg font-bold text-orange-500">
-              {{ formatPrice(item.price) }}원
-            </p>
-            <div class="flex items-center text-sm text-gray-400 space-x-2">
-              <!-- 관심 수 -->
-              <div class="flex items-center">
-                <svg
-                  class="w-4 h-4 mr-1"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                  />
-                </svg>
-                {{ item.likeCount || 0 }}
-              </div>
-              <!-- 채팅 수 -->
-              <div class="flex items-center">
-                <svg
-                  class="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                {{ item.chatCount || 0 }}
+            <!-- 찜 버튼 -->
+            <button
+              @click.stop="handleToggleLike(item)"
+              :disabled="isTogglingItem(item.itemId)"
+              :class="[
+                'absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors',
+                isTogglingItem(item.itemId)
+                  ? 'opacity-50 cursor-not-allowed'
+                  : '',
+              ]"
+            >
+              <svg
+                class="w-5 h-5 text-red-500"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- 상품 정보 -->
+          <div class="p-4">
+            <!-- 상태 배지 -->
+            <div class="flex items-center justify-between mb-2">
+              <span
+                :class="[
+                  'inline-block px-2 py-1 text-xs font-medium rounded-full',
+                  getSoldBadgeClass(item),
+                ]"
+              >
+                {{ getStatusText(item) }}
+              </span>
+            </div>
+
+            <!-- 제목 -->
+            <h4
+              :class="[
+                'font-semibold mb-2 group-hover:text-orange-600 transition-colors line-clamp-2',
+                getSoldTitleClass(item),
+              ]"
+            >
+              {{ item.name }}
+            </h4>
+
+            <div class="flex items-center justify-between">
+              <!-- 가격 -->
+              <p :class="['text-lg font-bold', getSoldPriceClass(item)]">
+                {{ formatPrice(item.price) }}원
+              </p>
+
+              <!-- 통계 -->
+              <div class="flex items-center text-sm text-gray-400 space-x-2">
+                <!-- 관심 수 -->
+                <div class="flex items-center">
+                  <svg
+                    class="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                    />
+                  </svg>
+                  {{ item.likeCount || 0 }}
+                </div>
+                <!-- 채팅 수 -->
+                <div class="flex items-center">
+                  <svg
+                    class="w-4 h-4 mr-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  {{ item.chatCount || 0 }}
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- 더보기 버튼 -->
+      <div v-if="showMoreButton" class="text-center pt-4">
+        <button
+          @click="handleViewAllFavorites"
+          class="text-orange-500 hover:text-orange-600 font-medium text-sm transition-colors"
+        >
+          더보기 ({{ likesData.length - 6 }}개 상품)
+        </button>
       </div>
     </div>
   </div>
@@ -129,9 +167,11 @@
 <script>
 import { mapState, mapActions } from "vuex";
 import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
+import { soldItemMixin } from "@/utils/soldItemUtils";
 
 export default {
   name: "LikesTab",
+  mixins: [soldItemMixin], // 판매완료 관련 유틸리티 믹스인
 
   data() {
     return {
@@ -146,6 +186,16 @@ export default {
     // Vuex에서 가져온 실제 찜 목록 데이터 사용
     likesData() {
       return this.likedItems || [];
+    },
+
+    // 화면에 표시할 상품들 (최대 6개)
+    displayedLikes() {
+      return this.likesData.slice(0, 6);
+    },
+
+    // 더보기 버튼 표시 여부
+    showMoreButton() {
+      return this.likesData.length > 6;
     },
   },
 
@@ -173,6 +223,11 @@ export default {
 
     handleNavigateItems() {
       this.$emit("navigate-items");
+    },
+
+    // 관심목록 전체보기 페이지로 이동
+    handleViewAllFavorites() {
+      this.$router.push("/favorites");
     },
 
     handleItemClick(item) {
