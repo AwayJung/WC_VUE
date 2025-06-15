@@ -6,8 +6,7 @@
       :current-item-id="currentItem?.data?.itemId || $route.params.id"
       :current-item-status="currentItem?.data?.status"
       :current-item-seller-id="currentItem?.data?.sellerId"
-      class="z-50"
-      @toggle-menu="toggleMenu"
+      menu-mode="item-detail"
       @status-changed="handleItemStatusChanged"
     />
 

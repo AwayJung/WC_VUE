@@ -282,17 +282,10 @@ export default {
       const itemId = this.getItemId(item);
       this.$router.push(`/items/${itemId}`);
     },
-
     async handleStatusToggle(item) {
       const currentStatus = this.getItemStatus(item);
       const newStatus = currentStatus === "SELLING" ? "SOLD" : "SELLING";
       const itemId = this.getItemId(item);
-      const userId = this.currentUser?.userId;
-
-      if (!userId) {
-        alert("로그인이 필요합니다.");
-        return;
-      }
 
       this.statusChanging = itemId;
 
@@ -300,10 +293,8 @@ export default {
         await this.changeItemStatus({
           itemId,
           status: newStatus,
-          userId,
         });
 
-        // 로컬 salesData 즉시 업데이트
         this.updateLocalItemStatus(itemId, newStatus);
 
         // 부모 컴포넌트에 알림

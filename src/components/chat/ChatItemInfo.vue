@@ -2,7 +2,10 @@
   <!-- 상품 정보 영역 -->
   <div
     v-if="itemId && isAuthenticated"
-    class="bg-white border-b-2 border-gray-100 px-5 py-5 shadow-sm"
+    :class="[
+      'bg-white border-b-2 border-gray-100 px-5 py-5 shadow-sm transition-all',
+      itemInfo ? getSoldCardClass(itemInfo) : '',
+    ]"
   >
     <!-- 로딩 상태 -->
     <div v-if="itemLoading" class="flex items-center space-x-5">
@@ -41,6 +44,7 @@
           />
         </svg>
       </button>
+
       <!-- 상품 이미지 (클릭 가능) -->
       <div
         @click="handleItemClick"
@@ -49,7 +53,10 @@
         <img
           :src="getItemImageUrl(itemInfo)"
           :alt="getItemTitle(itemInfo)"
-          class="w-full h-full object-cover"
+          :class="[
+            'w-full h-full object-cover transition-all',
+            getSoldImageClass(itemInfo),
+          ]"
           @error="handleImageError"
         />
       </div>
@@ -58,16 +65,34 @@
       <div @click="handleItemClick" class="flex-1 min-w-0 cursor-pointer group">
         <!-- 상품명 -->
         <h3
-          class="text-lg font-bold text-gray-800 truncate mb-2 group-hover:text-orange-600 transition-colors duration-200"
+          :class="[
+            'text-lg font-bold truncate mb-2 group-hover:text-orange-600 transition-colors duration-200',
+            getSoldTitleClass(itemInfo),
+          ]"
         >
           {{ getItemTitle(itemInfo) }}
         </h3>
+
         <!-- 가격 -->
         <div class="flex items-center">
-          <span class="text-2xl font-black text-orange-500 mr-2">
+          <span
+            :class="['text-2xl font-black mr-2', getSoldPriceClass(itemInfo)]"
+          >
             {{ formatPrice(getItemPrice(itemInfo)) }}
           </span>
           <div class="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+        </div>
+
+        <!-- 상태 배지 -->
+        <div class="mt-2">
+          <span
+            :class="[
+              'inline-block px-2 py-1 text-xs font-medium rounded-full',
+              getSoldBadgeClass(itemInfo),
+            ]"
+          >
+            {{ getStatusText(itemInfo) }}
+          </span>
         </div>
       </div>
     </div>
@@ -105,15 +130,17 @@
 </template>
 
 <script>
-// 🆕 이미지 유틸리티 import
+// 이미지 유틸리티 import
 import {
   getItemImageUrl as utilsGetItemImageUrl,
   handleImageError as utilsHandleImageError,
   getPlaceholderImage as utilsGetPlaceholderImage,
 } from "@/utils/imageUtils.js";
+import { soldItemMixin } from "@/utils/soldItemUtils"; // 추가
 
 export default {
   name: "ChatItemInfo",
+  mixins: [soldItemMixin], // 추가
 
   props: {
     itemId: {
@@ -195,7 +222,7 @@ export default {
       }
     },
 
-    // 🆕 상품 정보 로드 완료 이벤트 발생
+    // 상품 정보 로드 완료 이벤트 발생
     emitItemLoaded() {
       if (this.itemInfo) {
         const itemData = {

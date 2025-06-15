@@ -2,6 +2,7 @@
   <div class="min-h-screen bg-gray-50">
     <MarketHeader
       :is-logged-in="isAuthenticated"
+      menu-mode="default"
       @toggle-menu="showMenu = !showMenu"
       @search="handleSearch"
       @search-clear="clearSearch"

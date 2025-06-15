@@ -6,7 +6,7 @@ import {
   deleteItem,
   getItemsByCategory,
   getItemsOrderByViewCount,
-  changeItemStatus, // 새로 추가된 import
+  changeItemStatus,
 } from "../api/item";
 
 const state = {
@@ -195,11 +195,12 @@ const actions = {
   },
 
   // 아이템 상태 변경 액션 (디버그 로그 추가)
-  async changeItemStatus({ commit }, { itemId, status, userId }) {
-    console.log("🏪 Vuex action 시작:", { itemId, status, userId });
+  async changeItemStatus({ commit }, { itemId, status }) {
+    console.log("🏪 Vuex action 시작:", { itemId, status });
     commit("SET_LOADING", true);
     try {
-      const response = await changeItemStatus(itemId, status, userId);
+      // userId 제거 - JWT 토큰에서 자동으로 추출됨
+      const response = await changeItemStatus(itemId, status);
       console.log("🏪 API 응답:", response.data);
 
       // 성공시 로컬 상태 업데이트

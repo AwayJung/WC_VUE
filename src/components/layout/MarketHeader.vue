@@ -191,88 +191,173 @@
                 class="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border py-2 z-50"
                 @click.stop
               >
-                <router-link
-                  to="/mypage"
-                  class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                  @click="closeAllMenus"
-                >
-                  <svg
-                    class="w-5 h-5 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                <!-- 기본 메뉴 (default 모드) -->
+                <template v-if="effectiveMenuMode === 'default'">
+                  <router-link
+                    to="/mypage"
+                    class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                    @click="closeAllMenus"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                  내 프로필
-                </router-link>
-                <router-link
-                  to="/items/create"
-                  class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                  @click="closeAllMenus"
-                >
-                  <svg
-                    class="w-5 h-5 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    내 프로필
+                  </router-link>
+                  <router-link
+                    to="/items/create"
+                    class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                    @click="closeAllMenus"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  상품 등록
-                </router-link>
-                <router-link
-                  to="/chat"
-                  class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-                  @click="closeAllMenus"
-                >
-                  <svg
-                    class="w-5 h-5 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    상품 등록
+                  </router-link>
+                  <router-link
+                    to="/chat"
+                    class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                    @click="closeAllMenus"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  채팅
-                </router-link>
-                <div class="border-t border-gray-100 my-1"></div>
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    채팅
+                  </router-link>
+                  <div class="border-t border-gray-100 my-1"></div>
+                  <button
+                    @click="handleLogout"
+                    class="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    로그아웃
+                  </button>
+                </template>
 
-                <div class="border-t border-gray-100 my-1"></div>
-                <button
-                  @click="handleLogout"
-                  class="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                <!-- 게시글 상세 페이지 메뉴 (item-detail 모드) -->
+                <template
+                  v-else-if="
+                    effectiveMenuMode === 'item-detail' &&
+                    isItemOwner &&
+                    currentItemId
+                  "
                 >
-                  <svg
-                    class="w-5 h-5 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <!-- 게시글 수정 버튼 -->
+                  <button
+                    @click="handleEditItem"
+                    class="flex items-center w-full px-4 py-3 text-sm text-blue-600 hover:bg-blue-50"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  로그아웃
-                </button>
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    게시글 수정
+                  </button>
+
+                  <!-- 게시글 삭제 버튼 -->
+                  <button
+                    @click="handleDeleteItem"
+                    :disabled="deleting"
+                    class="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <span v-if="deleting" class="flex items-center">
+                      <svg
+                        class="animate-spin w-5 h-5 mr-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        ></circle>
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      삭제중...
+                    </span>
+                    <span v-else class="flex items-center">
+                      <svg
+                        class="w-5 h-5 mr-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      게시글 삭제
+                    </span>
+                  </button>
+                </template>
+
+                <!-- item-detail 모드이지만 소유자가 아닌 경우 메뉴 없음 (이제 사용되지 않음) -->
+                <div
+                  v-else-if="false"
+                  class="px-4 py-3 text-sm text-gray-500 text-center"
+                >
+                  사용 가능한 메뉴가 없습니다
+                </div>
               </div>
             </div>
           </div>
@@ -337,6 +422,12 @@ export default {
       type: [String, Number],
       default: null,
     },
+    // 🔧 메뉴 모드 추가
+    menuMode: {
+      type: String,
+      default: "default", // "default" | "item-detail"
+      validator: (value) => ["default", "item-detail"].includes(value),
+    },
   },
   data() {
     return {
@@ -344,6 +435,7 @@ export default {
       currentSearchQuery: "",
       headerObserver: null,
       statusChanging: false, // 🔧 상태 변경 로딩
+      deleting: false, // 🔧 삭제 로딩 상태
 
       // 메뉴 상태
       showGuestMenu: false,
@@ -375,6 +467,15 @@ export default {
         this.isLoggedIn
       );
     },
+
+    // 🔧 실제 사용할 메뉴 모드 (자동 계산)
+    effectiveMenuMode() {
+      // item-detail 모드이지만 소유자가 아니면 default로 변경
+      if (this.menuMode === "item-detail" && !this.isItemOwner) {
+        return "default";
+      }
+      return this.menuMode;
+    },
   },
   mounted() {
     this.setupHeaderObserver();
@@ -400,11 +501,11 @@ export default {
     },
   },
   methods: {
-    ...mapActions("item", ["changeItemStatus"]),
+    ...mapActions("item", ["changeItemStatus", "deleteItem"]),
 
     // 🔧 상태 변경 관련 메서드들
     async handleStatusToggle() {
-      if (!this.currentItemId || !this.currentUser?.userId) {
+      if (!this.currentItemId) {
         alert("상태를 변경할 수 없습니다.");
         return;
       }
@@ -414,10 +515,11 @@ export default {
       this.statusChanging = true;
 
       try {
+        // userId 제거
         await this.changeItemStatus({
           itemId: this.currentItemId,
           status: newStatus,
-          userId: this.currentUser.userId,
+          // userId 제거됨
         });
 
         // 부모 컴포넌트에 상태 변경 알림
@@ -566,6 +668,40 @@ export default {
       this.$store.dispatch("auth/logout");
       this.$router.push("/");
       alert("로그아웃되었습니다.");
+    },
+
+    // 🔧 게시글 수정 메서드 추가
+    handleEditItem() {
+      this.closeAllMenus();
+      this.$router.push(`/items/update/${this.currentItemId}`);
+    },
+
+    // 🔧 게시글 삭제 메서드 추가
+    async handleDeleteItem() {
+      if (
+        !confirm(
+          "정말로 이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다."
+        )
+      ) {
+        return;
+      }
+
+      this.deleting = true;
+      this.closeAllMenus();
+
+      try {
+        await this.deleteItem(this.currentItemId);
+
+        alert("게시글이 삭제되었습니다.");
+
+        // 홈으로 이동
+        this.$router.push("/");
+      } catch (error) {
+        console.error("게시글 삭제 실패:", error);
+        alert("게시글 삭제에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        this.deleting = false;
+      }
     },
   },
 };
