@@ -5,33 +5,6 @@
       :showSearchButton="false"
       :showShareButton="false"
     />
-    <!-- 헤더 -->
-    <!-- <div class="bg-white px-4 py-3 flex items-center border-b">
-      <button @click="goBack" class="text-gray-800 -ml-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
-      </button>
-      <h2 class="ml-2 text-lg">채팅방</h2>
-    </div> -->
-
-    <!-- 상품 정보 컴포넌트 -->
-    <!-- <ChatItemInfo
-      :item-id="itemId"
-      :is-authenticated="isAuthenticated"
-      @item-click="goToItemDetail"
-    /> -->
 
     <ChatItemInfo
       :item-id="itemId"

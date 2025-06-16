@@ -1,20 +1,30 @@
 <template>
   <!-- 채팅 메시지 영역 -->
   <div class="flex-1 overflow-y-auto bg-gray-50" ref="messageContainer">
-    <ChatMessage
-      v-for="(message, index) in messages"
-      :key="`msg-${currentUserId}-${message.id || message.timestamp}-${index}`"
-      :message="message"
-      :current-user-id="currentUserId"
-      :show-status="true"
-      :show-options="true"
-      :show-sender-name="false"
-      :show-reaction-bar="false"
-      @message-click="handleMessageClick"
-      @message-options="handleMessageOptions"
-      @message-reaction="handleMessageReaction"
-      @message-context-menu="handleMessageContextMenu"
-    />
+    <div v-for="item in messagesWithDateSeparators" :key="item.key">
+      <!-- 날짜 표시 -->
+      <div
+        v-if="item.type === 'date'"
+        class="flex items-center justify-center py-3"
+      >
+        <span class="text-sm text-gray-500">{{ item.date }}</span>
+      </div>
+
+      <!-- 채팅 메시지 -->
+      <ChatMessage
+        v-else
+        :message="item.message"
+        :current-user-id="currentUserId"
+        :show-status="true"
+        :show-options="true"
+        :show-sender-name="false"
+        :show-reaction-bar="false"
+        @message-click="handleMessageClick"
+        @message-options="handleMessageOptions"
+        @message-reaction="handleMessageReaction"
+        @message-context-menu="handleMessageContextMenu"
+      />
+    </div>
   </div>
 </template>
 
@@ -36,6 +46,45 @@ export default {
     currentUserId: {
       type: [String, Number],
       required: true,
+    },
+  },
+
+  computed: {
+    // 메시지 배열에 날짜 구분선을 추가한 배열을 반환
+    messagesWithDateSeparators() {
+      if (!this.messages || this.messages.length === 0) {
+        return [];
+      }
+
+      const result = [];
+      let lastDate = null;
+
+      this.messages.forEach((message, index) => {
+        const messageDate = this.getDateString(
+          message.sentTime || message.timestamp
+        );
+
+        // 날짜가 바뀌면 날짜 구분선 추가
+        if (messageDate !== lastDate) {
+          result.push({
+            type: "date",
+            date: this.formatDateForDisplay(messageDate),
+            key: `date-${messageDate}`,
+          });
+          lastDate = messageDate;
+        }
+
+        // 메시지 추가
+        result.push({
+          type: "message",
+          message: message,
+          key: `message-${
+            message.id || message.timestamp || Date.now()
+          }-${index}`,
+        });
+      });
+
+      return result;
     },
   },
 
@@ -71,6 +120,45 @@ export default {
   },
 
   methods: {
+    // 날짜 문자열 반환 (YYYY-MM-DD 형식)
+    getDateString(timestamp) {
+      if (!timestamp) return "";
+
+      try {
+        const date = new Date(timestamp);
+        return date.toISOString().split("T")[0]; // YYYY-MM-DD
+      } catch (error) {
+        console.error("날짜 파싱 에러:", error);
+        return "";
+      }
+    },
+
+    // 화면에 표시할 날짜 형식으로 변환 (항상 "YYYY년 M월 D일" 형식)
+    formatDateForDisplay(dateString) {
+      if (!dateString) return "";
+
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("ko-KR", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      } catch (error) {
+        console.error("날짜 포맷 에러:", error);
+        return dateString;
+      }
+    },
+
+    // 두 날짜가 같은 날인지 확인
+    isSameDate(date1, date2) {
+      return (
+        date1.getFullYear() === date2.getFullYear() &&
+        date1.getMonth() === date2.getMonth() &&
+        date1.getDate() === date2.getDate()
+      );
+    },
+
     // 스크롤을 맨 아래로 이동
     scrollToBottom() {
       this.$nextTick(() => {
@@ -118,5 +206,21 @@ export default {
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #a0aec0;
+}
+
+/* 날짜 구분선 애니메이션 */
+.date-separator {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
