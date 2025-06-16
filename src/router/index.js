@@ -11,8 +11,10 @@ import ItemDetailPage from "@/views/Item/ItemDetailPage.vue";
 import ItemUpdatePage from "@/views/Item/ItemUpdatePage.vue";
 import ItemLikesPage from "@/views/Item/ItemLikesPage.vue";
 import MyPage from "@/views/Auth/MyPage.vue";
-import Notice from "@/views/Notice.vue";
-import AboutCompany from "@/views/AboutCompany.vue";
+import Notice from "@/views/Support/Notice.vue";
+import AboutCompany from "@/views/Support/AboutCompany.vue";
+import SupportFAQ from "@/views/Support/SupportFAQ.vue";
+import PolicyPages from "@/views/Support/PolicyPages.vue";
 
 Vue.use(VueRouter);
 
@@ -92,6 +94,16 @@ const routes = [
     path: "/aboutCompany",
     name: "AboutCompany",
     component: AboutCompany,
+  },
+  {
+    path: "/supportFAQ",
+    name: "supportFAQ",
+    component: SupportFAQ,
+  },
+  {
+    path: "/PolicyPages",
+    name: "PolicyPages",
+    component: PolicyPages,
   },
 ];
 

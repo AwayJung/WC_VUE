@@ -15,9 +15,12 @@
               </router-link>
             </li>
             <li>
-              <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
-                >자주 묻는 질문</a
+              <router-link
+                to="/supportFAQ"
+                class="text-sm text-gray-500 hover:text-gray-700"
               >
+                자주 묻는 질문
+              </router-link>
             </li>
           </ul>
         </div>
@@ -25,19 +28,20 @@
           <h3 class="text-sm font-semibold mb-4">서비스</h3>
           <ul class="space-y-2">
             <li>
-              <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
-                >이용약관</a
+              <router-link
+                to="PolicyPages"
+                class="text-sm text-gray-500 hover:text-gray-700"
               >
+                이용약관
+              </router-link>
             </li>
             <li>
-              <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
-                >개인정보처리방침</a
+              <router-link
+                to="PolicyPages"
+                class="text-sm text-gray-500 hover:text-gray-700"
               >
-            </li>
-            <li>
-              <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
-                >운영정책</a
-              >
+                개인정보 처리방침
+              </router-link>
             </li>
           </ul>
         </div>
