@@ -1,94 +1,14 @@
 <template>
   <div class="flex flex-col h-screen bg-white">
     <!-- 헤더 -->
-    <div class="px-4 py-3 flex items-center justify-between border-b">
-      <h1 class="text-xl font-bold">채팅</h1>
-      <div class="flex items-center space-x-4">
-        <button class="p-2">
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-            />
-          </svg>
-        </button>
-        <button class="p-2">
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-            />
-          </svg>
-        </button>
-        <button class="p-2">
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
+    <MarketHeader
+      :isLoggedIn="isAuthenticated"
+      :showSearchButton="false"
+      :showShareButton="false"
+    />
 
-    <!-- 로그인 필요 메시지 -->
-    <div
-      v-if="!isAuthenticated"
-      class="flex justify-center items-center h-full"
-    >
-      <div class="text-center">
-        <p class="text-gray-500 mb-4">로그인이 필요합니다.</p>
-        <button
-          @click="$router.push('/login')"
-          class="px-4 py-2 bg-orange-500 text-white rounded"
-        >
-          로그인하기
-        </button>
-      </div>
-    </div>
-
-    <div v-else>
-      <!-- 필터 버튼들 -->
-      <div class="flex gap-2 p-4 overflow-x-auto">
-        <button class="px-4 py-2 bg-gray-900 text-white rounded-full text-sm">
-          전체
-        </button>
-        <button
-          class="px-4 py-2 bg-white border rounded-full text-sm whitespace-nowrap"
-        >
-          안 읽은 채팅방
-        </button>
-      </div>
-
-      <!-- 아이템 필터 표시 (itemId가 있는 경우) -->
-      <div v-if="itemId" class="px-4 py-2 flex items-center bg-gray-100">
-        <span class="text-sm font-medium">특정 상품의 채팅방만 표시 중</span>
-        <button @click="clearItemFilter" class="ml-2 text-blue-500 text-sm">
-          모든 채팅방 보기
-        </button>
-      </div>
-
+    <!-- 로그인된 사용자만 채팅 목록 표시 -->
+    <div v-if="isAuthenticated">
       <!-- 채팅방 목록 -->
       <div class="flex-1 overflow-y-auto">
         <div v-if="loading" class="flex justify-center items-center h-full">
@@ -107,21 +27,60 @@
           <div
             v-for="room in filteredRooms"
             :key="room.roomId"
-            @click="enterRoom(room)"
-            class="flex items-center px-4 py-3 cursor-pointer hover:bg-gray-50"
+            class="flex items-center px-4 py-3 hover:bg-gray-50 group"
           >
-            <div class="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0"></div>
-            <div class="ml-3 flex-1">
-              <div class="flex items-center justify-between">
-                <div>
-                  <span class="font-medium">{{
-                    room.name || `채팅방 ${room.roomId}`
-                  }}</span>
-                  <span class="text-sm text-gray-500 ml-2">· 3일 전</span>
+            <!-- 채팅방 내용 클릭 영역 -->
+            <div
+              @click="enterRoom(room)"
+              class="flex items-center flex-1 cursor-pointer"
+            >
+              <div
+                class="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center"
+              >
+                <span class="text-xs text-gray-600">💬</span>
+              </div>
+              <div class="ml-3 flex-1">
+                <div class="flex items-center justify-between">
+                  <div class="flex-1">
+                    <span class="font-medium">{{
+                      room.name || `채팅방 ${room.roomId}`
+                    }}</span>
+                    <span class="text-sm text-gray-500 ml-2"
+                      >· {{ formatTimeAgo(room.lastMessageTime) }}</span
+                    >
+                  </div>
+                </div>
+                <div class="mt-1">
+                  <p class="text-gray-600 text-sm line-clamp-1">
+                    {{ room.lastMessage || "메시지가 없습니다." }}
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1">
+                    {{ room.itemTitle }}
+                  </p>
                 </div>
               </div>
-              <p class="text-gray-600 text-sm mt-1">마지막 메시지 내용...</p>
             </div>
+
+            <!-- 삭제 버튼 -->
+            <button
+              @click.stop="confirmDeleteRoom(room)"
+              class="ml-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+              title="채팅방 삭제"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
           </div>
         </div>
         <div
@@ -129,6 +88,38 @@
           class="flex items-center justify-center h-full text-gray-500"
         >
           채팅방이 없습니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- 삭제 확인 모달 -->
+    <div
+      v-if="showDeleteModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      @click="cancelDelete"
+    >
+      <div class="bg-white rounded-lg p-6 mx-4 max-w-sm w-full" @click.stop>
+        <h3 class="text-lg font-semibold mb-4">채팅방 삭제</h3>
+        <p class="text-gray-600 mb-6">
+          정말로 이 채팅방을 삭제하시겠습니까?<br />
+          <span class="text-sm text-red-500"
+            >삭제된 채팅방과 메시지는 복구할 수 없습니다.</span
+          >
+        </p>
+        <div class="flex space-x-3">
+          <button
+            @click="cancelDelete"
+            class="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            취소
+          </button>
+          <button
+            @click="executeDelete"
+            :disabled="deleting"
+            class="flex-1 px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+          >
+            {{ deleting ? "삭제 중..." : "삭제" }}
+          </button>
         </div>
       </div>
     </div>
@@ -141,22 +132,28 @@
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
 import BottomNavigation from "@/components/layout/BottomNavigation.vue";
+import MarketHeader from "@/components/layout/MarketHeader.vue";
+import { timeUtilsMixin } from "@/utils/timeUtils";
 
 export default {
   name: "ChatList",
+  mixins: [timeUtilsMixin],
   components: {
     BottomNavigation,
+    MarketHeader,
   },
   data() {
     return {
       itemId: null,
+      showDeleteModal: false,
+      roomToDelete: null,
+      deleting: false,
     };
   },
   computed: {
     ...mapState("chat", ["rooms", "currentRoom", "loading", "error"]),
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
 
-    // 현재 사용자 ID
     currentUserId() {
       return this.currentUser?.userId || null;
     },
@@ -167,51 +164,62 @@ export default {
     },
   },
   methods: {
-    ...mapActions("chat", ["fetchUserRooms"]),
+    ...mapActions("chat", ["fetchUserRooms", "deleteChatRoom"]),
+
+    // 로그인 체크
+    checkAuthAndRedirect() {
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요한 서비스입니다.");
+        this.$router.push("/login");
+        return false;
+      }
+      return true;
+    },
+
+    // 삭제 확인 다이얼로그 표시
+    confirmDeleteRoom(room) {
+      this.roomToDelete = room;
+      this.showDeleteModal = true;
+    },
+
+    // 삭제 취소
+    cancelDelete() {
+      this.showDeleteModal = false;
+      this.roomToDelete = null;
+      this.deleting = false;
+    },
+
+    // 실제 삭제 실행
+    async executeDelete() {
+      if (!this.roomToDelete) return;
+
+      this.deleting = true;
+
+      try {
+        await this.deleteChatRoom(this.roomToDelete.roomId);
+        alert("채팅방이 삭제되었습니다.");
+        this.cancelDelete();
+      } catch (error) {
+        console.error("채팅방 삭제 실패:", error);
+        alert("채팅방 삭제에 실패했습니다. 다시 시도해주세요.");
+        this.deleting = false;
+      }
+    },
 
     async loadRooms() {
-      // 로그인 체크
-      if (!this.isAuthenticated) {
-        console.log("로그인되지 않은 사용자 - 채팅방 목록 로드 중단");
-        return;
-      }
+      if (!this.checkAuthAndRedirect()) return;
 
       this.itemId = this.$route.query.itemId || null;
 
-      console.log(
-        "Loading rooms for userId:",
-        this.currentUserId,
-        "itemId:",
-        this.itemId
-      );
-
       try {
         await this.fetchUserRooms(this.currentUserId);
-        console.log("Loaded rooms (all):", this.rooms);
-
-        if (this.itemId) {
-          console.log(
-            "Filtering for itemId:",
-            this.itemId,
-            "Type:",
-            typeof this.itemId
-          );
-          console.log("Filtered rooms:", this.filteredRooms);
-        }
       } catch (error) {
         console.error("Error loading rooms:", error);
       }
     },
 
     enterRoom(room) {
-      console.log("Entering room:", room);
-
-      // 로그인 체크
-      if (!this.isAuthenticated) {
-        alert("로그인이 필요합니다.");
-        this.$router.push("/login");
-        return;
-      }
+      if (!this.checkAuthAndRedirect()) return;
 
       this.$router.push({
         name: "ChatRoom",
@@ -219,64 +227,39 @@ export default {
           roomId: room.roomId.toString(),
         },
         query: {
-          itemId: room.data?.itemId,
+          itemId: room.itemId,
         },
-      });
-    },
-
-    clearItemFilter() {
-      this.itemId = null;
-      this.$router.replace({
-        name: "ChatRoomList",
       });
     },
   },
 
   async created() {
-    console.log("=== ChatList 컴포넌트 생성 ===");
-    console.log("인증 상태:", this.isAuthenticated);
-    console.log("현재 사용자:", this.currentUser);
-    console.log("사용자 ID:", this.currentUserId);
-    console.log("라우트:", this.$route);
-    console.log("=============================");
+    await this.$nextTick();
 
-    await this.loadRooms();
-  },
-
-  mounted() {
-    // 마운트 후 로그인 정보 재확인
-    console.log("=== ChatList 마운트 완료 ===");
-    console.log("인증 상태:", this.isAuthenticated);
-    console.log("사용자 ID:", this.currentUserId);
-    console.log("채팅방 수:", this.rooms?.length || 0);
-    console.log("===========================");
+    if (this.isAuthenticated) {
+      await this.loadRooms();
+    } else {
+      this.checkAuthAndRedirect();
+    }
   },
 
   watch: {
-    // URL 쿼리 파라미터가 변경될 때 데이터 다시 로드
     "$route.query.itemId": function () {
-      this.loadRooms();
+      if (this.isAuthenticated) {
+        this.loadRooms();
+      }
     },
 
-    // 로그인 상태 변경 감지
     isAuthenticated(newVal, oldVal) {
-      console.log("[Auth 상태 변경]", { from: oldVal, to: newVal });
-
       if (newVal && !oldVal) {
-        // 로그인됨 - 채팅방 목록 로드
-        console.log("로그인됨 - 채팅방 목록 로드");
         this.loadRooms();
       } else if (!newVal && oldVal) {
-        // 로그아웃됨 - 데이터 초기화
-        console.log("로그아웃됨 - 채팅방 목록 초기화");
-        // Vuex store에서 채팅방 목록 초기화하는 액션이 있다면 호출
-        // this.$store.commit('chat/CLEAR_ROOMS');
+        this.checkAuthAndRedirect();
       }
     },
 
     currentUserId(newVal, oldVal) {
       if (newVal !== oldVal && this.isAuthenticated) {
-        console.log("[사용자 변경]", { from: oldVal, to: newVal });
         this.loadRooms();
       }
     },
@@ -296,5 +279,12 @@ export default {
   to {
     transform: rotate(360deg);
   }
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

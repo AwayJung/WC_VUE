@@ -1,30 +1,66 @@
 <template>
   <div
-    class="p-6 bg-white border-b cursor-pointer"
+    class="p-6 bg-white border-b cursor-pointer relative"
+    :class="{ 'opacity-75': getItemStatus() === 'SOLD' }"
     @click="$emit('click', getItemId())"
   >
     <div class="flex space-x-6">
       <div
-        class="w-32 h-32 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden"
+        class="w-32 h-32 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden relative"
       >
         <img
           :src="getImageUrl(item)"
           :alt="getItemDescription()"
           class="w-full h-full object-cover"
+          :class="{ grayscale: getItemStatus() === 'SOLD' }"
           @error="handleImageError"
         />
+
+        <!-- 판매완료 오버레이 -->
+        <div
+          v-if="getItemStatus() === 'SOLD'"
+          class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+        >
+          <span
+            class="bg-gray-600 text-white px-3 py-1 rounded-full text-sm font-bold"
+          >
+            판매완료
+          </span>
+        </div>
       </div>
 
       <!-- 상품 정보 -->
       <div class="flex-1 min-w-0">
         <div class="flex justify-between items-start mb-2">
-          <h3 class="text-xl font-medium text-gray-900 truncate">
-            {{ getItemTitle() }}
-          </h3>
+          <div class="flex items-center space-x-2">
+            <h3
+              class="text-xl font-medium truncate"
+              :class="
+                getItemStatus() === 'SOLD' ? 'text-gray-500' : 'text-gray-900'
+              "
+            >
+              {{ getItemTitle() }}
+            </h3>
+
+            <!-- 상태 배지 -->
+            <span
+              v-if="getItemStatus()"
+              :class="getStatusBadgeClass(getItemStatus())"
+              class="px-2 py-1 rounded-full text-xs font-medium flex-shrink-0"
+            >
+              {{ getStatusText(getItemStatus()) }}
+            </span>
+          </div>
+
           <ItemLikeCount v-if="getLikeCount() > 0" :count="getLikeCount()" />
         </div>
 
-        <div class="text-xl font-bold text-gray-900 mb-2">
+        <div
+          class="text-xl font-bold mb-2"
+          :class="
+            getItemStatus() === 'SOLD' ? 'text-gray-400' : 'text-gray-900'
+          "
+        >
           {{ formatPrice(getItemPrice()) }}
         </div>
 
@@ -85,6 +121,33 @@ export default {
       return (
         this.item.itemId || (this.item.data && this.item.data.itemId) || null
       );
+    },
+
+    // 🔧 안전하게 status 가져오기 (새로 추가)
+    getItemStatus() {
+      return (
+        this.item.status ||
+        (this.item.data && this.item.data.status) ||
+        "SELLING"
+      );
+    },
+
+    // 🔧 상태 배지 스타일 (새로 추가)
+    getStatusBadgeClass(status) {
+      const classes = {
+        SELLING: "bg-green-100 text-green-800",
+        SOLD: "bg-red-100 text-red-800",
+      };
+      return classes[status] || "bg-green-100 text-green-800";
+    },
+
+    // 🔧 상태 텍스트 (새로 추가)
+    getStatusText(status) {
+      const texts = {
+        SELLING: "판매중",
+        SOLD: "판매완료",
+      };
+      return texts[status] || "판매중";
     },
 
     // 안전하게 likeCount 가져오기

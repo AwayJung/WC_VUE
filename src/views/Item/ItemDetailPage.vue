@@ -2,8 +2,12 @@
   <div class="min-h-screen">
     <MarketHeader
       :is-logged-in="isAuthenticated"
-      class="z-50"
-      @toggle-menu="toggleMenu"
+      :show-status-button="isMyItem"
+      :current-item-id="currentItem?.data?.itemId || $route.params.id"
+      :current-item-status="currentItem?.data?.status"
+      :current-item-seller-id="currentItem?.data?.sellerId"
+      menu-mode="item-detail"
+      @status-changed="handleItemStatusChanged"
     />
 
     <!-- 로딩 상태 -->
@@ -20,8 +24,30 @@
     </div>
 
     <!-- 컨텐츠 영역 -->
-    <div v-else-if="currentItem" class="pt-16 pb-32">
-      <ItemImageSlide :item="currentItem || {}" />
+    <div
+      v-else-if="currentItem"
+      :class="['pt-16 pb-32 transition-all', getSoldCardClass(currentItem)]"
+    >
+      <!-- 이미지 슬라이드 (판매완료시 흑백 + 오버레이) -->
+      <div class="relative">
+        <ItemImageSlide
+          :item="currentItem || {}"
+          :class="['transition-all', getSoldImageClass(currentItem)]"
+        />
+
+        <!-- 판매완료 오버레이 -->
+        <div
+          v-if="shouldShowSoldOverlay(currentItem)"
+          :class="getSoldOverlayClass(currentItem)"
+        >
+          <div
+            class="bg-gray-700 text-white px-6 py-3 rounded-lg font-bold text-xl"
+          >
+            판매완료
+          </div>
+        </div>
+      </div>
+
       <ItemSellerInfo
         :item="currentItem"
         @click-chat="handleChatWithSeller"
@@ -81,6 +107,7 @@ import ItemDetailInfo from "@/components/Item/Detail/ItemDetailInfo.vue";
 import ItemImageSlide from "@/components/Item/Detail/ItemImageSlide.vue";
 import ItemSellerInfo from "@/components/Item/Detail/ItemSellerInfo.vue";
 import MarketHeader from "@/components/layout/MarketHeader.vue";
+import { soldItemMixin } from "@/utils/soldItemUtils"; // 추가
 
 export default {
   name: "ItemDetailPage",
@@ -92,6 +119,8 @@ export default {
     ItemActionButton,
     MarketHeader,
   },
+
+  mixins: [soldItemMixin], // 추가
 
   data() {
     return {
@@ -126,6 +155,19 @@ export default {
     ...mapActions("item", ["fetchItem", "deleteItem", "updateItem"]),
     ...mapActions("itemLike", ["toggleItemLike", "checkItemLikeStatus"]),
 
+    handleItemStatusChanged({ itemId, newStatus }) {
+      console.log("헤더에서 상태 변경:", { itemId, newStatus });
+
+      // 현재 아이템 상태 업데이트
+      if (this.currentItem && this.currentItem.data) {
+        this.currentItem.data.status = newStatus;
+
+        // Vue 반응성 트리거
+        this.$forceUpdate();
+
+        console.log("아이템 상태 업데이트 완료:", newStatus);
+      }
+    },
     async loadItemData() {
       const itemId = this.$route.params.id;
       try {

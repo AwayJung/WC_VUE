@@ -15,8 +15,8 @@
         </div>
 
         <div class="flex items-center space-x-3">
-          <!-- 검색 버튼 -->
-          <button class="p-2" @click="toggleSearchBar">
+          <!-- 검색 버튼 (조건부 표시) -->
+          <button v-if="showSearchButton" class="p-2" @click="toggleSearchBar">
             <svg
               class="w-6 h-6"
               fill="none"
@@ -32,57 +32,335 @@
             </svg>
           </button>
 
-          <!-- 메뉴 버튼 -->
-          <button class="p-2" v-if="!isLoggedIn" @click="$emit('toggle-menu')">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
+          <!-- 상태 변경 버튼 (자동으로 소유자만 표시) -->
+          <button
+            v-if="shouldShowStatusButton"
+            @click="handleStatusToggle"
+            :disabled="statusChanging"
+            :class="getStatusButtonClass(currentItemStatus)"
+            class="px-3 py-1 text-sm font-medium rounded-full transition-colors hover:opacity-80 disabled:opacity-50"
+          >
+            <span v-if="statusChanging" class="flex items-center">
+              <svg
+                class="animate-spin -ml-1 mr-2 h-3 w-3"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              변경중...
+            </span>
+            <span v-else>
+              {{ getStatusText(currentItemStatus) }}
+            </span>
           </button>
 
-          <!-- 공유  버튼 (로그인 시) -->
-          <button class="p-2" v-if="isLoggedIn" @click="shareContent">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <!-- 메뉴 버튼 (미로그인 시) -->
+          <div class="relative" v-if="!isLoggedIn">
+            <button
+              class="p-2"
+              @click="toggleGuestMenu"
+              :class="{ 'bg-gray-100 rounded': showGuestMenu }"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-              />
-            </svg>
-          </button>
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
 
-          <!-- 메뉴 버튼 (로그인 시) -->
-          <button class="p-2" v-if="isLoggedIn" @click="$emit('toggle-menu')">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+            <!-- 미로그인 드롭다운 메뉴 -->
+            <div
+              v-if="showGuestMenu"
+              class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border py-2 z-50"
+              @click.stop
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-              />
-            </svg>
-          </button>
+              <router-link
+                to="/login"
+                class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                @click="closeAllMenus"
+              >
+                <svg
+                  class="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                  />
+                </svg>
+                로그인
+              </router-link>
+              <router-link
+                to="/signup"
+                class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                @click="closeAllMenus"
+              >
+                <svg
+                  class="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                  />
+                </svg>
+                회원가입
+              </router-link>
+              <div class="border-t border-gray-100 my-1"></div>
+
+              <a
+                href="notice"
+                class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                @click="closeAllMenus"
+              >
+                <svg
+                  class="w-5 h-5 mr-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                공지사항
+              </a>
+            </div>
+          </div>
+
+          <!-- 로그인 시 버튼들 -->
+          <div v-if="isLoggedIn" class="flex items-center space-x-3">
+            <!-- 사용자 메뉴 버튼 -->
+            <div class="relative">
+              <button
+                class="p-2"
+                @click="toggleUserMenu"
+                :class="{ 'bg-gray-100 rounded': showUserMenu }"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                  />
+                </svg>
+              </button>
+
+              <!-- 사용자 드롭다운 메뉴 -->
+              <div
+                v-if="showUserMenu"
+                class="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border py-2 z-50"
+                @click.stop
+              >
+                <!-- 기본 메뉴 (default 모드) -->
+                <template v-if="effectiveMenuMode === 'default'">
+                  <router-link
+                    to="/mypage"
+                    class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                    @click="closeAllMenus"
+                  >
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    내 프로필
+                  </router-link>
+                  <router-link
+                    to="/items/create"
+                    class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                    @click="closeAllMenus"
+                  >
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    상품 등록
+                  </router-link>
+                  <router-link
+                    to="/chat"
+                    class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                    @click="closeAllMenus"
+                  >
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    채팅
+                  </router-link>
+                  <div class="border-t border-gray-100 my-1"></div>
+                  <button
+                    @click="handleLogout"
+                    class="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    로그아웃
+                  </button>
+                </template>
+
+                <!-- 게시글 상세 페이지 메뉴 (item-detail 모드) -->
+                <template
+                  v-else-if="
+                    effectiveMenuMode === 'item-detail' &&
+                    isItemOwner &&
+                    currentItemId
+                  "
+                >
+                  <!-- 게시글 수정 버튼 -->
+                  <button
+                    @click="handleEditItem"
+                    class="flex items-center w-full px-4 py-3 text-sm text-blue-600 hover:bg-blue-50"
+                  >
+                    <svg
+                      class="w-5 h-5 mr-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    게시글 수정
+                  </button>
+
+                  <!-- 게시글 삭제 버튼 -->
+                  <button
+                    @click="handleDeleteItem"
+                    :disabled="deleting"
+                    class="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <span v-if="deleting" class="flex items-center">
+                      <svg
+                        class="animate-spin w-5 h-5 mr-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        ></circle>
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      삭제중...
+                    </span>
+                    <span v-else class="flex items-center">
+                      <svg
+                        class="w-5 h-5 mr-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      게시글 삭제
+                    </span>
+                  </button>
+                </template>
+
+                <!-- item-detail 모드이지만 소유자가 아닌 경우 메뉴 없음 (이제 사용되지 않음) -->
+                <div
+                  v-else-if="false"
+                  class="px-4 py-3 text-sm text-gray-500 text-center"
+                >
+                  사용 가능한 메뉴가 없습니다
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -99,10 +377,18 @@
 
     <!-- 실제 헤더 높이만큼 공간 확보-->
     <div ref="headerSpacer" class="w-full"></div>
+
+    <!-- 메뉴 바깥 클릭 시 닫기 위한 오버레이 -->
+    <div
+      v-if="showGuestMenu || showUserMenu"
+      class="fixed inset-0 z-40"
+      @click="closeAllMenus"
+    ></div>
   </div>
 </template>
 
 <script>
+import { mapGetters, mapActions } from "vuex";
 import SearchArea from "@/components/layout/SearchArea.vue";
 
 export default {
@@ -115,37 +401,99 @@ export default {
       type: Boolean,
       default: false,
     },
+    showSearchButton: {
+      type: Boolean,
+      default: true,
+    },
+    // 🔧 상태 변경 버튼 관련 props 추가
+    showStatusButton: {
+      type: Boolean,
+      default: false,
+    },
+    currentItemId: {
+      type: [String, Number],
+      default: null,
+    },
+    currentItemStatus: {
+      type: String,
+      default: null,
+    },
+    currentItemSellerId: {
+      type: [String, Number],
+      default: null,
+    },
+    // 🔧 메뉴 모드 추가
+    menuMode: {
+      type: String,
+      default: "default", // "default" | "item-detail"
+      validator: (value) => ["default", "item-detail"].includes(value),
+    },
   },
   data() {
     return {
       showSearchBar: false,
       currentSearchQuery: "",
       headerObserver: null,
+      statusChanging: false, // 🔧 상태 변경 로딩
+      deleting: false, // 🔧 삭제 로딩 상태
+
+      // 메뉴 상태
+      showGuestMenu: false,
+      showUserMenu: false,
     };
   },
-  mounted() {
-    // ResizeObserver 설정
-    this.setupHeaderObserver();
+  computed: {
+    ...mapGetters("auth", ["currentUser"]),
 
-    // 초기 높이 설정
+    // 🔧 자동으로 소유자인지 판단
+    isItemOwner() {
+      if (!this.currentUser?.userId || !this.currentItemSellerId) {
+        return false;
+      }
+
+      // 타입 안전한 비교
+      const currentUserId = String(this.currentUser.userId);
+      const sellerId = String(this.currentItemSellerId);
+
+      return currentUserId === sellerId;
+    },
+
+    // 🔧 상태 버튼 표시 여부 (자동 계산)
+    shouldShowStatusButton() {
+      return (
+        this.showStatusButton &&
+        this.isItemOwner &&
+        this.currentItemStatus &&
+        this.isLoggedIn
+      );
+    },
+
+    // 🔧 실제 사용할 메뉴 모드 (자동 계산)
+    effectiveMenuMode() {
+      // item-detail 모드이지만 소유자가 아니면 default로 변경
+      if (this.menuMode === "item-detail" && !this.isItemOwner) {
+        return "default";
+      }
+      return this.menuMode;
+    },
+  },
+  mounted() {
+    this.setupHeaderObserver();
     this.$nextTick(() => {
       this.updateHeaderHeight();
     });
   },
   beforeDestroy() {
-    // ResizeObserver 정리
     if (this.headerObserver) {
       this.headerObserver.disconnect();
     }
   },
   watch: {
-    // 검색창 상태 변경 감시
     showSearchBar() {
       this.$nextTick(() => {
         this.updateHeaderHeight();
       });
     },
-    // 검색어 변경 감시
     currentSearchQuery() {
       this.$nextTick(() => {
         this.updateHeaderHeight();
@@ -153,7 +501,61 @@ export default {
     },
   },
   methods: {
+    ...mapActions("item", ["changeItemStatus", "deleteItem"]),
+
+    // 🔧 상태 변경 관련 메서드들
+    async handleStatusToggle() {
+      if (!this.currentItemId) {
+        alert("상태를 변경할 수 없습니다.");
+        return;
+      }
+
+      const newStatus =
+        this.currentItemStatus === "SELLING" ? "SOLD" : "SELLING";
+      this.statusChanging = true;
+
+      try {
+        // userId 제거
+        await this.changeItemStatus({
+          itemId: this.currentItemId,
+          status: newStatus,
+          // userId 제거됨
+        });
+
+        // 부모 컴포넌트에 상태 변경 알림
+        this.$emit("status-changed", {
+          itemId: this.currentItemId,
+          newStatus,
+        });
+      } catch (error) {
+        console.error("상태 변경 실패:", error);
+        alert("상태 변경에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        this.statusChanging = false;
+      }
+    },
+
+    getStatusButtonClass(status) {
+      const classes = {
+        SELLING: "bg-green-100 text-green-800 hover:bg-green-200",
+        SOLD: "bg-gray-100 text-gray-800 hover:bg-gray-200",
+      };
+      return (
+        classes[status] || "bg-green-100 text-green-800 hover:bg-green-200"
+      );
+    },
+
+    getStatusText(status) {
+      const texts = {
+        SELLING: "판매중",
+        SOLD: "판매완료",
+      };
+      return texts[status] || "판매중";
+    },
+
+    // 기존 메서드들...
     setupHeaderObserver() {
+      // 헤더 높이 관찰 (데스크톱용)
       if (typeof ResizeObserver !== "undefined") {
         this.headerObserver = new ResizeObserver((entries) => {
           for (const entry of entries) {
@@ -163,7 +565,6 @@ export default {
           }
         });
 
-        // 헤더 요소 관찰 시작
         const headerEl = this.$el.querySelector("header");
         if (headerEl) {
           this.headerObserver.observe(headerEl);
@@ -172,10 +573,7 @@ export default {
     },
 
     shareContent() {
-      // 현재 페이지 URL 가져오기
       const url = window.location.href;
-
-      // 공유 기능 지원 확인
       if (navigator.share) {
         navigator
           .share({
@@ -186,7 +584,6 @@ export default {
             console.error("공유하기 에러:", error);
           });
       } else {
-        // 기본 클립보드 복사 대체 기능
         navigator.clipboard
           .writeText(url)
           .then(() => {
@@ -198,7 +595,6 @@ export default {
       }
     },
 
-    // 헤더 높이 업데이트
     updateHeaderHeight() {
       const headerEl = this.$el.querySelector("header");
       const spacerEl = this.$refs.headerSpacer;
@@ -210,33 +606,23 @@ export default {
       }
     },
 
-    // 검색창 토글 (보이기/숨기기)
     toggleSearchBar() {
       this.showSearchBar = !this.showSearchBar;
-
-      // 검색창을 닫을 때만 검색어 초기화 및 이벤트 발생
       if (!this.showSearchBar) {
         this.hideSearchBar();
       }
     },
 
-    // 검색창 숨기기
     hideSearchBar() {
       if (this.showSearchBar) {
         this.showSearchBar = false;
       }
-
-      // 검색어 초기화
       this.currentSearchQuery = "";
-
-      // 검색어 초기화 이벤트 발생 (라우터 관련 코드는 부모에서 처리 안 하도록 특별 이벤트 발생)
       this.$emit("search-clear-no-route");
     },
 
     onSearch(query) {
       this.currentSearchQuery = query;
-
-      // 현재 라우트와 같은 경우 NavigationDuplicated 에러 방지
       const currentQuery = this.$route.query.q || "";
       if (currentQuery === query) {
         return;
@@ -258,9 +644,64 @@ export default {
 
     onSearchClear() {
       this.currentSearchQuery = "";
-
-      // 부모 컴포넌트에서는 이 이벤트를 받아서 라우터 조작을 하지 않도록 안내 필요
       this.$emit("search-clear-no-route");
+    },
+
+    // 메뉴 메서드들
+    toggleGuestMenu() {
+      this.showGuestMenu = !this.showGuestMenu;
+      this.showUserMenu = false;
+    },
+
+    toggleUserMenu() {
+      this.showUserMenu = !this.showUserMenu;
+      this.showGuestMenu = false;
+    },
+
+    closeAllMenus() {
+      this.showGuestMenu = false;
+      this.showUserMenu = false;
+    },
+
+    handleLogout() {
+      this.closeAllMenus();
+      this.$store.dispatch("auth/logout");
+      this.$router.push("/");
+      alert("로그아웃되었습니다.");
+    },
+
+    // 🔧 게시글 수정 메서드 추가
+    handleEditItem() {
+      this.closeAllMenus();
+      this.$router.push(`/items/update/${this.currentItemId}`);
+    },
+
+    // 🔧 게시글 삭제 메서드 추가
+    async handleDeleteItem() {
+      if (
+        !confirm(
+          "정말로 이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다."
+        )
+      ) {
+        return;
+      }
+
+      this.deleting = true;
+      this.closeAllMenus();
+
+      try {
+        await this.deleteItem(this.currentItemId);
+
+        alert("게시글이 삭제되었습니다.");
+
+        // 홈으로 이동
+        this.$router.push("/");
+      } catch (error) {
+        console.error("게시글 삭제 실패:", error);
+        alert("게시글 삭제에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        this.deleting = false;
+      }
     },
   },
 };

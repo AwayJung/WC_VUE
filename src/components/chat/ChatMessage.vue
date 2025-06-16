@@ -22,7 +22,7 @@
         isOwnMessage ? 'text-right mr-1' : 'text-left ml-1',
       ]"
     >
-      <span>{{ formatTime(message.timestamp) }}</span>
+      <span>{{ formatTime(message.sentTime) }}</span>
     </div>
   </div>
 </template>
@@ -46,10 +46,91 @@ export default {
   },
 
   computed: {
-    // 자신의 메시지인지 확인
+    // 자신의 메시지인지 확인 (개선된 버전)
     isOwnMessage() {
-      return this.message.senderId === this.currentUserId;
+      const messageSenderId = this.message?.senderId;
+      const currentUserId = this.currentUserId;
+
+      // 🔧 더 엄격한 검증
+      if (
+        !currentUserId ||
+        currentUserId === 0 ||
+        currentUserId === null ||
+        currentUserId === undefined
+      ) {
+        console.log("[ChatMessage] currentUserId 무효:", currentUserId);
+        return false;
+      }
+
+      if (!messageSenderId && messageSenderId !== 0) {
+        console.log("[ChatMessage] messageSenderId 무효:", messageSenderId);
+        return false;
+      }
+
+      // 🔧 숫자로 변환하여 비교 (더 안전)
+      const messageId = Number(messageSenderId);
+      const userId = Number(currentUserId);
+
+      const isOwn = messageId === userId;
+
+      // 🔍 상세 로그
+      console.log("[ChatMessage 비교]", {
+        messageContent: this.message.content?.substring(0, 20) + "...",
+        messageSenderId: messageSenderId,
+        messageIdConverted: messageId,
+        currentUserId: currentUserId,
+        userIdConverted: userId,
+        isOwn: isOwn,
+        timestamp: this.message.timestamp,
+      });
+
+      return isOwn;
     },
+  },
+
+  // 🆕 props 변경 감시
+  watch: {
+    currentUserId(newVal, oldVal) {
+      console.log(
+        `[ChatMessage] currentUserId 변경 (${this.message.content?.substring(
+          0,
+          10
+        )}...):`,
+        {
+          from: oldVal,
+          to: newVal,
+          messageSenderId: this.message.senderId,
+        }
+      );
+    },
+
+    // isOwnMessage 변경 감시 (디버깅용)
+    isOwnMessage(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        console.log(
+          `[ChatMessage] isOwnMessage 변경 (${this.message.content?.substring(
+            0,
+            10
+          )}...):`,
+          {
+            from: oldVal,
+            to: newVal,
+            currentUserId: this.currentUserId,
+            messageSenderId: this.message.senderId,
+          }
+        );
+      }
+    },
+  },
+
+  // 🆕 컴포넌트 생성 시 로그
+  created() {
+    console.log("[ChatMessage] 생성됨:", {
+      messageContent: this.message.content?.substring(0, 20) + "...",
+      messageSenderId: this.message.senderId,
+      currentUserId: this.currentUserId,
+      isOwnMessage: this.isOwnMessage,
+    });
   },
 
   methods: {

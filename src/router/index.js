@@ -3,15 +3,16 @@ import VueRouter from "vue-router";
 import ChatRoom from "@/views/Chat/ChatRoom.vue";
 import MainPage from "@/views/MainPage.vue";
 import ChatList from "@/views/Chat/ChatList.vue";
-import LoginPage from "@/views/LoginPage.vue";
-import SignUp from "@/views/SignUp.vue";
+import LoginPage from "@/views/Auth/LoginPage.vue";
+import SignUp from "@/views/Auth/SignUp.vue";
 import ItemCreatePage from "@/views/Item/ItemCreatePage.vue";
 import ItemListPage from "@/views/Item/ItemListPage.vue";
 import ItemDetailPage from "@/views/Item/ItemDetailPage.vue";
 import ItemUpdatePage from "@/views/Item/ItemUpdatePage.vue";
 import ItemLikesPage from "@/views/Item/ItemLikesPage.vue";
-import MyPage from "@/views/MyPage.vue";
+import MyPage from "@/views/Auth/MyPage.vue";
 import Notice from "@/views/Notice.vue";
+
 Vue.use(VueRouter);
 
 const routes = [
@@ -82,8 +83,8 @@ const routes = [
     component: ItemLikesPage,
   },
   {
-    path: '/notice',
-    name: 'Notice',
+    path: "/notice",
+    name: "Notice",
     component: Notice,
   },
 ];

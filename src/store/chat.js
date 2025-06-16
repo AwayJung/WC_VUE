@@ -1,4 +1,9 @@
-import { fetchUserRooms, fetchMessages, createChatRoom } from "../api/chat";
+import {
+  fetchUserRooms,
+  fetchMessages,
+  createChatRoom,
+  deleteChatRoom,
+} from "../api/chat";
 
 const state = {
   rooms: [],
@@ -12,6 +17,14 @@ const mutations = {
   },
   SET_MESSAGES(state, messages) {
     state.messages = messages;
+  },
+  REMOVE_ROOM(state, roomId) {
+    state.rooms = state.rooms.filter((room) => room.roomId !== roomId);
+    // 현재 채팅방이 삭제된 방이면 초기화
+    if (state.currentRoom && state.currentRoom.roomId === roomId) {
+      state.currentRoom = null;
+      state.messages = [];
+    }
   },
 };
 
@@ -51,6 +64,22 @@ const actions = {
       return response.data;
     } catch (error) {
       console.error("채팅방 생성 실패:", error);
+      throw error;
+    }
+  },
+
+  async deleteChatRoom({ commit }, roomId) {
+    try {
+      const response = await deleteChatRoom(roomId);
+
+      // 성공시 로컬 state에서도 제거
+      if (response.data.code === 20000) {
+        commit("REMOVE_ROOM", roomId);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error("채팅방 삭제 실패:", error);
       throw error;
     }
   },

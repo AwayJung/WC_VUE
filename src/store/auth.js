@@ -36,6 +36,7 @@ const actions = {
                         userId: data.userId,
                         name: data.name,
                         loginEmail: data.loginEmail,
+                        regDt: data.regDt,
                         // 기타 필요한 사용자 정보
                     }
                 });

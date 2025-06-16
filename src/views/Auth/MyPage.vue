@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 flex flex-col">
     <TheHeader />
 
-    <div class="max-w-6xl mx-auto px-4 py-8">
+    <main class="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
       <ProfileCard @edit-profile="handleEditProfile" />
 
       <!-- 통계 카드들 -->
@@ -38,6 +38,7 @@
             @filter-change="handleSalesFilterChange"
             @create-item="handleCreateItem"
             @view-all-sales="handleViewAllSales"
+            @status-changed="handleItemStatusChanged"
           />
 
           <LikesTab
@@ -49,13 +50,13 @@
           <SupportTab v-if="activeTab === 'support'" />
         </div>
       </div>
-    </div>
+    </main>
+    <TheFooter />
 
     <!-- 프로필 수정 모달 -->
     <ProfileEditModal
       :visible="showProfileEdit"
       @close="showProfileEdit = false"
-      @save="handleSaveProfile"
     />
   </div>
 </template>
@@ -69,6 +70,7 @@ import ProfileEditModal from "@/components/mypage/ProfileEditModal.vue";
 import SalesTab from "@/components/mypage/SalesTab.vue";
 import LikesTab from "@/components/mypage/LikesTab.vue";
 import SupportTab from "@/components/mypage/SupportTab.vue";
+import TheFooter from "@/components/layout/TheFooter.vue";
 
 export default {
   name: "MyPage",
@@ -80,6 +82,7 @@ export default {
     SalesTab,
     LikesTab,
     SupportTab,
+    TheFooter,
   },
 
   data() {
@@ -110,31 +113,40 @@ export default {
 
     // 현재 사용자의 판매상품만 필터링
     mySalesData() {
-      if (!this.allItems || !this.currentUser) return [];
+      if (!this.allItems || !this.currentUser) {
+        return [];
+      }
 
       return this.allItems.filter((item) => {
         const itemSellerId = item.sellerId || (item.data && item.data.sellerId);
-        return itemSellerId === this.currentUser.userId;
+        // 타입 안전한 비교 + 하드코딩된 sellerId=3 임시 처리
+        const normalizedItemSellerId = String(itemSellerId);
+        const normalizedCurrentUserId = String(this.currentUser.userId);
+
+        return normalizedItemSellerId === normalizedCurrentUserId;
       });
     },
 
     // 필터에 따른 판매상품
     filteredSalesData() {
-      if (this.salesFilter === "all") return this.mySalesData;
+      if (this.salesFilter === "all") {
+        return this.mySalesData;
+      }
 
       return this.mySalesData.filter((item) => {
         const status =
-          item.status || (item.data && item.data.status) || "selling";
-        return status === this.salesFilter;
+          item.status || (item.data && item.data.status) || "SELLING";
+        const normalizedStatus = status.toUpperCase();
+        const normalizedFilter = this.salesFilter.toUpperCase();
+
+        return normalizedStatus === normalizedFilter;
       });
     },
   },
 
   watch: {
     // 탭 변경 감지
-    activeTab(newTab, oldTab) {
-      console.log(`탭 변경: ${oldTab} → ${newTab}`);
-
+    activeTab(newTab) {
       // 관심목록 탭으로 변경 시 찜 목록 새로고침
       if (newTab === "likes") {
         this.refreshLikesData();
@@ -146,7 +158,6 @@ export default {
       handler(newItems) {
         if (newItems && Array.isArray(newItems)) {
           this.userStats.likes = newItems.length;
-          console.log("찜 목록 통계 업데이트:", newItems.length);
         }
       },
       immediate: true,
@@ -155,7 +166,7 @@ export default {
 
   methods: {
     ...mapActions("item", ["fetchItems"]),
-    ...mapActions("itemLike", ["fetchMyLikes", "refreshLikedItems"]),
+    ...mapActions("itemLike", ["refreshLikedItems"]),
 
     handleEditProfile() {
       this.showProfileEdit = true;
@@ -163,7 +174,6 @@ export default {
 
     handleSalesFilterChange(filter) {
       this.salesFilter = filter;
-      console.log("판매내역 필터 변경:", filter);
     },
 
     handleCreateItem() {
@@ -183,35 +193,37 @@ export default {
     },
 
     handleNavigateItems() {
-      // 전체 아이템 목록으로 이동
       this.$router.push("/items");
     },
 
     // 통계 업데이트 핸들러
     handleUpdateStats(statsUpdate) {
-      console.log("통계 업데이트:", statsUpdate);
-
-      // 전달받은 통계로 업데이트
       Object.assign(this.userStats, statsUpdate);
     },
 
-    async handleSaveProfile(profileData) {
+    // 아이템 상태 변경 핸들러
+    handleItemStatusChanged({ itemId, newStatus }) {
+      // allItems에서 해당 아이템의 상태 업데이트
+      const item = this.allItems.find((item) => {
+        const id = item.itemId || (item.data && item.data.itemId) || item.id;
+        return String(id) === String(itemId);
+      });
+
+      if (item) {
+        // 아이템 상태 업데이트
+        if (item.data) {
+          item.data.status = newStatus;
+        }
+        item.status = newStatus;
+
+        // Vue 반응성 트리거
+        this.$forceUpdate();
+      }
+    },
+
+    async handleSaveProfile() {
       try {
-        console.log("프로필 저장:", profileData);
-
-        // 실제 API 호출 예시
-        // const formData = new FormData();
-        // formData.append('nickname', profileData.nickname);
-        // formData.append('bio', profileData.bio);
-        // if (profileData.profileImage) {
-        //   formData.append('profileImage', profileData.profileImage);
-        // }
-        //
-        // const response = await userApi.updateProfile(formData);
-        //
-        // // Vuex 스토어 업데이트
-        // this.$store.commit('auth/UPDATE_USER_PROFILE', response.data);
-
+        // 프로필 저장 로직 구현 필요
         this.showProfileEdit = false;
         alert("프로필이 수정되었습니다.");
       } catch (error) {
@@ -221,23 +233,37 @@ export default {
     },
 
     // API 호출 메서드들
-    async fetchAllItems() {
+    async fetchAllItems(forceRefresh = false) {
       try {
-        console.log("전체 아이템 데이터 조회");
-        // Vuex store에서 아이템 가져오기
-        await this.fetchItems();
+        if (forceRefresh) {
+          // Vuex 우회하고 직접 API 호출
+          const { getItemList } = await import("@/api/item");
+          const response = await getItemList();
 
-        // store에서 데이터 구조에 맞게 가져오기
-        const items = this.$store.state.item.items;
-        if (items && items.data) {
-          if (Array.isArray(items.data)) {
-            this.allItems = items.data;
-          } else {
-            this.allItems = Object.values(items.data);
+          if (response.data) {
+            if (Array.isArray(response.data)) {
+              this.allItems = response.data;
+            } else if (
+              response.data.data &&
+              Array.isArray(response.data.data)
+            ) {
+              this.allItems = response.data.data;
+            } else {
+              this.allItems = Object.values(response.data);
+            }
+          }
+        } else {
+          // 기존 Vuex 방식
+          await this.fetchItems();
+          const items = this.$store.state.item.items;
+          if (items && items.data) {
+            if (Array.isArray(items.data)) {
+              this.allItems = items.data;
+            } else {
+              this.allItems = Object.values(items.data);
+            }
           }
         }
-
-        console.log("내 판매상품:", this.mySalesData);
       } catch (error) {
         console.error("아이템 데이터 조회 실패:", error);
       }
@@ -245,46 +271,26 @@ export default {
 
     async refreshLikesData() {
       try {
-        console.log("=== 찜 목록 새로고침 시작 ===");
-
         if (this.isAuthenticated) {
-          // Vuex action을 통해 찜 목록 새로고침
           await this.refreshLikedItems();
-          console.log("찜 목록 새로고침 완료");
         }
       } catch (error) {
         console.error("찜 목록 새로고침 실패:", error);
       }
     },
 
-    async fetchUserStats() {
-      try {
-        console.log("사용자 통계 조회");
+    fetchUserStats() {
+      // 판매상품 통계
+      this.userStats.sales = this.mySalesData.length;
 
-        // 판매상품 통계
-        this.userStats.sales = this.mySalesData.length;
-
-        // 찜 목록 통계 (Vuex에서 가져오기)
-        if (this.likedItems && Array.isArray(this.likedItems)) {
-          this.userStats.likes = this.likedItems.length;
-        }
-
-        // 실제 API 호출 예시
-        // const response = await userApi.getUserStats(this.currentUser.userId);
-        // this.userStats = response.data;
-
-        console.log("현재 통계:", this.userStats);
-      } catch (error) {
-        console.error("사용자 통계 조회 실패:", error);
+      // 찜 목록 통계
+      if (this.likedItems && Array.isArray(this.likedItems)) {
+        this.userStats.likes = this.likedItems.length;
       }
     },
   },
 
   async created() {
-    console.log("=== MyPage 생성 ===");
-    console.log("인증 상태:", this.isAuthenticated);
-    console.log("현재 사용자:", this.currentUser);
-
     // 인증 체크
     if (!this.isAuthenticated) {
       alert("로그인이 필요합니다.");
@@ -294,22 +300,16 @@ export default {
 
     // 초기 데이터 로딩
     try {
-      await Promise.all([this.fetchAllItems(), this.refreshLikesData()]);
+      await Promise.all([
+        this.fetchAllItems(true), // 강제 새로고침
+        this.refreshLikesData(),
+      ]);
 
       // 아이템 로드 후 통계 업데이트
-      await this.fetchUserStats();
-
-      console.log("=== MyPage 초기화 완료 ===");
+      this.fetchUserStats();
     } catch (error) {
       console.error("초기 데이터 로딩 실패:", error);
     }
-  },
-
-  mounted() {
-    console.log("=== MyPage 마운트 완료 ===");
-    console.log("현재 탭:", this.activeTab);
-    console.log("찜한 상품 수:", this.likedItems?.length || 0);
-    console.log("============================");
   },
 };
 </script>

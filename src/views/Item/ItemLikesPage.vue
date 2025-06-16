@@ -1,54 +1,35 @@
 <template>
   <div>
-    <!-- 마켓 헤더 컴포넌트 적용 -->
-    <MarketHeader />
+    <MarketHeader :isLoggedIn="isAuthenticated" />
 
     <div class="container mx-auto px-4 py-6 max-w-5xl">
-      <!-- 카테고리 탭 -->
       <div class="mb-6">
         <div class="inline-flex rounded-md shadow-sm">
           <button
-            class="px-5 py-2 text-sm font-medium bg-gray-200 text-gray-800 rounded-l-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            class="px-5 py-2 text-sm font-medium bg-orange-500 text-white rounded-l-lg hover:bg-orange-600 focus:outline-none"
           >
-            전체
+            관심목록
           </button>
           <button
-            class="px-5 py-2 text-sm font-medium bg-white text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            @click="$router.push('/items')"
+            class="px-5 py-2 text-sm font-medium bg-white text-gray-600 hover:bg-gray-100 focus:outline-none"
           >
             물품 목록
           </button>
           <button
-            class="px-5 py-2 text-sm font-medium bg-white text-gray-600 rounded-r-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            @click="$router.push('/mypage')"
+            class="px-5 py-2 text-sm font-medium bg-white text-gray-600 rounded-r-lg hover:bg-gray-100 focus:outline-none"
           >
             마이 페이지
           </button>
         </div>
       </div>
 
-      <!-- 로그인 필요 메시지 -->
-      <div
-        v-if="!isAuthenticated"
-        class="flex justify-center items-center py-12"
-      >
-        <div class="text-center">
-          <p class="text-gray-500 mb-4">로그인이 필요합니다.</p>
-          <button
-            @click="$router.push('/login')"
-            class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
-          >
-            로그인하기
-          </button>
-        </div>
-      </div>
-
-      <!-- 로그인된 사용자용 찜 목록 -->
-      <div v-else>
-        <!-- 로딩 상태 -->
+      <div v-if="isAuthenticated">
         <div v-if="loading" class="flex justify-center items-center py-12">
           <p class="text-gray-500">불러오는 중...</p>
         </div>
 
-        <!-- 찜 목록 없음 -->
         <div
           v-else-if="likedItems.length === 0"
           class="flex justify-center items-center py-12"
@@ -64,7 +45,6 @@
           </div>
         </div>
 
-        <!-- 찜 목록 -->
         <div
           v-else
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -72,22 +52,27 @@
           <div
             v-for="item in likedItems"
             :key="item.itemId"
-            class="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+            :class="[
+              'border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200',
+              getSoldCardClass(item),
+            ]"
           >
-            <!-- 상품 이미지와 찜 버튼을 포함하는 컨테이너 -->
             <div class="relative w-full h-48">
-              <!-- 상품 이미지 - 고정된 높이로 설정 -->
               <div
                 class="w-full h-full cursor-pointer overflow-hidden"
                 @click="goToItemDetail(item.itemId)"
               >
-                <ItemImageSlide
-                  :item="{ data: item }"
-                  class="h-full w-full object-cover"
+                <img
+                  :src="getItemImageUrl(item)"
+                  :alt="item.name || '상품이미지'"
+                  :class="[
+                    'h-full w-full object-cover transition-all',
+                    getSoldImageClass(item),
+                  ]"
+                  @error="handleImageError"
                 />
               </div>
 
-              <!-- 찜 버튼 - 이미지 위에 겹치도록 배치 -->
               <button
                 @click="toggleLike(item.itemId)"
                 :disabled="isTogglingItem(item.itemId)"
@@ -111,30 +96,43 @@
               </button>
             </div>
 
-            <!-- 상품 정보 - 이미지와 완전히 분리된 영역 -->
             <div
               class="p-4 cursor-pointer bg-white"
               @click="goToItemDetail(item.itemId)"
             >
-              <!-- 상품명과 좋아요 수를 한 줄에 배치하기 위한 Flex 컨테이너 -->
               <div class="flex justify-between items-start">
-                <h2 class="text-lg font-semibold mb-2 truncate">
+                <h2
+                  :class="[
+                    'text-lg font-semibold mb-2 truncate',
+                    getSoldTitleClass(item),
+                  ]"
+                >
                   {{ item.name || "상품명" }}
                 </h2>
-                <!-- 오른쪽에 좋아요 수 컴포넌트 배치 -->
-                <ItemLikeCount :count="item.likeCount || 1" />
+                <ItemLikeCount :count="item.likeCount" />
               </div>
 
-              <p class="text-gray-900 font-bold mb-2">
+              <p :class="['font-bold mb-2', getSoldPriceClass(item)]">
                 {{ formatPrice(item.price) }}원
               </p>
+
+              <!-- 상태 배지 -->
+              <div class="flex items-center justify-between">
+                <span
+                  :class="[
+                    'inline-block px-2 py-1 text-xs font-medium rounded-full',
+                    getSoldBadgeClass(item),
+                  ]"
+                >
+                  {{ getStatusText(item) }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 하단 네비게이션에 실제 사용자 ID 전달 -->
     <BottomNavigation :userId="currentUserId" />
   </div>
 </template>
@@ -143,17 +141,18 @@
 import { mapState, mapActions, mapGetters } from "vuex";
 import MarketHeader from "@/components/layout/MarketHeader.vue";
 import BottomNavigation from "@/components/layout/BottomNavigation.vue";
-import ItemImageSlide from "@/components/Item/Detail/ItemImageSlide.vue";
 import ItemLikeCount from "@/components/Item/ItemLikeCount.vue";
+import { soldItemMixin } from "@/utils/soldItemUtils";
+import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
 
 export default {
   name: "ItemLikesPage",
   components: {
     MarketHeader,
     BottomNavigation,
-    ItemImageSlide,
     ItemLikeCount,
   },
+  mixins: [soldItemMixin], // 추가
 
   data() {
     return {
@@ -180,10 +179,8 @@ export default {
     console.log("찜한 상품 목록:", this.likedItems);
     console.log("======================================");
 
-    // 로그인된 사용자만 찜 목록 로드
-    if (this.isAuthenticated) {
-      this.loadLikedItems();
-    }
+    //  로그인 상태 체크 후 처리
+    this.checkAuthAndLoad();
   },
 
   mounted() {
@@ -229,16 +226,21 @@ export default {
   methods: {
     ...mapActions("itemLike", ["fetchMyLikes", "toggleItemLike"]),
 
+    checkAuthAndLoad() {
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+
+        this.$router.push("/login");
+        return;
+      }
+
+      this.loadLikedItems();
+    },
+
     async loadLikedItems() {
       console.log("=== 찜 목록 로드 시작 ===");
       console.log("사용자 ID:", this.currentUserId);
       console.log("인증 상태:", this.isAuthenticated);
-
-      // 사용자 ID가 없으면 로드하지 않음
-      if (!this.currentUserId) {
-        console.log("사용자 ID가 없어 찜 목록 로드를 중단합니다.");
-        return;
-      }
 
       this.loading = true;
       try {
@@ -272,10 +274,6 @@ export default {
       try {
         const result = await this.toggleItemLike(itemId);
         console.log("찜 토글 성공:", result);
-
-        // 성공 시 해당 아이템을 목록에서 즉시 제거 (찜 취소이므로)
-        // Vuex의 UPDATE_ITEM_LIKE_STATUS mutation이 처리하므로
-        // 여기서는 별도의 목록 재로드 불필요
       } catch (error) {
         console.error("찜 토글에 실패했습니다:", error);
         console.error("에러 상세:", error.response?.data || error.message);
@@ -313,6 +311,15 @@ export default {
       return price
         ? price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
         : "0";
+    },
+
+    // imageUtils에서 가져온 함수들
+    getItemImageUrl(item) {
+      return getItemImageUrl(item);
+    },
+
+    handleImageError(event) {
+      handleImageError(event);
     },
   },
 };
