@@ -53,10 +53,12 @@
         <h4 class="text-lg font-medium text-gray-900">고객센터</h4>
         <div class="space-y-3">
           <!-- 고객센터 메뉴들 -->
-          <a
+          <component
             v-for="menu in supportMenus"
             :key="menu.id"
-            :href="menu.link"
+            :is="menu.isRouter ? 'router-link' : 'a'"
+            :to="menu.isRouter ? menu.link : undefined"
+            :href="menu.isRouter ? undefined : menu.link"
             class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
           >
             <div class="flex items-center">
@@ -90,7 +92,7 @@
                 d="M9 5l7 7-7 7"
               />
             </svg>
-          </a>
+          </component>
 
           <!-- 고객센터 전화 -->
           <div class="p-4 bg-orange-50 rounded-lg border border-orange-200">
@@ -153,7 +155,8 @@ export default {
         {
           id: 1,
           title: "공지사항",
-          link: "Notice",
+          link: "/notice", // ← 라우터 경로로 변경
+          isRouter: true, // ← router-link 사용 플래그 추가
           iconPath:
             "M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z",
         },
@@ -161,6 +164,7 @@ export default {
           id: 2,
           title: "약관 및 정책",
           link: "#",
+          isRouter: false, // ← 일반 링크
           iconPath:
             "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
         },
@@ -168,6 +172,7 @@ export default {
           id: 3,
           title: "1:1 문의하기",
           link: "#",
+          isRouter: false, // ← 일반 링크
           iconPath:
             "M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z",
         },
