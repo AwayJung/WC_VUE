@@ -12,6 +12,7 @@ import ItemUpdatePage from "@/views/Item/ItemUpdatePage.vue";
 import ItemLikesPage from "@/views/Item/ItemLikesPage.vue";
 import MyPage from "@/views/Auth/MyPage.vue";
 import Notice from "@/views/Notice.vue";
+import AboutCompany from "@/views/AboutCompany.vue";
 
 Vue.use(VueRouter);
 
@@ -86,6 +87,11 @@ const routes = [
     path: "/notice",
     name: "Notice",
     component: Notice,
+  },
+  {
+    path: "/aboutCompany",
+    name: "AboutCompany",
+    component: AboutCompany,
   },
 ];
 

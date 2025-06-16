@@ -7,14 +7,12 @@
           <h3 class="text-sm font-semibold mb-4">중고거래</h3>
           <ul class="space-y-2">
             <li>
-              <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
-                >매물 등록</a
+              <router-link
+                to="/items/create"
+                class="text-sm text-gray-500 hover:text-gray-700"
               >
-            </li>
-            <li>
-              <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
-                >안전거래</a
-              >
+                매물 등록
+              </router-link>
             </li>
             <li>
               <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
@@ -47,7 +45,6 @@
           <h3 class="text-sm font-semibold mb-4">기타</h3>
           <ul class="space-y-2">
             <li>
-              <!-- 🆕 공지사항 링크를 router-link로 변경 -->
               <router-link
                 to="/notice"
                 class="text-sm text-gray-500 hover:text-gray-700"
@@ -56,14 +53,12 @@
               </router-link>
             </li>
             <li>
-              <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
-                >앱 다운로드</a
+              <router-link
+                to="/aboutCompany"
+                class="text-sm text-gray-500 hover:text-gray-700"
               >
-            </li>
-            <li>
-              <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
-                >회사 소개</a
-              >
+                회사 소개
+              </router-link>
             </li>
           </ul>
         </div>
