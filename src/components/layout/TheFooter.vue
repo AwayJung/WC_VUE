@@ -47,9 +47,13 @@
           <h3 class="text-sm font-semibold mb-4">기타</h3>
           <ul class="space-y-2">
             <li>
-              <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
-                >공지사항</a
+              <!-- 🆕 공지사항 링크를 router-link로 변경 -->
+              <router-link
+                to="/notice"
+                class="text-sm text-gray-500 hover:text-gray-700"
               >
+                공지사항
+              </router-link>
             </li>
             <li>
               <a href="#" class="text-sm text-gray-500 hover:text-gray-700"
