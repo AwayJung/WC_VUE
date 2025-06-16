@@ -3,52 +3,7 @@
     <h3 class="text-xl font-semibold text-gray-900">고객지원</h3>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- 자주 묻는 질문 -->
-      <div class="space-y-4">
-        <h4 class="text-lg font-medium text-gray-900">자주 묻는 질문</h4>
-        <div class="space-y-3">
-          <a
-            v-for="faq in faqItems"
-            :key="faq.id"
-            :href="faq.link"
-            class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
-          >
-            <div class="flex items-center">
-              <svg
-                class="w-5 h-5 text-gray-400 mr-3 group-hover:text-orange-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span class="font-medium group-hover:text-orange-600">
-                {{ faq.title }}
-              </span>
-            </div>
-            <svg
-              class="w-5 h-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </a>
-        </div>
-      </div>
-
-      <!-- 고객센터 -->
+      <!-- 고객센터 메뉴 -->
       <div class="space-y-4">
         <h4 class="text-lg font-medium text-gray-900">고객센터</h4>
         <div class="space-y-3">
@@ -93,6 +48,88 @@
               />
             </svg>
           </component>
+        </div>
+      </div>
+
+      <!-- 자주 묻는 질문 & 문의 -->
+      <div class="space-y-4">
+        <h4 class="text-lg font-medium text-gray-900">도움말</h4>
+        <div class="space-y-3">
+          <!-- 자주 묻는 질문 -->
+          <router-link
+            to="/SupportFAQ"
+            class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+          >
+            <div class="flex items-center">
+              <svg
+                class="w-5 h-5 text-gray-400 mr-3 group-hover:text-orange-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span class="font-medium group-hover:text-orange-600">
+                자주 묻는 질문
+              </span>
+            </div>
+            <svg
+              class="w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </router-link>
+
+          <!-- 1:1 문의하기 -->
+          <button
+            @click="openInquiryModal"
+            class="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+          >
+            <div class="flex items-center">
+              <svg
+                class="w-5 h-5 text-gray-400 mr-3 group-hover:text-orange-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                />
+              </svg>
+              <span class="font-medium group-hover:text-orange-600">
+                1:1 문의하기
+              </span>
+            </div>
+            <svg
+              class="w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
 
           <!-- 고객센터 전화 -->
           <div class="p-4 bg-orange-50 rounded-lg border border-orange-200">
@@ -124,6 +161,127 @@
         </div>
       </div>
     </div>
+
+    <!-- 1:1 문의하기 모달 -->
+    <div
+      v-if="showInquiryModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      @click="closeInquiryModal"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        @click.stop
+      >
+        <!-- 모달 헤더 -->
+        <div
+          class="flex items-center justify-between p-6 border-b border-gray-200"
+        >
+          <h3 class="text-lg font-semibold text-gray-900">1:1 문의하기</h3>
+          <button
+            @click="closeInquiryModal"
+            class="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- 모달 내용 -->
+        <form @submit.prevent="submitInquiry" class="p-6 space-y-4">
+          <!-- 문의 유형 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              문의 유형
+            </label>
+            <select
+              v-model="inquiryForm.category"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            >
+              <option value="">선택해주세요</option>
+              <option value="account">계정/로그인</option>
+              <option value="trading">거래 관련</option>
+              <option value="technical">기술적 문제</option>
+              <option value="payment">결제 문의</option>
+              <option value="other">기타</option>
+            </select>
+          </div>
+
+          <!-- 제목 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              제목
+            </label>
+            <input
+              type="text"
+              v-model="inquiryForm.title"
+              placeholder="문의 제목을 입력해주세요"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+          </div>
+
+          <!-- 내용 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              문의 내용
+            </label>
+            <textarea
+              v-model="inquiryForm.content"
+              rows="6"
+              placeholder="문의하실 내용을 자세히 작성해주세요"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+            ></textarea>
+          </div>
+
+          <!-- 이메일 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              답변 받을 이메일
+            </label>
+            <input
+              type="email"
+              v-model="inquiryForm.email"
+              placeholder="example@email.com"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+          </div>
+
+          <!-- 안내 메시지 -->
+          <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+            <p class="text-sm text-blue-800">
+              💡 문의하신 내용은 영업일 기준 1-2일 내에 답변드립니다.
+            </p>
+          </div>
+
+          <!-- 버튼 -->
+          <div class="flex space-x-3 pt-4">
+            <button
+              type="button"
+              @click="closeInquiryModal"
+              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              class="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              문의하기
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -133,24 +291,13 @@ export default {
 
   data() {
     return {
-      faqItems: [
-        {
-          id: 1,
-          title: "안전한 거래 방법은?",
-          link: "#",
-        },
-        {
-          id: 2,
-          title: "계정 관련 문의",
-          link: "#",
-        },
-        {
-          id: 3,
-          title: "신고 및 차단",
-          link: "#",
-        },
-      ],
-
+      showInquiryModal: false,
+      inquiryForm: {
+        category: "",
+        title: "",
+        content: "",
+        email: "",
+      },
       supportMenus: [
         {
           id: 1,
@@ -168,16 +315,54 @@ export default {
           iconPath:
             "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
         },
-        {
-          id: 3,
-          title: "1:1 문의하기",
-          link: "#",
-          isRouter: false,
-          iconPath:
-            "M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z",
-        },
       ],
     };
+  },
+
+  methods: {
+    openInquiryModal() {
+      this.showInquiryModal = true;
+      document.body.style.overflow = "hidden"; // 배경 스크롤 방지
+    },
+
+    closeInquiryModal() {
+      this.showInquiryModal = false;
+      document.body.style.overflow = "auto"; // 스크롤 복원
+      // 폼 초기화
+      this.inquiryForm = {
+        category: "",
+        title: "",
+        content: "",
+        email: "",
+      };
+    },
+
+    submitInquiry() {
+      // 간단한 유효성 검사
+      if (
+        !this.inquiryForm.category ||
+        !this.inquiryForm.title ||
+        !this.inquiryForm.content ||
+        !this.inquiryForm.email
+      ) {
+        alert("모든 필드를 입력해주세요.");
+        return;
+      }
+
+      // 여기서 실제 API 호출을 하면 됩니다
+      console.log("문의 내용:", this.inquiryForm);
+
+      // 임시로 성공 메시지
+      alert(
+        "문의가 성공적으로 접수되었습니다. 빠른 시일 내에 답변드리겠습니다."
+      );
+      this.closeInquiryModal();
+    },
+  },
+
+  beforeDestroy() {
+    // 컴포넌트 파괴 시 스크롤 복원
+    document.body.style.overflow = "auto";
   },
 };
 </script>
