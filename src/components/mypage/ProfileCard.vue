@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white rounded-xl shadow-sm border p-8 mb-8">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-6">
+    <div class="flex items-start justify-between">
+      <div class="flex items-start space-x-6 flex-1">
         <div class="relative">
           <img
             :src="profileImage"
@@ -13,8 +13,17 @@
           <h2 class="text-2xl font-bold text-gray-900 mb-2">
             {{ displayName }}
           </h2>
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-4 mb-4">
             <span class="text-gray-600">가입일 • {{ formatJoinDate() }}</span>
+          </div>
+
+          <!-- 자기소개 섹션 (내용이 있을 때만 표시) -->
+          <div v-if="userIntroduction" class="max-w-2xl">
+            <div
+              class="text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-4 border"
+            >
+              {{ userIntroduction }}
+            </div>
           </div>
         </div>
       </div>
@@ -46,31 +55,50 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "ProfileCard",
   emits: ["edit-profile"],
 
+  data() {
+    return {
+      // 자기소개 관련 데이터 제거 (모달에서 처리)
+    };
+  },
+
   computed: {
-    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+    ...mapGetters("auth", [
+      "currentUser",
+      "isAuthenticated",
+      "userProfile",
+      "userIntroduction",
+    ]),
 
     displayName() {
-      return this.currentUser?.name;
+      return this.userProfile?.name || this.currentUser?.name;
     },
 
     profileImage() {
-      return (
-        this.currentUser?.profileImage ||
-        require("@/assets/images/carrot_profile_default.jpg")
-      );
+      const imageFileName =
+        this.userProfile?.profileImage || this.currentUser?.profileImage;
+
+      if (imageFileName) {
+        // 백엔드에서 제공하는 이미지 URL로 변경 (실제 서버 경로에 맞게 수정)
+        return `http://localhost:8080/images/${imageFileName}`;
+      }
+
+      return require("@/assets/images/carrot_profile_default.jpg");
     },
   },
 
   methods: {
+    ...mapActions("auth", ["fetchUserProfile"]),
+
     formatJoinDate() {
-      if (this.currentUser?.regDt) {
-        const date = new Date(this.currentUser.regDt);
+      const regDt = this.userProfile?.regDt || this.currentUser?.regDt;
+      if (regDt) {
+        const date = new Date(regDt);
         return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
       }
       return "";
@@ -79,6 +107,15 @@ export default {
     handleEditProfile() {
       this.$emit("edit-profile");
     },
+  },
+
+  // 컴포넌트 마운트 시 프로필 정보 로드
+  async mounted() {
+    try {
+      await this.fetchUserProfile();
+    } catch (error) {
+      console.error("프로필 로딩 실패:", error);
+    }
   },
 };
 </script>
