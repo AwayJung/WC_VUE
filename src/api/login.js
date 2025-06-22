@@ -183,4 +183,18 @@ loginApi.interceptors.response.use(
   }
 );
 
+// =============== 비밀번호 관련 API ===============
+
+export const forgotPassword = (email) => {
+  return loginApi.post("/api/users/forgot-password", {
+    loginEmail: email,
+  });
+};
+
+export const changePassword = (passwordData) => {
+  return loginApi.put("/api/users/change-password", {
+    password: passwordData.newPassword,
+  });
+};
+
 export default loginApi;

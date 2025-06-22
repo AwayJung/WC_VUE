@@ -28,8 +28,9 @@
         </div>
       </div>
 
-      <!-- 프로필 수정 버튼 -->
-      <div class="flex-shrink-0">
+      <!-- 버튼 그룹 -->
+      <div class="flex-shrink-0 flex flex-col space-y-3">
+        <!-- 프로필 수정 버튼 -->
         <button
           @click="handleEditProfile"
           class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium flex items-center space-x-2"
@@ -49,6 +50,27 @@
           </svg>
           <span>프로필 수정</span>
         </button>
+
+        <!-- 비밀번호 변경 버튼 -->
+        <button
+          @click="handleChangePassword"
+          class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors font-medium flex items-center space-x-2"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+          <span>비밀번호 변경</span>
+        </button>
       </div>
     </div>
   </div>
@@ -59,7 +81,7 @@ import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "ProfileCard",
-  emits: ["edit-profile"],
+  emits: ["edit-profile", "change-password"],
 
   data() {
     return {
@@ -106,6 +128,10 @@ export default {
 
     handleEditProfile() {
       this.$emit("edit-profile");
+    },
+
+    handleChangePassword() {
+      this.$emit("change-password");
     },
   },
 

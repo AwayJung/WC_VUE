@@ -3,7 +3,10 @@
     <TheHeader />
 
     <main class="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
-      <ProfileCard @edit-profile="handleEditProfile" />
+      <ProfileCard
+        @edit-profile="handleEditProfile"
+        @change-password="handleChangePassword"
+      />
 
       <!-- 통계 카드들 -->
       <StatsCards :stats="userStats" />
@@ -53,11 +56,18 @@
     </main>
     <TheFooter />
 
-    <!-- 🔥 프로필 수정 모달 - save 이벤트 추가 -->
+    <!-- 프로필 수정 모달 -->
     <ProfileEditModal
       :visible="showProfileEdit"
       @close="handleCloseProfileEdit"
       @save="handleProfileSaved"
+    />
+
+    <!-- 비밀번호 변경 모달 -->
+    <ChangePasswordModal
+      :visible="showPasswordModal"
+      @close="handleClosePasswordModal"
+      @success="handlePasswordChanged"
     />
   </div>
 </template>
@@ -68,6 +78,7 @@ import TheHeader from "@/components/layout/TheHeader.vue";
 import ProfileCard from "@/components/mypage/ProfileCard.vue";
 import StatsCards from "@/components/mypage/StatsCards.vue";
 import ProfileEditModal from "@/components/mypage/ProfileEditModal.vue";
+import ChangePasswordModal from "@/components/mypage/ChangePasswordModal.vue";
 import SalesTab from "@/components/mypage/SalesTab.vue";
 import LikesTab from "@/components/mypage/LikesTab.vue";
 import SupportTab from "@/components/mypage/SupportTab.vue";
@@ -80,6 +91,7 @@ export default {
     ProfileCard,
     StatsCards,
     ProfileEditModal,
+    ChangePasswordModal,
     SalesTab,
     LikesTab,
     SupportTab,
@@ -90,6 +102,7 @@ export default {
     return {
       activeTab: "sales",
       showProfileEdit: false,
+      showPasswordModal: false,
       salesFilter: "all",
       allItems: [],
 
@@ -173,9 +186,18 @@ export default {
       this.showProfileEdit = true;
     },
 
+    handleChangePassword() {
+      this.showPasswordModal = true;
+    },
+
     // 프로필 수정 모달 닫기
     handleCloseProfileEdit() {
       this.showProfileEdit = false;
+    },
+
+    // 비밀번호 변경 모달 닫기
+    handleClosePasswordModal() {
+      this.showPasswordModal = false;
     },
 
     // 프로필 수정 완료 후 처리
@@ -207,6 +229,18 @@ export default {
             "프로필이 수정되었지만 새로고침에 실패했습니다. 페이지를 새로고침해주세요."
           );
         }
+      }
+    },
+
+    // 비밀번호 변경 성공 후 처리
+    handlePasswordChanged() {
+      this.showPasswordModal = false;
+
+      // 성공 알림
+      if (this.$toast?.success) {
+        this.$toast.success("비밀번호가 성공적으로 변경되었습니다.");
+      } else {
+        alert("비밀번호가 성공적으로 변경되었습니다.");
       }
     },
 
@@ -258,8 +292,6 @@ export default {
         this.$forceUpdate();
       }
     },
-
-    // 🔥 기존 handleSaveProfile 메서드 제거 (ProfileEditModal에서 자체 처리)
 
     // API 호출 메서드들
     async fetchAllItems(forceRefresh = false) {
@@ -327,7 +359,7 @@ export default {
       return;
     }
 
-    // 🔥 초기 데이터 로딩 - 프로필 정보도 함께 로드
+    // 초기 데이터 로딩 - 프로필 정보도 함께 로드
     try {
       await Promise.all([
         this.fetchUserProfile(), // 프로필 정보 로드 추가

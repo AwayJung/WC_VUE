@@ -5,6 +5,7 @@ import MainPage from "@/views/MainPage.vue";
 import ChatList from "@/views/Chat/ChatList.vue";
 import LoginPage from "@/views/Auth/LoginPage.vue";
 import SignUp from "@/views/Auth/SignUp.vue";
+import ForgotPassword from "@/views/Auth/ForgotPassword.vue";
 import ItemCreatePage from "@/views/Item/ItemCreatePage.vue";
 import ItemListPage from "@/views/Item/ItemListPage.vue";
 import ItemDetailPage from "@/views/Item/ItemDetailPage.vue";
@@ -49,6 +50,11 @@ const routes = [
     path: "/signup",
     name: "SignUp",
     component: SignUp,
+  },
+  {
+    path: "/forgot-password",
+    name: "ForgotPassword",
+    component: ForgotPassword,
   },
   {
     path: "/items/create",
