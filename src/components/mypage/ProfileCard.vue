@@ -76,7 +76,7 @@ export default {
     ]),
 
     displayName() {
-      return this.userProfile?.name || this.currentUser?.name;
+      return this.userProfile?.nickname;
     },
 
     profileImage() {

@@ -53,10 +53,11 @@
     </main>
     <TheFooter />
 
-    <!-- 프로필 수정 모달 -->
+    <!-- 🔥 프로필 수정 모달 - save 이벤트 추가 -->
     <ProfileEditModal
       :visible="showProfileEdit"
-      @close="showProfileEdit = false"
+      @close="handleCloseProfileEdit"
+      @save="handleProfileSaved"
     />
   </div>
 </template>
@@ -108,7 +109,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+    ...mapGetters("auth", ["currentUser", "isAuthenticated", "userProfile"]),
     ...mapState("itemLike", ["likedItems"]),
 
     // 현재 사용자의 판매상품만 필터링
@@ -119,7 +120,6 @@ export default {
 
       return this.allItems.filter((item) => {
         const itemSellerId = item.sellerId || (item.data && item.data.sellerId);
-        // 타입 안전한 비교 + 하드코딩된 sellerId=3 임시 처리
         const normalizedItemSellerId = String(itemSellerId);
         const normalizedCurrentUserId = String(this.currentUser.userId);
 
@@ -167,9 +167,47 @@ export default {
   methods: {
     ...mapActions("item", ["fetchItems"]),
     ...mapActions("itemLike", ["refreshLikedItems"]),
+    ...mapActions("auth", ["fetchUserProfile"]),
 
     handleEditProfile() {
       this.showProfileEdit = true;
+    },
+
+    // 프로필 수정 모달 닫기
+    handleCloseProfileEdit() {
+      this.showProfileEdit = false;
+    },
+
+    // 프로필 수정 완료 후 처리
+    async handleProfileSaved() {
+      try {
+        // 프로필 정보 새로고침해서 ProfileCard에 반영
+        await this.fetchUserProfile();
+
+        this.showProfileEdit = false;
+
+        // 성공 알림 (토스트 메시지 있으면 사용, 없으면 alert)
+        if (this.$toast?.success) {
+          this.$toast.success("프로필이 성공적으로 수정되었습니다.");
+        } else {
+          alert("프로필이 성공적으로 수정되었습니다.");
+        }
+      } catch (error) {
+        console.error("프로필 새로고침 실패:", error);
+
+        // 에러가 발생해도 모달은 닫고 사용자에게 알림
+        this.showProfileEdit = false;
+
+        if (this.$toast?.warning) {
+          this.$toast.warning(
+            "프로필이 수정되었지만 새로고침에 실패했습니다. 페이지를 새로고침해주세요."
+          );
+        } else {
+          alert(
+            "프로필이 수정되었지만 새로고침에 실패했습니다. 페이지를 새로고침해주세요."
+          );
+        }
+      }
     },
 
     handleSalesFilterChange(filter) {
@@ -221,16 +259,7 @@ export default {
       }
     },
 
-    async handleSaveProfile() {
-      try {
-        // 프로필 저장 로직 구현 필요
-        this.showProfileEdit = false;
-        alert("프로필이 수정되었습니다.");
-      } catch (error) {
-        console.error("프로필 수정 실패:", error);
-        alert("프로필 수정에 실패했습니다.");
-      }
-    },
+    // 🔥 기존 handleSaveProfile 메서드 제거 (ProfileEditModal에서 자체 처리)
 
     // API 호출 메서드들
     async fetchAllItems(forceRefresh = false) {
@@ -298,9 +327,10 @@ export default {
       return;
     }
 
-    // 초기 데이터 로딩
+    // 🔥 초기 데이터 로딩 - 프로필 정보도 함께 로드
     try {
       await Promise.all([
+        this.fetchUserProfile(), // 프로필 정보 로드 추가
         this.fetchAllItems(true), // 강제 새로고침
         this.refreshLikesData(),
       ]);
