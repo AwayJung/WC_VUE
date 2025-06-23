@@ -53,6 +53,9 @@
             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             placeholder="닉네임을 입력하세요"
           />
+          <p class="text-xs text-gray-500 mt-1">
+            빈칸으로 두면 기존 닉네임이 유지됩니다
+          </p>
         </div>
 
         <!-- 자기소개 -->
@@ -94,8 +97,8 @@
         <button
           @click="handleSave"
           class="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 font-medium"
-          :disabled="!isFormValid || isSaving"
-          :class="{ 'opacity-50 cursor-not-allowed': !isFormValid || isSaving }"
+          :disabled="isSaving"
+          :class="{ 'opacity-50 cursor-not-allowed': isSaving }"
         >
           {{ isSaving ? "저장 중..." : "저장" }}
         </button>
@@ -157,8 +160,9 @@ export default {
       }
     },
 
+    // 🔧 유효성 검사 로직 제거 (항상 저장 가능)
     isFormValid() {
-      return this.editForm.nickname.trim().length > 0;
+      return true; // 항상 저장 가능하도록 변경
     },
   },
 
@@ -191,10 +195,10 @@ export default {
         }
       }
 
-      // 폼 초기화
+      // 폼 초기화 - 기존 값으로 미리 채우기
       this.editForm = {
-        nickname: this.userProfile?.nickname || "",
-        introduction: this.userProfile?.introduction || "",
+        nickname: this.userProfile?.nickname || "", // 기존 닉네임으로 미리 채우기
+        introduction: this.userProfile?.introduction || "", // 기존 자기소개로 미리 채우기
         profileImage: null,
       };
       this.previewImage = null;
@@ -271,39 +275,42 @@ export default {
     },
 
     async handleSave() {
-      if (!this.isFormValid) {
-        alert("닉네임을 입력해주세요.");
-        return;
-      }
-
       try {
         this.isSaving = true;
 
-        // 변경사항 확인
+        // 🔧 변경된 저장 로직
         const currentNickname = this.userProfile?.nickname || "";
         const currentIntroduction = this.userProfile?.introduction || "";
 
-        const hasNicknameChanged =
-          this.editForm.nickname.trim() !== currentNickname;
+        // 닉네임 처리: 빈칸이면 기존 값 유지, 아니면 새 값 사용
+        const finalNickname = this.editForm.nickname.trim() || currentNickname;
+
+        // 자기소개 처리: 입력된 값 그대로 사용 (빈칸 허용)
+        const finalIntroduction = this.editForm.introduction.trim();
+
+        const hasNicknameChanged = finalNickname !== currentNickname;
         const hasIntroductionChanged =
-          this.editForm.introduction.trim() !== currentIntroduction;
+          finalIntroduction !== currentIntroduction;
         const hasImageChanged = this.editForm.profileImage !== null;
 
-        // 전체 프로필 정보를 한 번에 업데이트
+        // 변경사항이 있을 때만 업데이트
         if (hasNicknameChanged || hasIntroductionChanged || hasImageChanged) {
           const profileData = {
             name: this.userProfile?.name || "", // 이름은 기존 값 유지
-            nickname: this.editForm.nickname.trim(),
-            introduction: this.editForm.introduction.trim(),
+            nickname: finalNickname, // 🔧 최종 결정된 닉네임 사용
+            introduction: finalIntroduction, // 🔧 입력된 자기소개 사용
           };
 
           await this.updateUserProfile({
             userProfile: profileData,
             profileImage: this.editForm.profileImage,
           });
+
+          this.$toast?.success?.("프로필이 성공적으로 수정되었습니다.");
+        } else {
+          this.$toast?.info?.("변경된 내용이 없습니다.");
         }
 
-        this.$toast?.success?.("프로필이 성공적으로 수정되었습니다.");
         this.$emit("save");
         this.handleClose();
       } catch (error) {
@@ -319,7 +326,6 @@ export default {
       this.$emit("close");
     },
 
-    // 이미지 로드 에러 처리 (imageUtils 사용)
     handleImageError(event) {
       handleImageError(event);
     },
