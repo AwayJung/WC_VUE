@@ -52,8 +52,6 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // 토큰 갱신 실패 시 로그아웃 처리
         store.dispatch("auth/logout");
-        // 로그인 페이지로 리다이렉트 (필요시)
-        // router.push('/login');
       }
     }
 

@@ -230,12 +230,12 @@
 <script>
 import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
 import { timeUtilsMixin } from "@/utils/timeUtils";
-import { soldItemMixin } from "@/utils/soldItemUtils"; // 새로 추가
+import { soldItemMixin } from "@/utils/soldItemUtils";
 import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "SalesTab",
-  mixins: [timeUtilsMixin, soldItemMixin], // soldItemMixin 추가
+  mixins: [timeUtilsMixin, soldItemMixin],
 
   props: {
     salesData: {
@@ -258,6 +258,11 @@ export default {
 
   computed: {
     displayedItems() {
+      console.log("=== Sales Data 전체 확인 ===");
+      console.log("salesData:", this.salesData);
+      console.log("salesData 첫 번째 아이템:", this.salesData[0]);
+      console.log("==============================");
+
       return this.salesData.slice(0, 4);
     },
     ...mapGetters("auth", ["currentUser"]),
@@ -309,13 +314,11 @@ export default {
 
     // 데이터 추출 헬퍼 메서드들
     getItemId(item) {
-      return item.itemId || (item.data && item.data.itemId) || item.id;
+      return item.itemId;
     },
 
     getItemTitle(item) {
-      return (
-        item.title || (item.data && item.data.title) || item.name || "제목 없음"
-      );
+      return item.title || "제목 없음";
     },
 
     getItemImage(item) {
@@ -323,7 +326,7 @@ export default {
     },
 
     getItemPrice(item) {
-      return item.price || (item.data && item.data.price) || 0;
+      return item.price || 0;
     },
 
     getItemCreatedAt(item) {
@@ -335,15 +338,24 @@ export default {
     },
 
     getItemStatus(item) {
-      return item.status || (item.data && item.data.status) || "SELLING";
+      return item.status || "SELLING";
     },
 
     getItemLikeCount(item) {
-      return item.likeCount || (item.data && item.data.likeCount) || 0;
+      const directLikeCount = item.likeCount;
+      const nestedLikeCount = item.data && item.data.likeCount;
+
+      if (directLikeCount !== undefined && directLikeCount !== null) {
+        return directLikeCount;
+      } else if (nestedLikeCount !== undefined && nestedLikeCount !== null) {
+        return nestedLikeCount;
+      }
+
+      return 0;
     },
 
     getItemViewCount(item) {
-      return item.viewCount || (item.data && item.data.viewCount) || 0;
+      return item.viewCount || 0;
     },
 
     handleImageError(event) {
@@ -372,7 +384,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* 기본 스타일 유지 */
-</style>
