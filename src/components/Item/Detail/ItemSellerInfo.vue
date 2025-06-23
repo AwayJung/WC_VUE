@@ -11,7 +11,7 @@
       </div>
       <div class="ml-3 flex-1">
         <h3 class="font-bold text-base">
-          {{ item.data.sellerName || "판매자" }}
+          {{ item.data.sellerNickname || "판매자" }}
         </h3>
       </div>
     </div>

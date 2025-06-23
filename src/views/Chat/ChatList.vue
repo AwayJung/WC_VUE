@@ -42,9 +42,7 @@
               <div class="ml-3 flex-1">
                 <div class="flex items-center justify-between">
                   <div class="flex-1">
-                    <span class="font-medium">{{
-                      room.name || `채팅방 ${room.roomId}`
-                    }}</span>
+                    <span class="font-medium">{{ room.sellerNickname }}</span>
                     <span class="text-sm text-gray-500 ml-2"
                       >· {{ formatTimeAgo(room.lastMessageTime) }}</span
                     >

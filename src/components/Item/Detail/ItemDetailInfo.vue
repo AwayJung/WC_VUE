@@ -44,7 +44,6 @@ export default {
       return this.item.seller || {};
     },
     formattedLikeCount() {
-      // 좋아요 수가 없거나 0이면 0을 표시
       const likeCount = this.item.data && this.item.data.likeCount;
       if (likeCount === null || likeCount === undefined) return 0;
 
