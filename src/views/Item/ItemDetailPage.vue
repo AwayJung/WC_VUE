@@ -168,6 +168,7 @@ export default {
         console.log("아이템 상태 업데이트 완료:", newStatus);
       }
     },
+
     async loadItemData() {
       const itemId = this.$route.params.id;
       try {
@@ -203,6 +204,9 @@ export default {
 
     handleViewChatHistory(itemId) {
       console.log("handleViewChatHistory 호출됨, itemId:", itemId);
+
+      // 판매완료된 상품이어도 판매자는 채팅 내역을 볼 수 있어야 함
+      // 따라서 여기서는 판매완료 체크를 하지 않음
 
       // 로그인 체크
       if (!this.isAuthenticated) {
@@ -308,6 +312,12 @@ export default {
     },
 
     handlePurchase() {
+      // 판매완료 상품 체크
+      if (this.isSoldItem(this.currentItem)) {
+        alert("판매완료된 상품은 구매할 수 없습니다.");
+        return;
+      }
+
       // 로그인 체크
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
@@ -323,6 +333,12 @@ export default {
       // 이미 처리 중이면 무시
       if (this.isToggling) {
         console.log("이미 찜하기 처리 중입니다.");
+        return;
+      }
+
+      // 판매완료 상품 체크
+      if (this.isSoldItem(this.currentItem)) {
+        alert("판매완료된 상품은 찜할 수 없습니다.");
         return;
       }
 
@@ -357,12 +373,15 @@ export default {
       }
     },
 
-    // 불필요한 함수 제거됨
-    // handleUpdateLike() 함수 삭제
-
     async handleChat() {
       console.log("handleChat 호출됨");
       console.log("currentItem:", this.currentItem);
+
+      // 판매완료 상품 체크
+      if (this.isSoldItem(this.currentItem)) {
+        alert("판매완료된 상품은 채팅할 수 없습니다.");
+        return;
+      }
 
       // 로그인 체크
       if (!this.isAuthenticated) {
@@ -405,6 +424,12 @@ export default {
     },
 
     handleChatWithSeller() {
+      // 판매완료 상품 체크
+      if (this.isSoldItem(this.currentItem)) {
+        alert("판매완료된 상품은 채팅할 수 없습니다.");
+        return;
+      }
+
       this.handleChat();
     },
 
