@@ -148,5 +148,7 @@ export const changePassword = (passwordData) => {
     password: passwordData.newPassword,
   });
 };
-
+export const getUserProfileById = (userId) => {
+  return loginApi.get(`/api/users/profile/${userId}`);
+};
 export default loginApi;

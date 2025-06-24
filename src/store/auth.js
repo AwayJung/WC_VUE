@@ -10,7 +10,9 @@ import {
   deleteProfileImage,
   updateProfile,
   signupWithProfileImage,
+  getUserProfileById,
 } from "@/api/login.js";
+import Vue from "vue";
 
 const state = {
   accessToken: null,
@@ -20,6 +22,7 @@ const state = {
   userProfile: null,
   profileLoading: false,
   profileError: null,
+  sellerProfiles: {},
 };
 
 const getters = {
@@ -30,10 +33,10 @@ const getters = {
   profileError: (state) => state.profileError,
   userIntroduction: (state) => state.userProfile?.introduction || "",
   userProfileImage: (state) => state.userProfile?.profileImage || null,
+  getSellerProfile: (state) => (userId) => state.sellerProfiles[userId] || null,
 };
 
 const actions = {
-  // 인증 관련
   async login({ commit }, credentials) {
     try {
       const response = await login({
@@ -119,7 +122,6 @@ const actions = {
     }
   },
 
-  // 프로필 관련
   async fetchUserProfile({ commit }) {
     commit("SET_PROFILE_LOADING", true);
     commit("SET_PROFILE_ERROR", null);
@@ -138,6 +140,23 @@ const actions = {
         error.response?.data?.message || "프로필 조회에 실패했습니다."
       );
       commit("SET_PROFILE_LOADING", false);
+      return Promise.reject(error);
+    }
+  },
+
+  async fetchSellerProfile({ commit, state }, userId) {
+    if (state.sellerProfiles[userId]) {
+      return Promise.resolve(state.sellerProfiles[userId]);
+    }
+
+    try {
+      const response = await getUserProfileById(userId);
+      const profileData = response.data.data;
+
+      commit("SET_SELLER_PROFILE", { userId, profileData });
+
+      return Promise.resolve(profileData);
+    } catch (error) {
       return Promise.reject(error);
     }
   },
@@ -251,10 +270,15 @@ const mutations = {
     state.isAuthenticated = false;
     state.userProfile = null;
     state.profileError = null;
+    state.sellerProfiles = {};
   },
 
   SET_USER_PROFILE(state, profileData) {
     state.userProfile = profileData;
+  },
+
+  SET_SELLER_PROFILE(state, { userId, profileData }) {
+    Vue.set(state.sellerProfiles, userId, profileData);
   },
 
   SET_PROFILE_LOADING(state, loading) {
