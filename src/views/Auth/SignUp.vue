@@ -269,6 +269,7 @@ import { handleImageError } from "@/utils/imageUtils";
 
 export default {
   name: "SignupPage",
+
   data() {
     return {
       email: "",
@@ -277,23 +278,21 @@ export default {
       name: "",
       nickname: "",
       introduction: "",
-      profileImage: null, // 업로드할 이미지 파일
-      previewImage: null, // 미리보기용 이미지 URL
+      profileImage: null,
+      previewImage: null,
       isLoading: false,
     };
   },
+
   methods: {
-    // 이미지 로드 에러 시 기본 이미지로 대체
     handleImageError(event) {
       handleImageError(event);
     },
 
-    // 프로필 이미지 업로드 처리
     handleProfileImageUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      // 파일 유효성 검사
       if (file.size > 5 * 1024 * 1024) {
         alert("파일 크기는 5MB 이하로 선택해주세요.");
         event.target.value = "";
@@ -308,7 +307,6 @@ export default {
 
       this.profileImage = file;
 
-      // 미리보기 이미지 생성
       const reader = new FileReader();
       reader.onload = (e) => {
         this.previewImage = e.target.result;
@@ -316,7 +314,6 @@ export default {
       reader.readAsDataURL(file);
     },
 
-    // 선택된 프로필 이미지 제거
     removeProfileImage() {
       this.profileImage = null;
       this.previewImage = null;
@@ -325,9 +322,7 @@ export default {
       }
     },
 
-    // 회원가입 처리
     async handleSignup() {
-      // 입력값 유효성 검사
       if (this.password.length < 10) {
         alert("비밀번호를 10자리 이상 작성하세요.");
         return;
@@ -356,7 +351,6 @@ export default {
           introduction: this.introduction,
         };
 
-        // 프로필 이미지 유무에 따른 분기 처리
         if (this.profileImage) {
           await this.$store.dispatch("auth/signupWithImage", {
             signupData,

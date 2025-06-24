@@ -9,16 +9,13 @@ const itemApi = axios.create({
   },
 });
 
-// 🔧 수정된 토큰 추출 로직
 itemApi.interceptors.request.use((config) => {
-  // vuex store에서 토큰 추출
   const vuexData = localStorage.getItem("vuex");
   let token = null;
 
   if (vuexData) {
     try {
       const parsedData = JSON.parse(vuexData);
-      // auth.accessToken 경로로 토큰 추출
       token = parsedData.auth?.accessToken;
     } catch (error) {
       console.error("vuex 데이터 파싱 오류:", error);
@@ -27,10 +24,8 @@ itemApi.interceptors.request.use((config) => {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log("✅ Authorization 헤더 설정됨");
-  } else {
-    console.log("❌ 토큰이 없습니다!");
   }
+
   return config;
 });
 
@@ -63,6 +58,5 @@ export const getItemsOrderByViewCount = () => {
 };
 
 export const changeItemStatus = (itemId, status) => {
-  console.log("🔧 changeItemStatus 호출:", { itemId, status });
   return itemApi.put(`/api/items/${itemId}/status`, { status });
 };

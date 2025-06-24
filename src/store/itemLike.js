@@ -8,11 +8,10 @@ const state = {
 
 const mutations = {
   SET_LIKED_ITEMS(state, items) {
-    // API에서 받은 각 아이템에 기본값 설정
     state.likedItems = items.map((item) => ({
       ...item,
-      likeCount: item.likeCount || 0, // likeCount가 없으면 0으로 초기화
-      isLiked: true, // 찜 목록에 있는 아이템은 기본적으로 isLiked = true
+      likeCount: item.likeCount || 0,
+      isLiked: true,
     }));
   },
 
@@ -21,16 +20,13 @@ const mutations = {
   },
 
   UPDATE_ITEM_LIKE_STATUS(state, { itemId, isLiked }) {
-    // likedItems 배열에서 해당 아이템 찾기
     const itemIndex = state.likedItems.findIndex(
       (item) => item.itemId === itemId
     );
 
     if (itemIndex !== -1) {
-      // 기존 아이템 객체
       const item = state.likedItems[itemIndex];
 
-      // 새 객체를 생성하여 반응성 보장
       const updatedItem = {
         ...item,
         isLiked: isLiked,
@@ -39,17 +35,14 @@ const mutations = {
           : Math.max((item.likeCount || 1) - 1, 0),
       };
 
-      // Vue.set을 사용하여 배열 항목 교체 (반응성 보장)
       Vue.set(state.likedItems, itemIndex, updatedItem);
     }
 
-    // 찜 취소된 경우 (isLiked가 false) 해당 아이템을 likedItems에서 제거
     if (!isLiked && itemIndex !== -1) {
       state.likedItems.splice(itemIndex, 1);
     }
   },
 
-  // 인증되지 않은 사용자의 경우 찜 목록 초기화
   CLEAR_LIKED_ITEMS(state) {
     state.likedItems = [];
     state.currentItemLiked = false;
@@ -57,32 +50,26 @@ const mutations = {
 };
 
 const getters = {
-  // 현재 사용자가 인증되었는지 확인하는 getter
   isUserAuthenticated: (state, getters, rootState) => {
     return rootState.auth.isAuthenticated;
   },
 
-  // 현재 사용자 정보 getter
   currentUser: (state, getters, rootState) => {
     return rootState.auth.user;
   },
 
-  // 찜한 아이템 개수 getter
   likedItemsCount: (state) => {
     return state.likedItems.length;
   },
 
-  // 특정 아이템이 찜되었는지 확인하는 getter
   isItemLiked: (state) => (itemId) => {
     return state.likedItems.some((item) => item.itemId === itemId);
   },
 };
 
 const actions = {
-  // 인증 상태 확인 후 액션 실행하는 헬퍼 함수
   async checkAuthAndExecute({ getters, dispatch }, actionCallback) {
     if (!getters.isUserAuthenticated) {
-      // 인증되지 않은 경우 처리
       console.warn("사용자가 인증되지 않았습니다. 로그인이 필요합니다.");
       throw new Error("LOGIN_REQUIRED");
     }
@@ -90,7 +77,6 @@ const actions = {
     try {
       return await actionCallback();
     } catch (error) {
-      // 토큰 만료나 인증 오류 시 처리
       if (error.response?.status === 401) {
         console.warn("인증이 만료되었습니다. 다시 로그인해주세요.");
         await dispatch("auth/logout", null, { root: true });
@@ -101,43 +87,28 @@ const actions = {
   },
 
   async toggleItemLike({ commit, dispatch }, itemId) {
-    console.log("===== itemLike/toggleItemLike 액션 시작 =====");
-
     return dispatch("checkAuthAndExecute", async () => {
       const response = await itemLikeApi.toggleLike(itemId);
       const isLiked = response.data.data;
-      console.log("찜하기 상태:", isLiked);
 
-      // 현재 아이템 좋아요 상태 업데이트
       commit("SET_CURRENT_ITEM_LIKED", isLiked);
-
-      // 목록 내 해당 아이템의 좋아요 상태와 카운트 업데이트
       commit("UPDATE_ITEM_LIKE_STATUS", { itemId, isLiked });
-
-      // item 모듈의 currentItem.data.isLiked 업데이트
       dispatch("item/updateItemLikeStatus", isLiked, { root: true });
 
       return isLiked;
     });
   },
 
-  // 찜 목록 불러오기
   async fetchMyLikes({ commit, dispatch }) {
     return dispatch("checkAuthAndExecute", async () => {
       const response = await itemLikeApi.getMyLikes();
-      console.log("찜 목록 API 응답:", response.data);
-
       const likedItems = response.data.data || [];
-      console.log("불러온 찜 목록:", likedItems);
-
       commit("SET_LIKED_ITEMS", likedItems);
       return likedItems;
     });
   },
 
-  // 특정 아이템 찜 상태 확인
   async checkItemLikeStatus({ commit, dispatch, getters }, itemId) {
-    // 인증되지 않은 사용자는 찜 상태를 false로 설정
     if (!getters.isUserAuthenticated) {
       commit("SET_CURRENT_ITEM_LIKED", false);
       dispatch("item/updateItemLikeStatus", false, { root: true });
@@ -146,56 +117,37 @@ const actions = {
 
     return dispatch("checkAuthAndExecute", async () => {
       const response = await itemLikeApi.getItemLikeStatus(itemId);
-      console.log("아이템 찜 상태 API 응답:", response.data);
 
-      // 응답 데이터 분석
       let isLiked = false;
 
-      // 1. 직접 boolean으로 오는 경우
       if (typeof response.data === "boolean") {
         isLiked = response.data;
-      }
-      // 2. data 속성에 boolean으로 오는 경우
-      else if (typeof response.data.data === "boolean") {
+      } else if (typeof response.data.data === "boolean") {
         isLiked = response.data.data;
-      }
-      // 3. data 속성에 숫자로 오는 경우 (1이면 true)
-      else if (typeof response.data.data === "number") {
+      } else if (typeof response.data.data === "number") {
         isLiked = response.data.data === 1;
-      }
-      // 4. data 속성이 객체인 경우
-      else if (
+      } else if (
         typeof response.data.data === "object" &&
         response.data.data !== null
       ) {
-        // isLiked 속성이 있는 경우
         if ("isLiked" in response.data.data) {
           isLiked = Boolean(response.data.data.isLiked);
-        }
-        // liked 속성이 있는 경우
-        else if ("liked" in response.data.data) {
+        } else if ("liked" in response.data.data) {
           isLiked = Boolean(response.data.data.liked);
         }
       }
 
-      console.log("파싱된 isLiked 값:", isLiked);
-
-      // 현재 아이템 좋아요 상태 업데이트
       commit("SET_CURRENT_ITEM_LIKED", isLiked);
-
-      // item 모듈의 currentItem.data.isLiked 업데이트
       dispatch("item/updateItemLikeStatus", isLiked, { root: true });
 
       return isLiked;
     });
   },
 
-  // 로그아웃 시 찜 목록 초기화
   clearLikedItems({ commit }) {
     commit("CLEAR_LIKED_ITEMS");
   },
 
-  // 사용자 변경 시 찜 목록 다시 로드
   async refreshLikedItems({ dispatch, getters }) {
     if (getters.isUserAuthenticated) {
       try {

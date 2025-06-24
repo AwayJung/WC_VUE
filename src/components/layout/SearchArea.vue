@@ -43,7 +43,7 @@
       </button>
     </div>
 
-    <!-- 최근 검색어 (showRecentSearches prop이 true이고 검색어가 없을 때) -->
+    <!-- 최근 검색어 -->
     <div
       v-if="showRecentSearches && !searchQuery && recentSearches.length > 0"
       class="mt-3"
@@ -89,6 +89,7 @@ import { mapActions } from "vuex";
 
 export default {
   name: "SearchArea",
+
   props: {
     showRecentSearches: {
       type: Boolean,
@@ -103,31 +104,31 @@ export default {
       default: "",
     },
   },
+
   data() {
     return {
       searchQuery: this.initialQuery,
       recentSearches: [],
     };
   },
+
   mounted() {
-    // localStorage에서 최근 검색어 불러오기
     const savedSearches = localStorage.getItem("recentSearches");
     if (savedSearches) {
       this.recentSearches = JSON.parse(savedSearches);
     }
   },
+
   methods: {
     ...mapActions("search", ["searchItems"]),
 
     async handleSearch() {
       if (!this.searchQuery.trim()) return;
 
-      // 현재 라우트의 쿼리와 검색어가 같은 경우 중복 라우팅 방지
       if (
         this.$route.name === "ItemListPage" &&
         this.$route.query.q === this.searchQuery
       ) {
-        // 검색 이벤트는 여전히 발생시킴
         this.$emit("search", this.searchQuery);
         return;
       }
@@ -144,7 +145,6 @@ export default {
         if (error.name !== "NavigationDuplicated") {
           console.error("검색 오류:", error);
         } else {
-          // 중복 라우팅 오류가 발생해도 이벤트는 발생시킴
           this.$emit("search", this.searchQuery);
         }
       }
@@ -156,21 +156,17 @@ export default {
     },
 
     addToRecentSearches(query) {
-      // 같은 검색어가 있으면 삭제
       const index = this.recentSearches.indexOf(query);
       if (index !== -1) {
         this.recentSearches.splice(index, 1);
       }
 
-      // 최신 검색어를 배열 앞에 추가
       this.recentSearches.unshift(query);
 
-      // 최대 10개까지만 저장
       if (this.recentSearches.length > 10) {
         this.recentSearches.pop();
       }
 
-      // localStorage에 저장
       localStorage.setItem(
         "recentSearches",
         JSON.stringify(this.recentSearches)
@@ -195,6 +191,7 @@ export default {
       localStorage.removeItem("recentSearches");
     },
   },
+
   watch: {
     initialQuery: {
       handler(newVal) {

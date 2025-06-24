@@ -1,46 +1,43 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import ChatRoom from "@/views/Chat/ChatRoom.vue";
-import MainPage from "@/views/MainPage.vue";
-import ChatList from "@/views/Chat/ChatList.vue";
+
+// Auth
 import LoginPage from "@/views/Auth/LoginPage.vue";
 import SignUp from "@/views/Auth/SignUp.vue";
 import ForgotPassword from "@/views/Auth/ForgotPassword.vue";
+import MyPage from "@/views/Auth/MyPage.vue";
+
+// Chat
+import ChatRoom from "@/views/Chat/ChatRoom.vue";
+import ChatList from "@/views/Chat/ChatList.vue";
+
+// Item
 import ItemCreatePage from "@/views/Item/ItemCreatePage.vue";
 import ItemListPage from "@/views/Item/ItemListPage.vue";
 import ItemDetailPage from "@/views/Item/ItemDetailPage.vue";
 import ItemUpdatePage from "@/views/Item/ItemUpdatePage.vue";
 import ItemLikesPage from "@/views/Item/ItemLikesPage.vue";
-import MyPage from "@/views/Auth/MyPage.vue";
+
+// Support
 import Notice from "@/views/Support/Notice.vue";
 import AboutCompany from "@/views/Support/AboutCompany.vue";
 import SupportFAQ from "@/views/Support/SupportFAQ.vue";
 import PolicyPages from "@/views/Support/PolicyPages.vue";
 
+// Main
+import MainPage from "@/views/MainPage.vue";
+
 Vue.use(VueRouter);
 
 const routes = [
+  // Main
   {
     path: "/",
     name: "Home",
     component: MainPage,
   },
-  {
-    path: "/chat/room/:roomId",
-    name: "ChatRoom",
-    component: ChatRoom,
-    props: (route) => ({
-      roomId: route.params.roomId,
-      itemId: route.query.itemId,
-      userId: route.query.userId,
-    }),
-  },
-  {
-    path: "/chat/:userId",
-    name: "ChatRoomList",
-    component: ChatList,
-    props: true,
-  },
+
+  // Auth
   {
     path: "/login",
     name: "Login",
@@ -57,14 +54,46 @@ const routes = [
     component: ForgotPassword,
   },
   {
+    path: "/mypage",
+    name: "MyPage",
+    component: MyPage,
+    meta: { requiresAuth: true },
+  },
+
+  // Chat
+  {
+    path: "/chat/room/:roomId",
+    name: "ChatRoom",
+    component: ChatRoom,
+    props: (route) => ({
+      roomId: route.params.roomId,
+      itemId: route.query.itemId,
+      userId: route.query.userId,
+    }),
+  },
+  {
+    path: "/chat/:userId",
+    name: "ChatRoomList",
+    component: ChatList,
+    props: true,
+  },
+
+  // Item
+  {
+    path: "/items",
+    name: "ItemListPage",
+    component: ItemListPage,
+  },
+  {
     path: "/items/create",
     name: "ItemCreate",
     component: ItemCreatePage,
   },
   {
-    path: "/items",
-    name: "ItemListPage",
-    component: ItemListPage,
+    path: "/items/update/:id",
+    name: "ItemUpdate",
+    component: ItemUpdatePage,
+    meta: { requiresAuth: true },
   },
   {
     path: "/items/:id",
@@ -73,24 +102,12 @@ const routes = [
     props: true,
   },
   {
-    path: "/items/update/:id",
-    name: "ItemUpdate",
-    component: ItemUpdatePage,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: "/mypage",
-    name: "MyPage",
-    component: MyPage,
-    meta: { requiresAuth: true },
-  },
-  {
     path: "/favorites",
     name: "ItemLikes",
     component: ItemLikesPage,
   },
+
+  // Support
   {
     path: "/notice",
     name: "Notice",

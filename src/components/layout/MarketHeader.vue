@@ -32,7 +32,7 @@
             </svg>
           </button>
 
-          <!-- 상태 변경 버튼 (자동으로 소유자만 표시) -->
+          <!-- 상태 변경 버튼 -->
           <button
             v-if="shouldShowStatusButton"
             @click="handleStatusToggle"
@@ -275,7 +275,7 @@
                   </button>
                 </template>
 
-                <!-- 게시글 상세 페이지 메뉴 (item-detail 모드) -->
+                <!-- 게시글 상세 페이지 메뉴 -->
                 <template
                   v-else-if="
                     effectiveMenuMode === 'item-detail' &&
@@ -350,14 +350,6 @@
                     </span>
                   </button>
                 </template>
-
-                <!-- item-detail 모드이지만 소유자가 아닌 경우 메뉴 없음 (이제 사용되지 않음) -->
-                <div
-                  v-else-if="false"
-                  class="px-4 py-3 text-sm text-gray-500 text-center"
-                >
-                  사용 가능한 메뉴가 없습니다
-                </div>
               </div>
             </div>
           </div>
@@ -393,9 +385,11 @@ import SearchArea from "@/components/layout/SearchArea.vue";
 
 export default {
   name: "MarketHeader",
+
   components: {
     SearchArea,
   },
+
   props: {
     isLoggedIn: {
       type: Boolean,
@@ -405,7 +399,6 @@ export default {
       type: Boolean,
       default: true,
     },
-    // 🔧 상태 변경 버튼 관련 props 추가
     showStatusButton: {
       type: Boolean,
       default: false,
@@ -422,43 +415,39 @@ export default {
       type: [String, Number],
       default: null,
     },
-    // 🔧 메뉴 모드 추가
     menuMode: {
       type: String,
-      default: "default", // "default" | "item-detail"
+      default: "default",
       validator: (value) => ["default", "item-detail"].includes(value),
     },
   },
+
   data() {
     return {
       showSearchBar: false,
       currentSearchQuery: "",
       headerObserver: null,
-      statusChanging: false, // 🔧 상태 변경 로딩
-      deleting: false, // 🔧 삭제 로딩 상태
-
-      // 메뉴 상태
+      statusChanging: false,
+      deleting: false,
       showGuestMenu: false,
       showUserMenu: false,
     };
   },
+
   computed: {
     ...mapGetters("auth", ["currentUser"]),
 
-    // 🔧 자동으로 소유자인지 판단
     isItemOwner() {
       if (!this.currentUser?.userId || !this.currentItemSellerId) {
         return false;
       }
 
-      // 타입 안전한 비교
       const currentUserId = String(this.currentUser.userId);
       const sellerId = String(this.currentItemSellerId);
 
       return currentUserId === sellerId;
     },
 
-    // 🔧 상태 버튼 표시 여부 (자동 계산)
     shouldShowStatusButton() {
       return (
         this.showStatusButton &&
@@ -468,26 +457,27 @@ export default {
       );
     },
 
-    // 🔧 실제 사용할 메뉴 모드 (자동 계산)
     effectiveMenuMode() {
-      // item-detail 모드이지만 소유자가 아니면 default로 변경
       if (this.menuMode === "item-detail" && !this.isItemOwner) {
         return "default";
       }
       return this.menuMode;
     },
   },
+
   mounted() {
     this.setupHeaderObserver();
     this.$nextTick(() => {
       this.updateHeaderHeight();
     });
   },
+
   beforeDestroy() {
     if (this.headerObserver) {
       this.headerObserver.disconnect();
     }
   },
+
   watch: {
     showSearchBar() {
       this.$nextTick(() => {
@@ -500,10 +490,10 @@ export default {
       });
     },
   },
+
   methods: {
     ...mapActions("item", ["changeItemStatus", "deleteItem"]),
 
-    // 🔧 상태 변경 관련 메서드들
     async handleStatusToggle() {
       if (!this.currentItemId) {
         alert("상태를 변경할 수 없습니다.");
@@ -515,14 +505,11 @@ export default {
       this.statusChanging = true;
 
       try {
-        // userId 제거
         await this.changeItemStatus({
           itemId: this.currentItemId,
           status: newStatus,
-          // userId 제거됨
         });
 
-        // 부모 컴포넌트에 상태 변경 알림
         this.$emit("status-changed", {
           itemId: this.currentItemId,
           newStatus,
@@ -553,9 +540,7 @@ export default {
       return texts[status] || "판매중";
     },
 
-    // 기존 메서드들...
     setupHeaderObserver() {
-      // 헤더 높이 관찰 (데스크톱용)
       if (typeof ResizeObserver !== "undefined") {
         this.headerObserver = new ResizeObserver((entries) => {
           for (const entry of entries) {
@@ -647,7 +632,6 @@ export default {
       this.$emit("search-clear-no-route");
     },
 
-    // 메뉴 메서드들
     toggleGuestMenu() {
       this.showGuestMenu = !this.showGuestMenu;
       this.showUserMenu = false;
@@ -670,13 +654,11 @@ export default {
       alert("로그아웃되었습니다.");
     },
 
-    // 🔧 게시글 수정 메서드 추가
     handleEditItem() {
       this.closeAllMenus();
       this.$router.push(`/items/update/${this.currentItemId}`);
     },
 
-    // 🔧 게시글 삭제 메서드 추가
     async handleDeleteItem() {
       if (
         !confirm(
@@ -694,7 +676,6 @@ export default {
 
         alert("게시글이 삭제되었습니다.");
 
-        // 홈으로 이동
         this.$router.push("/");
       } catch (error) {
         console.error("게시글 삭제 실패:", error);

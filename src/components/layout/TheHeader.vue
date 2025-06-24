@@ -14,18 +14,21 @@
             <router-link
               :to="{ name: 'ItemListPage' }"
               class="text-base font-medium hover:text-orange-500"
-              >중고 거래</router-link
             >
+              중고 거래
+            </router-link>
             <router-link
               :to="{ name: 'ItemListPage', query: { sort: 'popular' } }"
               class="text-base text-gray-400 font-medium hover:text-orange-500"
-              >인기 매물</router-link
             >
+              인기 매물
+            </router-link>
             <router-link
               :to="{ name: 'ItemCreate' }"
               class="text-base text-gray-400 font-medium hover:text-orange-500"
-              >물건 판매</router-link
             >
+              물건 판매
+            </router-link>
           </div>
         </div>
 
@@ -75,15 +78,15 @@ import { mapGetters } from "vuex";
 
 export default {
   name: "TheHeader",
+
   computed: {
-    ...mapGetters("auth", {
-      isAuthenticated: "isAuthenticated",
-      currentUser: "currentUser",
-    }),
+    ...mapGetters("auth", ["isAuthenticated", "currentUser"]),
+
     currentUserId() {
       return this.currentUser?.userId || null;
     },
   },
+
   methods: {
     async handleLogout() {
       await this.$store.dispatch("auth/logout");

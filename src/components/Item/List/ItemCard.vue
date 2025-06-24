@@ -99,15 +99,13 @@ import { timeUtilsMixin } from "@/utils/timeUtils";
 
 export default {
   name: "ItemCard",
+
   components: {
     ItemLikeCount,
   },
+
   mixins: [timeUtilsMixin],
-  data() {
-    return {
-      placeholderImage: defaultImage,
-    };
-  },
+
   props: {
     item: {
       type: Object,
@@ -115,24 +113,21 @@ export default {
     },
   },
 
+  data() {
+    return {
+      placeholderImage: defaultImage,
+    };
+  },
+
   methods: {
-    // 안전하게 itemId 가져오기
     getItemId() {
-      return (
-        this.item.itemId || (this.item.data && this.item.data.itemId) || null
-      );
+      return this.item.itemId || this.item.data?.itemId || null;
     },
 
-    // 🔧 안전하게 status 가져오기 (새로 추가)
     getItemStatus() {
-      return (
-        this.item.status ||
-        (this.item.data && this.item.data.status) ||
-        "SELLING"
-      );
+      return this.item.status || this.item.data?.status || "SELLING";
     },
 
-    // 🔧 상태 배지 스타일 (새로 추가)
     getStatusBadgeClass(status) {
       const classes = {
         SELLING: "bg-green-100 text-green-800",
@@ -141,7 +136,6 @@ export default {
       return classes[status] || "bg-green-100 text-green-800";
     },
 
-    // 🔧 상태 텍스트 (새로 추가)
     getStatusText(status) {
       const texts = {
         SELLING: "판매중",
@@ -150,58 +144,37 @@ export default {
       return texts[status] || "판매중";
     },
 
-    // 안전하게 likeCount 가져오기
     getLikeCount() {
       const directLikeCount = this.item.likeCount;
-      const nestedLikeCount = this.item.data && this.item.data.likeCount;
+      const nestedLikeCount = this.item.data?.likeCount;
 
-      // undefined, null 체크를 포함
       if (directLikeCount !== undefined && directLikeCount !== null) {
         return directLikeCount;
       } else if (nestedLikeCount !== undefined && nestedLikeCount !== null) {
         return nestedLikeCount;
       }
 
-      return 0; // 기본값
+      return 0;
     },
 
-    // 안전하게 title 가져오기
     getItemTitle() {
-      return (
-        this.item.title ||
-        (this.item.data && this.item.data.title) ||
-        "제목 없음"
-      );
+      return this.item.title || this.item.data?.title || "제목 없음";
     },
 
-    // 안전하게 description 가져오기
     getItemDescription() {
-      return (
-        this.item.description ||
-        (this.item.data && this.item.data.description) ||
-        ""
-      );
+      return this.item.description || this.item.data?.description || "";
     },
 
-    // 안전하게 price 가져오기
     getItemPrice() {
-      return this.item.price || (this.item.data && this.item.data.price) || 0;
+      return this.item.price || this.item.data?.price || 0;
     },
 
-    // 안전하게 createdAt 가져오기
     getItemCreatedAt() {
-      return (
-        this.item.createdAt ||
-        (this.item.data && this.item.data.createdAt) ||
-        null
-      );
+      return this.item.createdAt || this.item.data?.createdAt || null;
     },
 
-    // 안전하게 comments 가져오기
     getItemComments() {
-      return (
-        this.item.comments || (this.item.data && this.item.data.comments) || 0
-      );
+      return this.item.comments || this.item.data?.comments || 0;
     },
 
     formatPrice(price) {

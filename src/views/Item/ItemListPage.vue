@@ -164,7 +164,6 @@ export default {
     "$route.query": {
       deep: true,
       handler(newQuery, oldQuery) {
-        // 카테고리, 정렬, 판매자 파라미터 변경 감지
         if (
           newQuery.category !== oldQuery.category ||
           newQuery.sort !== oldQuery.sort ||
@@ -184,22 +183,18 @@ export default {
     ...mapState("itemLike", ["likedItems"]),
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
 
-    // 현재 정렬 방식
     currentSort() {
       return this.$route.query.sort || "latest";
     },
 
-    // 현재 사용자 ID
     currentUserId() {
       return this.currentUser?.userId || null;
     },
 
-    // 판매자 필터 여부
     isSellerFilter() {
       return !!this.$route.query.sellerId;
     },
 
-    // 현재 로그인한 사용자의 판매상품 페이지인지 확인
     isMySellerPage() {
       return (
         this.isSellerFilter &&
@@ -208,7 +203,6 @@ export default {
       );
     },
 
-    // 페이지 제목
     pageTitle() {
       const type = this.$route.query.type;
       const customTitle = this.$route.query.title;
@@ -225,7 +219,6 @@ export default {
       }
     },
 
-    // 아이템 데이터 처리
     processedItems() {
       if (!this.items) return [];
       let result = [];
@@ -239,22 +232,18 @@ export default {
       return this.mergeLikeInfo(result);
     },
 
-    // 필터링된 아이템 목록
     filteredItems() {
       let result = this.processedItems;
 
-      // 판매자 필터 적용
       if (this.isSellerFilter) {
         const sellerId = parseInt(this.$route.query.sellerId);
         result = result.filter((item) => {
-          // item 구조에 따라 sellerId 접근 방식 조정
           const itemSellerId =
             item.sellerId || (item.data && item.data.sellerId);
           return itemSellerId === sellerId;
         });
       }
 
-      // 검색어 필터 적용
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase().trim();
         result = result.filter((item) => {
@@ -298,22 +287,13 @@ export default {
 
         let itemsPromise;
 
-        // 판매자 필터가 있는 경우 전체 아이템을 가져온 후 클라이언트에서 필터링
-        // (서버 API에 sellerId 필터가 없다고 가정)
         if (sellerId) {
-          console.log("판매자별 조회:", sellerId);
-          itemsPromise = this.fetchItems(); // 전체 아이템 가져오기
+          itemsPromise = this.fetchItems();
         } else if (categoryId) {
-          // 카테고리가 있으면 카테고리별 조회
-          console.log("카테고리별 조회:", categoryId);
           itemsPromise = this.fetchItemsByCategory(parseInt(categoryId));
         } else if (sortType === "popular") {
-          // 전체 인기순 조회
-          console.log("전체 인기순 조회");
           itemsPromise = this.fetchPopularItems();
         } else {
-          // 전체 최신순 조회
-          console.log("전체 최신순 조회");
           itemsPromise = this.fetchItems();
         }
 
@@ -323,14 +303,6 @@ export default {
         }
 
         await Promise.all(promises);
-        console.log(
-          "데이터 로드 완료 - 정렬:",
-          sortType,
-          "카테고리:",
-          categoryId,
-          "판매자:",
-          sellerId
-        );
       } catch (error) {
         console.error("데이터 로드 중 오류 발생:", error);
       }

@@ -86,6 +86,7 @@ import TheFooter from "@/components/layout/TheFooter.vue";
 
 export default {
   name: "MyPage",
+
   components: {
     TheHeader,
     ProfileCard,
@@ -105,7 +106,6 @@ export default {
       showPasswordModal: false,
       salesFilter: "all",
       allItems: [],
-
       tabs: [
         { id: "sales", name: "판매내역" },
         { id: "likes", name: "관심목록" },
@@ -119,14 +119,13 @@ export default {
     ...mapGetters("chat", ["chatCount"]),
     ...mapState("itemLike", ["likedItems"]),
 
-    // 현재 사용자의 판매상품만 필터링
     mySalesData() {
       if (!this.allItems || !this.currentUser) {
         return [];
       }
 
       return this.allItems.filter((item) => {
-        const itemSellerId = item.sellerId || (item.data && item.data.sellerId);
+        const itemSellerId = item.sellerId || item.data?.sellerId;
         const normalizedItemSellerId = String(itemSellerId);
         const normalizedCurrentUserId = String(this.currentUser.userId);
 
@@ -134,15 +133,13 @@ export default {
       });
     },
 
-    // 필터에 따른 판매상품
     filteredSalesData() {
       if (this.salesFilter === "all") {
         return this.mySalesData;
       }
 
       return this.mySalesData.filter((item) => {
-        const status =
-          item.status || (item.data && item.data.status) || "SELLING";
+        const status = item.status || item.data?.status || "SELLING";
         const normalizedStatus = status.toUpperCase();
         const normalizedFilter = this.salesFilter.toUpperCase();
 
@@ -150,34 +147,48 @@ export default {
       });
     },
 
-    // 거래완료 상품들
     completedItems() {
       return this.mySalesData.filter((item) => {
-        const status =
-          item.status || (item.data && item.data.status) || "SELLING";
+        const status = item.status || item.data?.status || "SELLING";
         return status.toUpperCase() === "SOLD";
       });
     },
 
-    // 최종 통계 - Vuex chatCount와 로컬 통계 합치기
     finalUserStats() {
       return {
         sales: this.mySalesData.length,
         likes: this.likedItems?.length || 0,
-        chats: this.chatCount, // Vuex에서 가져온 채팅방 수
+        chats: this.chatCount,
         completed: this.completedItems.length,
       };
     },
   },
 
   watch: {
-    // 탭 변경 감지
     activeTab(newTab) {
-      // 관심목록 탭으로 변경 시 찜 목록 새로고침
       if (newTab === "likes") {
         this.refreshLikesData();
       }
     },
+  },
+
+  async created() {
+    if (!this.isAuthenticated) {
+      alert("로그인이 필요합니다.");
+      this.$router.push("/login");
+      return;
+    }
+
+    try {
+      await Promise.all([
+        this.fetchUserProfile(),
+        this.fetchAllItems(true),
+        this.refreshLikesData(),
+        this.fetchChatRoomCount(),
+      ]);
+    } catch (error) {
+      console.error("초기 데이터 로딩 실패:", error);
+    }
   },
 
   methods: {
@@ -202,7 +213,6 @@ export default {
       this.showPasswordModal = false;
     },
 
-    // 프로필 수정 완료 후 처리
     async handleProfileSaved() {
       try {
         await this.fetchUserProfile();
@@ -229,7 +239,6 @@ export default {
       }
     },
 
-    // 비밀번호 변경 성공 후 처리
     handlePasswordChanged() {
       this.showPasswordModal = false;
 
@@ -248,7 +257,6 @@ export default {
       this.$router.push("/items/create");
     },
 
-    // 내 판매상품 전체보기
     handleViewAllSales() {
       this.$router.push({
         path: "/items",
@@ -264,50 +272,40 @@ export default {
       this.$router.push("/items");
     },
 
-    // 아이템 상태 변경 핸들러
     handleItemStatusChanged({ itemId, newStatus }) {
       const item = this.allItems.find((item) => {
-        const id = item.itemId || (item.data && item.data.itemId) || item.id;
+        const id = item.itemId || item.data?.itemId || item.id;
         return String(id) === String(itemId);
       });
 
       if (item) {
-        // 아이템 상태 업데이트
         if (item.data) {
           item.data.status = newStatus;
         }
         item.status = newStatus;
-
-        // Vue 반응성 트리거
         this.$forceUpdate();
       }
     },
 
-    // 아이템 데이터 조회
     async fetchAllItems(forceRefresh = false) {
       try {
         if (forceRefresh) {
-          // 직접 API 호출
           const { getItemList } = await import("@/api/item");
           const response = await getItemList();
 
           if (response.data) {
             if (Array.isArray(response.data)) {
               this.allItems = response.data;
-            } else if (
-              response.data.data &&
-              Array.isArray(response.data.data)
-            ) {
+            } else if (Array.isArray(response.data.data)) {
               this.allItems = response.data.data;
             } else {
               this.allItems = Object.values(response.data);
             }
           }
         } else {
-          // Vuex 방식
           await this.fetchItems();
           const items = this.$store.state.item.items;
-          if (items && items.data) {
+          if (items?.data) {
             if (Array.isArray(items.data)) {
               this.allItems = items.data;
             } else {
@@ -330,7 +328,6 @@ export default {
       }
     },
 
-    // 채팅방 수 조회
     async fetchChatRoomCount() {
       try {
         if (!this.currentUser?.userId) {
@@ -342,27 +339,6 @@ export default {
         console.error("채팅방 수 조회 실패:", error);
       }
     },
-  },
-
-  async created() {
-    // 인증 체크
-    if (!this.isAuthenticated) {
-      alert("로그인이 필요합니다.");
-      this.$router.push("/login");
-      return;
-    }
-
-    // 초기 데이터 로딩
-    try {
-      await Promise.all([
-        this.fetchUserProfile(),
-        this.fetchAllItems(true),
-        this.refreshLikesData(),
-        this.fetchChatRoomCount(),
-      ]);
-    } catch (error) {
-      console.error("초기 데이터 로딩 실패:", error);
-    }
   },
 };
 </script>

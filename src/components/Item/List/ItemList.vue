@@ -35,7 +35,7 @@
 
     <!-- 상품 목록 -->
     <div v-else>
-      <item-card
+      <ItemCard
         v-for="item in items"
         :key="item.itemId"
         :item="item"
@@ -50,9 +50,11 @@ import ItemCard from "./ItemCard.vue";
 
 export default {
   name: "ItemList",
+
   components: {
     ItemCard,
   },
+
   props: {
     items: {
       type: Array,
@@ -68,6 +70,7 @@ export default {
       default: "",
     },
   },
+
   methods: {
     navigateToDetail(itemId) {
       this.$router.push(`/items/${itemId}`);

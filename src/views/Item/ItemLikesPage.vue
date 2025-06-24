@@ -116,7 +116,6 @@
                 {{ formatPrice(item.price) }}원
               </p>
 
-              <!-- 상태 배지 -->
               <div class="flex items-center justify-between">
                 <span
                   :class="[
@@ -152,12 +151,12 @@ export default {
     BottomNavigation,
     ItemLikeCount,
   },
-  mixins: [soldItemMixin], // 추가
+  mixins: [soldItemMixin],
 
   data() {
     return {
       loading: false,
-      togglingItems: new Set(), // 현재 토글 중인 아이템들을 추적
+      togglingItems: new Set(),
     };
   },
 
@@ -165,61 +164,26 @@ export default {
     ...mapState("itemLike", ["likedItems"]),
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
 
-    // 현재 사용자 ID - Vuex에서 가져오기
     currentUserId() {
       return this.currentUser?.userId || null;
     },
   },
 
   created() {
-    console.log("=== ItemLikesPage 컴포넌트 생성 ===");
-    console.log("인증 상태:", this.isAuthenticated);
-    console.log("현재 사용자:", this.currentUser);
-    console.log("사용자 ID:", this.currentUserId);
-    console.log("찜한 상품 목록:", this.likedItems);
-    console.log("======================================");
-
-    //  로그인 상태 체크 후 처리
     this.checkAuthAndLoad();
   },
 
-  mounted() {
-    // 마운트 후 데이터 확인
-    console.log("=== ItemLikesPage 마운트 완료 ===");
-    console.log("인증 상태:", this.isAuthenticated);
-    console.log("사용자 ID:", this.currentUserId);
-    console.log("찜한 상품 수:", this.likedItems?.length || 0);
-    console.log("==================================");
-  },
-
   watch: {
-    // 로그인 상태 변경 감지
     isAuthenticated(newVal, oldVal) {
-      console.log("[Auth 상태 변경]", { from: oldVal, to: newVal });
-
       if (newVal && !oldVal) {
-        // 로그인됨 - 찜 목록 로드
-        console.log("로그인됨 - 찜 목록 로드");
         this.loadLikedItems();
-      } else if (!newVal && oldVal) {
-        // 로그아웃됨 - 상태 확인
-        console.log("로그아웃됨 - 찜 목록 상태 확인");
       }
     },
 
-    // 사용자 ID 변경 감지
     currentUserId(newVal, oldVal) {
-      if (newVal !== oldVal) {
-        console.log("[사용자 변경]", { from: oldVal, to: newVal });
-        if (this.isAuthenticated) {
-          this.loadLikedItems();
-        }
+      if (newVal !== oldVal && this.isAuthenticated) {
+        this.loadLikedItems();
       }
-    },
-
-    // 찜 목록 변경 감지
-    likedItems(newVal) {
-      console.log("[찜 목록 변경] 새로운 목록:", newVal?.length || 0, "개");
     },
   },
 
@@ -229,81 +193,51 @@ export default {
     checkAuthAndLoad() {
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
-
         this.$router.push("/login");
         return;
       }
-
       this.loadLikedItems();
     },
 
     async loadLikedItems() {
-      console.log("=== 찜 목록 로드 시작 ===");
-      console.log("사용자 ID:", this.currentUserId);
-      console.log("인증 상태:", this.isAuthenticated);
-
       this.loading = true;
       try {
-        // fetchMyLikes는 파라미터 없이 호출 (Vuex action에서 현재 사용자 정보 사용)
         await this.fetchMyLikes();
-        console.log("찜 목록 로드 완료:", this.likedItems?.length || 0, "개");
-        console.log("로드된 찜 목록:", this.likedItems);
       } catch (error) {
         console.error("찜 목록을 불러오는 데 실패했습니다:", error);
-        console.error("에러 상세:", error.response?.data || error.message);
       } finally {
         this.loading = false;
-        console.log("=== 찜 목록 로드 종료 ===");
       }
     },
 
     async toggleLike(itemId) {
-      // 이미 해당 아이템이 처리 중이면 무시
       if (this.togglingItems.has(itemId)) {
-        console.log("이미 해당 아이템 토글 처리 중:", itemId);
         return;
       }
 
-      console.log("=== 찜 토글 시작 ===");
-      console.log("아이템 ID:", itemId);
-      console.log("사용자 ID:", this.currentUserId);
-
-      // 토글 중인 아이템 목록에 추가
       this.togglingItems.add(itemId);
 
       try {
-        const result = await this.toggleItemLike(itemId);
-        console.log("찜 토글 성공:", result);
+        await this.toggleItemLike(itemId);
       } catch (error) {
         console.error("찜 토글에 실패했습니다:", error);
-        console.error("에러 상세:", error.response?.data || error.message);
-
-        // 에러 발생 시에만 목록 다시 로드
         this.loadLikedItems();
       } finally {
-        // 500ms 후 토글 중인 목록에서 제거
         setTimeout(() => {
           this.togglingItems.delete(itemId);
         }, 500);
-
-        console.log("=== 찜 토글 종료 ===");
       }
     },
 
-    // 특정 아이템이 토글 중인지 확인하는 헬퍼 메서드
     isTogglingItem(itemId) {
       return this.togglingItems.has(itemId);
     },
 
     goToItemDetail(itemId) {
-      console.log("상세페이지로 이동, 아이템ID:", itemId, typeof itemId);
-
-      // 아이디가 유효한지 확인
       if (!itemId || itemId === "undefined" || itemId === "null") {
         console.error("유효하지 않은 아이템 ID:", itemId);
         return;
       }
-
       this.$router.push(`/items/${itemId}`);
     },
 
@@ -313,7 +247,6 @@ export default {
         : "0";
     },
 
-    // imageUtils에서 가져온 함수들
     getItemImageUrl(item) {
       return getItemImageUrl(item);
     },

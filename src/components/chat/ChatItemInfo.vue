@@ -130,17 +130,17 @@
 </template>
 
 <script>
-// 이미지 유틸리티 import
 import {
   getItemImageUrl as utilsGetItemImageUrl,
   handleImageError as utilsHandleImageError,
   getPlaceholderImage as utilsGetPlaceholderImage,
 } from "@/utils/imageUtils.js";
-import { soldItemMixin } from "@/utils/soldItemUtils"; // 추가
+import { soldItemMixin } from "@/utils/soldItemUtils";
 
 export default {
   name: "ChatItemInfo",
-  mixins: [soldItemMixin], // 추가
+
+  mixins: [soldItemMixin],
 
   props: {
     itemId: {
@@ -162,7 +162,6 @@ export default {
   },
 
   watch: {
-    // itemId 변경 시 상품 정보 재로드
     itemId: {
       immediate: true,
       handler(newVal, oldVal) {
@@ -172,7 +171,6 @@ export default {
       },
     },
 
-    // 인증 상태 변경 시
     isAuthenticated: {
       immediate: true,
       handler(newVal) {
@@ -187,7 +185,6 @@ export default {
   },
 
   methods: {
-    // 상품 정보 로드
     async loadItemInfo() {
       if (!this.itemId || !this.isAuthenticated) {
         this.itemInfo = null;
@@ -199,16 +196,11 @@ export default {
       this.itemError = false;
 
       try {
-        console.log("[상품 정보] 로드 시작:", this.itemId);
-
         const { getItem } = await import("@/api/item");
         const response = await getItem(this.itemId);
 
-        if (response && response.data) {
+        if (response?.data) {
           this.itemInfo = response.data.data || response.data;
-          console.log("[상품 정보] 로드 완료:", this.itemInfo);
-
-          // 상품 정보 로드 완료 이벤트 발생
           this.emitItemLoaded();
         } else {
           this.itemError = true;
@@ -222,7 +214,6 @@ export default {
       }
     },
 
-    // 상품 정보 로드 완료 이벤트 발생
     emitItemLoaded() {
       if (this.itemInfo) {
         const itemData = {
@@ -232,40 +223,32 @@ export default {
           id: this.itemId,
         };
 
-        console.log("[ChatItemInfo] 상품 정보 emit:", itemData);
         this.$emit("item-loaded", itemData);
       }
     },
 
-    // 채팅 목록으로 이동
     goToChatList() {
-      console.log("[ChatItemInfo] 채팅 목록으로 이동");
       this.$emit("go-back");
     },
 
-    // 이미지 URL 생성 (utils 사용)
     getItemImageUrl(item) {
       return utilsGetItemImageUrl(item);
     },
 
-    // 플레이스홀더 이미지 (utils 사용)
     getPlaceholderImage() {
       return utilsGetPlaceholderImage();
     },
 
-    // 상품 제목 추출
     getItemTitle(item) {
       if (!item) return "상품명 없음";
       return item.title || "상품명 없음";
     },
 
-    // 상품 가격 추출
     getItemPrice(item) {
       if (!item) return 0;
       return item.price || 0;
     },
 
-    // 가격 포맷팅
     formatPrice(price) {
       if (!price && price !== 0) return "";
       return price.toLocaleString("ko-KR") + "원";
@@ -275,10 +258,8 @@ export default {
       utilsHandleImageError(event);
     },
 
-    // 상품 클릭 처리
     handleItemClick() {
       if (this.itemId) {
-        console.log("[ChatItemInfo] 상품 클릭:", this.itemId);
         this.$emit("item-click", this.itemId);
       }
     },

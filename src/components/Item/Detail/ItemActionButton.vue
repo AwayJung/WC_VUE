@@ -46,14 +46,17 @@
 <script>
 import { Heart } from "lucide-vue";
 import { mapGetters } from "vuex";
-import { soldItemMixin } from "@/utils/soldItemUtils"; // soldItemMixin 추가
+import { soldItemMixin } from "@/utils/soldItemUtils";
 
 export default {
   name: "ItemActionButton",
+
   components: {
     Heart,
   },
-  mixins: [soldItemMixin], // mixin 추가
+
+  mixins: [soldItemMixin],
+
   props: {
     item: {
       type: Object,
@@ -68,20 +71,20 @@ export default {
       default: null,
     },
   },
+
   data() {
     return {
       isToggling: false,
     };
   },
+
   computed: {
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
 
-    // Vuex에서 현재 아이템의 찜 상태 가져오기
     isLiked() {
       return this.$store.state.itemLike.currentItemLiked;
     },
 
-    // 현재 사용자 ID 계산
     currentUserIdComputed() {
       return this.currentUser?.userId || this.currentUserId || null;
     },
@@ -91,13 +94,12 @@ export default {
     },
 
     isOwner() {
-      const result = this.item.data.sellerId === this.currentUserIdComputed;
-      return result;
+      return this.item.data.sellerId === this.currentUserIdComputed;
     },
   },
+
   methods: {
     handleLikeClick() {
-      // 판매완료된 상품은 찜하기 불가
       if (this.isSoldItem(this.item)) {
         alert("판매완료된 상품은 찜할 수 없습니다.");
         return;
@@ -106,11 +108,8 @@ export default {
       if (this.isToggling) return;
 
       this.isToggling = true;
-
-      // 부모 컴포넌트에 이벤트 발생
       this.$emit("click-like");
 
-      // 500ms 후 다시 클릭 가능
       setTimeout(() => {
         this.isToggling = false;
       }, 500);
@@ -128,14 +127,10 @@ export default {
     },
 
     handleChatAction() {
-      // 판매완료된 상품은 채팅 불가
       if (this.isSoldItem(this.item)) {
         alert("판매완료된 상품은 채팅할 수 없습니다.");
         return;
       }
-
-      console.log("handleChatAction 호출됨, isOwner:", this.isOwner);
-      console.log("item 객체:", this.item);
 
       if (this.isOwner) {
         const itemId = this.item.data.itemId;

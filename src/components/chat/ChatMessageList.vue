@@ -50,7 +50,6 @@ export default {
   },
 
   computed: {
-    // 메시지 배열에 날짜 구분선을 추가한 배열을 반환
     messagesWithDateSeparators() {
       if (!this.messages || this.messages.length === 0) {
         return [];
@@ -64,7 +63,6 @@ export default {
           message.sentTime || message.timestamp
         );
 
-        // 날짜가 바뀌면 날짜 구분선 추가
         if (messageDate !== lastDate) {
           result.push({
             type: "date",
@@ -74,7 +72,6 @@ export default {
           lastDate = messageDate;
         }
 
-        // 메시지 추가
         result.push({
           type: "message",
           message: message,
@@ -96,13 +93,7 @@ export default {
       },
     },
 
-    // currentUserId 변경 시 강제 리렌더링을 위한 감시자
-    currentUserId(newVal, oldVal) {
-      console.log("[ChatMessageList] currentUserId 변경:", {
-        from: oldVal,
-        to: newVal,
-      });
-      // Vue의 $forceUpdate로 강제 리렌더링
+    currentUserId() {
       this.$nextTick(() => {
         this.$forceUpdate();
       });
@@ -110,30 +101,22 @@ export default {
   },
 
   mounted() {
-    // 컴포넌트 마운트 후 스크롤을 맨 아래로
     this.scrollToBottom();
-
-    console.log("[ChatMessageList] 마운트됨:", {
-      currentUserId: this.currentUserId,
-      messagesCount: this.messages.length,
-    });
   },
 
   methods: {
-    // 날짜 문자열 반환 (YYYY-MM-DD 형식)
     getDateString(timestamp) {
       if (!timestamp) return "";
 
       try {
         const date = new Date(timestamp);
-        return date.toISOString().split("T")[0]; // YYYY-MM-DD
+        return date.toISOString().split("T")[0];
       } catch (error) {
         console.error("날짜 파싱 에러:", error);
         return "";
       }
     },
 
-    // 화면에 표시할 날짜 형식으로 변환 (항상 "YYYY년 M월 D일" 형식)
     formatDateForDisplay(dateString) {
       if (!dateString) return "";
 
@@ -150,7 +133,6 @@ export default {
       }
     },
 
-    // 두 날짜가 같은 날인지 확인
     isSameDate(date1, date2) {
       return (
         date1.getFullYear() === date2.getFullYear() &&
@@ -159,7 +141,6 @@ export default {
       );
     },
 
-    // 스크롤을 맨 아래로 이동
     scrollToBottom() {
       this.$nextTick(() => {
         const container = this.$refs.messageContainer;
@@ -169,7 +150,6 @@ export default {
       });
     },
 
-    // ChatMessage 이벤트들을 부모로 전달
     handleMessageClick(message) {
       this.$emit("message-click", message);
     },
@@ -190,7 +170,6 @@ export default {
 </script>
 
 <style scoped>
-/* 스크롤바 스타일링 */
 .overflow-y-auto::-webkit-scrollbar {
   width: 6px;
 }
@@ -208,7 +187,6 @@ export default {
   background: #a0aec0;
 }
 
-/* 날짜 구분선 애니메이션 */
 .date-separator {
   animation: fadeIn 0.3s ease-in-out;
 }

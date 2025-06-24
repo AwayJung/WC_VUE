@@ -12,9 +12,7 @@
 
     <!-- 로딩 상태 -->
     <div v-if="loading" class="flex justify-center items-center h-screen">
-      <div
-        class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"
-      ></div>
+      <div class="rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       <span class="ml-2">로딩 중...</span>
     </div>
 
@@ -69,8 +67,7 @@
           type="button"
           @click="onSubmit"
           :disabled="!isFormValid || isSubmitting"
-          class="submit-button"
-          :class="{ 'opacity-50': !isFormValid || isSubmitting }"
+          class="w-full p-3 bg-orange-500 text-white rounded-lg font-medium mb-16 transition-opacity duration-200 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {{ isSubmitting ? "수정 중..." : "수정 완료" }}
         </button>
@@ -102,16 +99,15 @@ export default {
         priceFlexible: false,
         description: "",
       },
-      originalImages: [], // 기존 이미지 정보 저장
+      originalImages: [],
       isSubmitting: false,
-      formError: null, // 이름 변경: error -> formError
+      formError: null,
     };
   },
   computed: {
     ...mapState("item", ["loading", "error", "currentItem"]),
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
 
-    // 현재 사용자 ID
     currentUserId() {
       return this.currentUser?.userId || null;
     },
@@ -129,7 +125,6 @@ export default {
       return this.$route.params.id;
     },
 
-    // 현재 사용자가 이 상품의 소유자인지 확인
     isOwner() {
       return (
         this.isAuthenticated &&
@@ -140,12 +135,9 @@ export default {
   methods: {
     ...mapActions("item", ["fetchItem", "updateItem"]),
 
-    // 상품 데이터 불러오기
     async loadItemData() {
       try {
-        // 로그인 체크
         if (!this.isAuthenticated) {
-          console.log("로그인되지 않은 사용자");
           return;
         }
 
@@ -154,14 +146,12 @@ export default {
         if (this.currentItem && this.currentItem.data) {
           const item = this.currentItem.data;
 
-          // 판매자 확인 (자신의 상품이 아니면 리다이렉트)
           if (item.sellerId !== this.currentUserId) {
             alert("자신의 상품만 수정할 수 있습니다.");
             this.$router.push(`/items/${this.itemId}`);
             return;
           }
 
-          // 폼 데이터 초기화
           this.formData = {
             images: [],
             imageUrls: [],
@@ -172,11 +162,9 @@ export default {
             description: item.description || "",
           };
 
-          // 기존 이미지 초기화
           const imageUrls = [];
-          this.originalImages = []; // 초기화
+          this.originalImages = [];
 
-          // 대표 이미지가 있으면 추가
           if (item.imageUrl) {
             imageUrls.push(item.imageUrl);
             this.originalImages.push({
@@ -185,7 +173,6 @@ export default {
             });
           }
 
-          // 추가 이미지가 있으면 추가
           if (item.imageUrlList && item.imageUrlList.length > 0) {
             item.imageUrlList.forEach((url) => {
               imageUrls.push(url);
@@ -196,15 +183,7 @@ export default {
             });
           }
 
-          // 이미지 URL 초기화
           this.formData.imageUrls = imageUrls;
-
-          console.log("상품 데이터 로드 완료:", {
-            itemId: this.itemId,
-            sellerId: item.sellerId,
-            currentUserId: this.currentUserId,
-            isOwner: this.isOwner,
-          });
         }
       } catch (error) {
         console.error("상품 정보 로드 실패:", error);
@@ -212,7 +191,6 @@ export default {
       }
     },
 
-    // 이미지 업로더에서 사용할 메소드들
     addImages(files) {
       files.forEach((file) => {
         this.formData.images.push(file);
@@ -221,15 +199,11 @@ export default {
     },
 
     removeImage(index) {
-      // 이미지 URL 배열에서 해당 이미지 제거
       this.formData.imageUrls.splice(index, 1);
 
-      // 새로 추가된 이미지인 경우 images 배열에서도 제거
       if (index < this.formData.images.length) {
         this.formData.images.splice(index, 1);
-      }
-      // 기존 이미지인 경우 originalImages에서 제거 표시
-      else if (this.originalImages.length > 0) {
+      } else if (this.originalImages.length > 0) {
         const originalIndex = index - this.formData.images.length;
         if (originalIndex >= 0 && originalIndex < this.originalImages.length) {
           this.originalImages[originalIndex].deleted = true;
@@ -254,7 +228,6 @@ export default {
       }
     },
 
-    // 이미지 URL에서 파일명 추출
     getImageNameFromUrl(imageUrl) {
       if (!imageUrl) return null;
       const urlParts = imageUrl.split("/");
@@ -262,7 +235,6 @@ export default {
     },
 
     async onSubmit() {
-      // 로그인 및 권한 체크
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
         this.$router.push("/login");
@@ -275,10 +247,8 @@ export default {
         return;
       }
 
-      // Reset previous error
       this.formError = null;
 
-      // Validate form
       if (!this.isFormValid) {
         this.formError = "모든 필드를 채워주세요.";
         return;
@@ -291,20 +261,16 @@ export default {
 
         const formData = new FormData();
 
-        // 새로운 이미지 추가
         if (this.formData.images.length > 0) {
-          // 모든 이미지를 "images" 키로 추가
           for (let i = 0; i < this.formData.images.length; i++) {
             formData.append("images", this.formData.images[i]);
           }
         }
 
-        // 남아있는 기존 이미지 파일명 수집
         const imageFileNames = this.originalImages
           .filter((img) => !img.deleted)
           .map((img) => this.getImageNameFromUrl(img.url));
 
-        // 아이템 데이터를 JSON 문자열로 변환하여 추가
         const itemData = {
           title: this.formData.title.trim(),
           categoryId: this.formData.categoryId,
@@ -312,23 +278,12 @@ export default {
           priceFlexible: this.formData.priceFlexible,
           description: this.formData.description.trim(),
           sellerId: this.currentUserId,
-          imageIds: imageFileNames, // 남아있는 기존 이미지 파일명 전달
+          imageIds: imageFileNames,
         };
 
-        // 아이템 데이터 추가
         formData.append("item", JSON.stringify(itemData));
 
-        // FormData 내용 확인 (디버깅용)
-        console.log("=== 수정 요청 데이터 ===");
-        console.log("사용자 ID:", this.currentUserId);
-        console.log("아이템 데이터:", itemData);
-        for (let pair of formData.entries()) {
-          console.log(
-            pair[0] + ": " + (pair[1] instanceof File ? pair[1].name : pair[1])
-          );
-        }
-
-        const response = await axios.put(
+        await axios.put(
           `http://localhost:8080/api/items/${this.itemId}`,
           formData,
           {
@@ -338,19 +293,9 @@ export default {
           }
         );
 
-        console.log("아이템 수정 응답:", response.data);
-
         this.$router.push(`/items/${this.itemId}`);
       } catch (error) {
         console.error("아이템 수정 실패:", error);
-        console.error(
-          "응답 데이터:",
-          error.response ? error.response.data : "응답 없음"
-        );
-        console.error(
-          "응답 상태:",
-          error.response ? error.response.status : "상태 코드 없음"
-        );
         this.formError =
           error.response?.data?.message ||
           error.message ||
@@ -365,26 +310,14 @@ export default {
     await this.loadItemData();
   },
 
-  mounted() {
-    console.log("=== ItemUpdatePage 로그인 정보 ===");
-    console.log("인증 상태:", this.isAuthenticated);
-    console.log("현재 사용자:", this.currentUser);
-    console.log("사용자 ID:", this.currentUserId);
-    console.log("상품 소유자 여부:", this.isOwner);
-    console.log("===============================");
-  },
-
-  // 라우트 가드 - 페이지 진입 전 권한 체크
   async beforeRouteEnter(to, from, next) {
     next(async (vm) => {
-      // 로그인 체크
       if (!vm.isAuthenticated) {
         alert("로그인이 필요합니다.");
         vm.$router.push("/login");
         return;
       }
 
-      // 상품 정보가 로드된 후 권한 체크
       if (vm.currentItem && !vm.isOwner) {
         alert("자신의 상품만 수정할 수 있습니다.");
         vm.$router.push(`/items/${vm.itemId}`);
@@ -394,33 +327,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.submit-button {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #f97316;
-  color: white;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  margin-bottom: 4rem;
-  transition: opacity 0.2s ease;
-}
-
-.submit-button:disabled {
-  cursor: not-allowed;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-</style>

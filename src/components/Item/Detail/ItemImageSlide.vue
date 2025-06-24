@@ -78,6 +78,8 @@
 
 <script>
 export default {
+  name: "ItemImageSlide",
+
   props: {
     item: {
       type: Object,
@@ -85,40 +87,36 @@ export default {
       default: () => ({}),
     },
   },
+
   data() {
     return {
       forceDefault: false,
       currentIndex: 0,
     };
   },
+
   computed: {
     allImages() {
       const mainImage = this.item?.data?.imageUrl;
       const imageUrlList = this.item?.data?.imageUrlList || [];
 
-      // additionalImages 처리 - JSON 문자열이 들어올 수 있음
       let additionalImages = [];
       const rawAdditionalImages = this.item?.data?.additionalImages;
 
       if (rawAdditionalImages) {
-        // 문자열인 경우 JSON 파싱 시도
         if (typeof rawAdditionalImages === "string") {
           try {
-            // JSON 문자열에서 따옴표 치환 문제 해결
             const cleanedJson = rawAdditionalImages.replace(/'/g, '"');
             additionalImages = JSON.parse(cleanedJson);
           } catch (e) {
             console.error("additionalImages JSON 파싱 오류:", e);
             additionalImages = [];
           }
-        }
-        // 이미 배열인 경우
-        else if (Array.isArray(rawAdditionalImages)) {
+        } else if (Array.isArray(rawAdditionalImages)) {
           additionalImages = rawAdditionalImages;
         }
       }
 
-      // 유효한 이미지 URL만 필터링
       const allImageUrls = [mainImage, ...imageUrlList, ...additionalImages]
         .filter((url) => url && typeof url === "string")
         .filter(
@@ -138,6 +136,7 @@ export default {
       return imgUrl ? this.getFullUrl(imgUrl) : "";
     },
   },
+
   methods: {
     getFullUrl(imageUrl) {
       if (!imageUrl) return "";
@@ -150,7 +149,6 @@ export default {
     },
 
     handleImageError() {
-      console.error(`이미지 로드 실패: ${this.currentImageUrl}`);
       this.forceDefault = true;
     },
 
@@ -158,15 +156,14 @@ export default {
       this.forceDefault = false;
     },
 
-    nextImage() {
+    nextImage(event) {
       this.currentIndex = (this.currentIndex + 1) % this.allImages.length;
       this.resetImage();
-      // 페이지 상단으로 스크롤하지 않도록 이벤트 전파 중지
       event.stopPropagation();
       event.preventDefault();
     },
 
-    prevImage() {
+    prevImage(event) {
       this.currentIndex =
         (this.currentIndex - 1 + this.allImages.length) % this.allImages.length;
       this.resetImage();
@@ -174,6 +171,7 @@ export default {
       event.preventDefault();
     },
   },
+
   watch: {
     "item.data": {
       handler() {

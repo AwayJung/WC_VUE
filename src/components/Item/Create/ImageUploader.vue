@@ -44,6 +44,7 @@
 <script>
 export default {
   name: "ImageUploader",
+
   props: {
     images: {
       type: Array,
@@ -54,15 +55,14 @@ export default {
       required: true,
     },
   },
+
   methods: {
     handleImageUpload(event) {
       const files = Array.from(event.target.files);
       const remainingSlots = 5 - this.images.length;
       const filesToAdd = files.slice(0, remainingSlots);
 
-      // Validate file types and sizes
       const validFiles = filesToAdd.filter((file) => {
-        // Check file type
         const validTypes = ["image/jpeg", "image/png", "image/gif"];
         if (!validTypes.includes(file.type)) {
           alert(
@@ -71,7 +71,6 @@ export default {
           return false;
         }
 
-        // Check file size (5MB limit)
         if (file.size > 5 * 1024 * 1024) {
           alert("파일 크기는 5MB를 초과할 수 없습니다.");
           return false;
@@ -80,10 +79,7 @@ export default {
         return true;
       });
 
-      // 유효한 파일 emit
       this.$emit("upload-images", validFiles);
-
-      // Reset file input
       event.target.value = "";
     },
 

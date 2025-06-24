@@ -97,7 +97,6 @@ export default {
   },
 
   computed: {
-    // 전송 가능 여부
     canSend() {
       return (
         this.messageText.trim() && this.isConnected && this.isAuthenticated
@@ -106,41 +105,23 @@ export default {
   },
 
   methods: {
-    // 메시지 전송
     handleSendMessage() {
-      if (!this.canSend) {
-        console.log("[메시지 입력] 전송 조건 불충족:", {
-          hasMessage: !!this.messageText.trim(),
-          isConnected: this.isConnected,
-          isAuthenticated: this.isAuthenticated,
-        });
-        return;
-      }
+      if (!this.canSend) return;
 
       const message = this.messageText.trim();
-
-      // 부모 컴포넌트에 메시지 전송 이벤트 발생
       this.$emit("send-message", message);
-
-      // 입력창 초기화
       this.messageText = "";
     },
 
-    // 입력 변화 감지
     handleInput() {
-      // 필요시 타이핑 이벤트 발생
       this.$emit("typing");
     },
 
-    // 추가 버튼 클릭 (파일 첨부 등)
     handleAddButtonClick() {
       if (!this.isConnected) return;
-
-      // 부모 컴포넌트에 추가 기능 이벤트 발생
       this.$emit("add-action");
     },
 
-    // 외부에서 입력창 포커스
     focus() {
       this.$nextTick(() => {
         const input = this.$el.querySelector("input");
@@ -150,7 +131,6 @@ export default {
       });
     },
 
-    // 외부에서 입력창 내용 설정
     setMessage(message) {
       this.messageText = message;
     },
@@ -159,12 +139,10 @@ export default {
 </script>
 
 <style scoped>
-/* 추가 스타일링 */
 .border-t {
   box-shadow: 0 -1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
-/* 전송 버튼 활성화 시 애니메이션 */
 @keyframes pulse {
   0%,
   100% {

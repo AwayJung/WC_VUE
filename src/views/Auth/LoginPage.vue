@@ -139,7 +139,7 @@
       </div>
     </div>
 
-    <!-- 에러 모달 (메인 모달 외부에 배치) -->
+    <!-- 에러 모달 -->
     <LoginErrorModal
       :visible="showErrorModal"
       :message="errorMessage"
@@ -152,8 +152,12 @@
 import LoginErrorModal from "@/views/Auth/LoginErrorModal.vue";
 
 export default {
-  components: { LoginErrorModal },
   name: "LoginPage",
+
+  components: {
+    LoginErrorModal,
+  },
+
   data() {
     return {
       email: "",
@@ -163,6 +167,33 @@ export default {
       showErrorModal: false,
     };
   },
+
+  computed: {
+    isAuthenticated() {
+      return this.$store.getters["auth/isAuthenticated"];
+    },
+  },
+
+  created() {
+    if (this.isAuthenticated) {
+      const token = this.$store.state.auth.accessToken;
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          const exp = payload.exp * 1000;
+          if (Date.now() >= exp) {
+            this.$store.dispatch("auth/logout");
+            return;
+          }
+        } catch (e) {
+          this.$store.dispatch("auth/logout");
+          return;
+        }
+      }
+      this.$router.push("/");
+    }
+  },
+
   methods: {
     async handleLogin() {
       this.isLoading = true;
@@ -194,31 +225,6 @@ export default {
         this.isLoading = false;
       }
     },
-  },
-  computed: {
-    isAuthenticated() {
-      return this.$store.getters["auth/isAuthenticated"];
-    },
-  },
-  created() {
-    // 토큰 유효성 확인 후 리다이렉트
-    if (this.isAuthenticated) {
-      const token = this.$store.state.auth.accessToken;
-      if (token) {
-        try {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          const exp = payload.exp * 1000;
-          if (Date.now() >= exp) {
-            this.$store.dispatch("auth/logout");
-            return;
-          }
-        } catch (e) {
-          this.$store.dispatch("auth/logout");
-          return;
-        }
-      }
-      this.$router.push("/");
-    }
   },
 };
 </script>

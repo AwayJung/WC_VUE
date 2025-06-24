@@ -139,12 +139,14 @@ import { forgotPassword } from "@/api/login";
 
 export default {
   name: "ForgotPassword",
+
   data() {
     return {
       email: "",
       isLoading: false,
     };
   },
+
   methods: {
     async handleSubmit() {
       if (!this.email) return;
@@ -152,20 +154,15 @@ export default {
       this.isLoading = true;
 
       try {
-        const response = await forgotPassword(this.email);
-        console.log(response);
+        await forgotPassword(this.email);
 
         alert("임시 비밀번호가 이메일로 발송되었습니다.");
-        this.$router.push("/login"); // 로그인 페이지로 이동
+        this.$router.push("/login");
       } catch (error) {
         console.error("비밀번호 찾기 실패:", error);
 
         let errorMessage = "이메일 발송에 실패했습니다.";
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.message
-        ) {
+        if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         }
 

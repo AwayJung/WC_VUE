@@ -21,6 +21,7 @@
 <script>
 export default {
   name: "ItemSellerInfo",
+
   props: {
     item: {
       type: Object,
@@ -28,15 +29,10 @@ export default {
       default: () => ({}),
     },
   },
+
   computed: {
     sellerInfo() {
       return this.item.seller || {};
-    },
-    profileImage() {
-      return (
-        this.sellerInfo?.profile_image ||
-        require("@/assets/images/default-placeholder.png")
-      );
     },
   },
 };

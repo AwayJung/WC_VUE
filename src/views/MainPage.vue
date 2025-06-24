@@ -3,11 +3,9 @@
     <div class="flex-1">
       <the-header />
 
-      <!-- 검색 영역 컨테이너 추가 -->
       <div class="bg-white border-b">
         <div class="max-w-6xl mx-auto px-6 py-3">
           <div class="flex items-center">
-            <!-- 검색창 - 기존 SearchArea를 감싸는 컨테이너 -->
             <div class="flex-grow">
               <search-area
                 :show-recent-searches="false"
@@ -44,7 +42,6 @@
         </div>
       </div>
 
-      <!-- Popular Categories -->
       <div class="py-12 bg-white">
         <div class="max-w-6xl mx-auto px-6">
           <h2 class="text-lg font-bold mb-14">인기 카테고리</h2>
@@ -60,9 +57,9 @@
               >
                 {{ category.emoji }}
               </div>
-              <span class="text-xs md:text-sm text-gray-900">{{
-                category.name
-              }}</span>
+              <span class="text-xs md:text-sm text-gray-900">
+                {{ category.name }}
+              </span>
             </div>
           </div>
         </div>
@@ -105,22 +102,10 @@ export default {
   computed: {
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
   },
-  mounted() {
-    console.log("=== 현재 로그인 정보 ===");
-    console.log("인증 상태:", this.isAuthenticated);
-    console.log("현재 사용자:", this.currentUser);
-    console.log("사용자 ID:", this.currentUser?.userId);
-    console.log("사용자 이름:", this.currentUser?.name);
-    console.log("사용자 이메일:", this.currentUser?.loginEmail);
-    console.log("======================");
-  },
   methods: {
-    logout() {
-      this.$store.dispatch("auth/logout");
-    },
     handleSearch(searchText) {
-      console.log("Search:", searchText);
-      // 검색 로직 구현
+      // 검색 로직 구현 예정
+      this.$router.push({ path: "/items", query: { search: searchText } });
     },
     handleCategoryClick(categoryId) {
       this.$router.push({
@@ -131,22 +116,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.overflow-x-auto::-webkit-scrollbar {
-  display: none;
-}
-.overflow-x-auto {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-:deep(.search-area) {
-  width: 100%;
-}
-
-:deep(.search-area input) {
-  border-radius: 6px;
-  height: 40px;
-}
-</style>

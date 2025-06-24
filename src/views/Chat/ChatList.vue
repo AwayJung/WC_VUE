@@ -135,11 +135,14 @@ import { timeUtilsMixin } from "@/utils/timeUtils";
 
 export default {
   name: "ChatList",
+
   mixins: [timeUtilsMixin],
+
   components: {
     BottomNavigation,
     MarketHeader,
   },
+
   data() {
     return {
       itemId: null,
@@ -148,6 +151,7 @@ export default {
       deleting: false,
     };
   },
+
   computed: {
     ...mapState("chat", ["rooms", "currentRoom", "loading", "error"]),
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
@@ -161,10 +165,42 @@ export default {
       return this.rooms.filter((room) => room.itemId === parseInt(this.itemId));
     },
   },
+
+  async created() {
+    await this.$nextTick();
+
+    if (this.isAuthenticated) {
+      await this.loadRooms();
+    } else {
+      this.checkAuthAndRedirect();
+    }
+  },
+
+  watch: {
+    "$route.query.itemId": function () {
+      if (this.isAuthenticated) {
+        this.loadRooms();
+      }
+    },
+
+    isAuthenticated(newVal, oldVal) {
+      if (newVal && !oldVal) {
+        this.loadRooms();
+      } else if (!newVal && oldVal) {
+        this.checkAuthAndRedirect();
+      }
+    },
+
+    currentUserId(newVal, oldVal) {
+      if (newVal !== oldVal && this.isAuthenticated) {
+        this.loadRooms();
+      }
+    },
+  },
+
   methods: {
     ...mapActions("chat", ["fetchUserRooms", "deleteChatRoom"]),
 
-    // 로그인 체크
     checkAuthAndRedirect() {
       if (!this.isAuthenticated) {
         alert("로그인이 필요한 서비스입니다.");
@@ -174,20 +210,17 @@ export default {
       return true;
     },
 
-    // 삭제 확인 다이얼로그 표시
     confirmDeleteRoom(room) {
       this.roomToDelete = room;
       this.showDeleteModal = true;
     },
 
-    // 삭제 취소
     cancelDelete() {
       this.showDeleteModal = false;
       this.roomToDelete = null;
       this.deleting = false;
     },
 
-    // 실제 삭제 실행
     async executeDelete() {
       if (!this.roomToDelete) return;
 
@@ -228,38 +261,6 @@ export default {
           itemId: room.itemId,
         },
       });
-    },
-  },
-
-  async created() {
-    await this.$nextTick();
-
-    if (this.isAuthenticated) {
-      await this.loadRooms();
-    } else {
-      this.checkAuthAndRedirect();
-    }
-  },
-
-  watch: {
-    "$route.query.itemId": function () {
-      if (this.isAuthenticated) {
-        this.loadRooms();
-      }
-    },
-
-    isAuthenticated(newVal, oldVal) {
-      if (newVal && !oldVal) {
-        this.loadRooms();
-      } else if (!newVal && oldVal) {
-        this.checkAuthAndRedirect();
-      }
-    },
-
-    currentUserId(newVal, oldVal) {
-      if (newVal !== oldVal && this.isAuthenticated) {
-        this.loadRooms();
-      }
     },
   },
 };

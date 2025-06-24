@@ -71,9 +71,11 @@ import CategoryInput from "../category/CategoryInput.vue";
 
 export default {
   name: "ItemForm",
+
   components: {
     CategoryInput,
   },
+
   props: {
     title: {
       type: String,
@@ -96,30 +98,28 @@ export default {
       required: true,
     },
   },
+
   computed: {
     isSharing() {
       return this.priceFlexible && (this.price === 0 || this.price === "0");
     },
   },
+
   methods: {
     handlePriceInput(event) {
-      // 입력된 가격 전달
       this.$emit("update:price", event.target.value);
 
-      // 가격이 0이면 나눔으로 설정
       if (event.target.value === "0") {
         this.$emit("update:priceFlexible", true);
       }
     },
+
     handleSharingChange(event) {
-      // 나눔하기 체크박스 상태 전달
       this.$emit("update:priceFlexible", event.target.checked);
 
-      // 나눔하기가 선택되면 가격을 0으로 설정
       if (event.target.checked) {
         this.$emit("update:price", "0");
       } else {
-        // 나눔하기가 해제되면 가격을 초기화 (빈 문자열로)
         this.$emit("update:price", "");
       }
     },
@@ -128,7 +128,6 @@ export default {
 </script>
 
 <style scoped>
-/* 숫자 입력 필드의 위/아래 화살표 제거 */
 .no-spinner::-webkit-outer-spin-button,
 .no-spinner::-webkit-inner-spin-button {
   -webkit-appearance: none;

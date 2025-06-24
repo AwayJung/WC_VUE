@@ -39,7 +39,7 @@
         <span class="text-xs mt-1">찜 목록</span>
       </router-link>
 
-      <!-- 물품 목록 링크 - 별도 메뉴로 이동 -->
+      <!-- 물품 목록 링크 -->
       <router-link
         :to="{ name: 'ItemListPage' }"
         class="flex flex-col items-center"
@@ -113,6 +113,7 @@ import { mapGetters } from "vuex";
 
 export default {
   name: "BottomNavigation",
+
   props: {
     activePage: {
       type: String,
@@ -121,12 +122,15 @@ export default {
         ["home", "favorites", "nearby", "items", "chat", "my"].includes(value),
     },
   },
+
   computed: {
     ...mapGetters("auth", ["currentUser", "isAuthenticated"]),
+
     currentUserId() {
       return this.currentUser?.userId;
     },
   },
+
   methods: {
     handleChatClick() {
       if (this.isAuthenticated && this.currentUserId) {

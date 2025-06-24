@@ -107,7 +107,7 @@ import ItemDetailInfo from "@/components/Item/Detail/ItemDetailInfo.vue";
 import ItemImageSlide from "@/components/Item/Detail/ItemImageSlide.vue";
 import ItemSellerInfo from "@/components/Item/Detail/ItemSellerInfo.vue";
 import MarketHeader from "@/components/layout/MarketHeader.vue";
-import { soldItemMixin } from "@/utils/soldItemUtils"; // 추가
+import { soldItemMixin } from "@/utils/soldItemUtils";
 
 export default {
   name: "ItemDetailPage",
@@ -120,13 +120,13 @@ export default {
     MarketHeader,
   },
 
-  mixins: [soldItemMixin], // 추가
+  mixins: [soldItemMixin],
 
   data() {
     return {
       showMenu: false,
       isMyItem: false,
-      isToggling: false, // 중복 클릭 방지용 플래그
+      isToggling: false,
     };
   },
 
@@ -140,49 +140,36 @@ export default {
       return this.getCurrentItem || null;
     },
 
-    // 현재 사용자 ID
     currentUserId() {
       return this.currentUser?.userId || null;
     },
 
-    // 현재 아이템의 찜 상태
     isCurrentItemLiked() {
       return this.currentItemLiked;
     },
   },
 
   methods: {
-    ...mapActions("item", ["fetchItem", "deleteItem", "updateItem"]),
+    ...mapActions("item", ["fetchItem", "deleteItem"]),
     ...mapActions("itemLike", ["toggleItemLike", "checkItemLikeStatus"]),
 
-    handleItemStatusChanged({ itemId, newStatus }) {
-      console.log("헤더에서 상태 변경:", { itemId, newStatus });
-
-      // 현재 아이템 상태 업데이트
-      if (this.currentItem && this.currentItem.data) {
+    handleItemStatusChanged({ newStatus }) {
+      if (this.currentItem?.data) {
         this.currentItem.data.status = newStatus;
-
-        // Vue 반응성 트리거
         this.$forceUpdate();
-
-        console.log("아이템 상태 업데이트 완료:", newStatus);
       }
     },
 
     async loadItemData() {
       const itemId = this.$route.params.id;
       try {
-        console.log("Loading item data for ID:", itemId);
         await this.fetchItem(itemId);
-        console.log("Loaded item data:", this.currentItem);
 
         if (this.currentItem) {
-          console.log(this.currentItem);
           this.checkIfMyItem();
 
-          // 로그인된 사용자만 찜 상태 확인 (토글 아님!)
           if (this.isAuthenticated) {
-            await this.loadItemLikeStatus(itemId);
+            await this.checkItemLikeStatus(itemId);
           }
         }
       } catch (error) {
@@ -190,53 +177,28 @@ export default {
       }
     },
 
-    // 찜 상태 확인만 하는 함수 (토글 X)
-    async loadItemLikeStatus(itemId) {
-      try {
-        console.log("찜 상태 확인 시작:", itemId);
-        // checkItemLikeStatus는 상태만 확인하고 변경하지 않음
-        const isLiked = await this.checkItemLikeStatus(itemId);
-        console.log("찜 상태 확인 결과:", isLiked);
-      } catch (error) {
-        console.error("찜 상태 확인 실패:", error);
-      }
-    },
-
     handleViewChatHistory(itemId) {
-      console.log("handleViewChatHistory 호출됨, itemId:", itemId);
-
-      // 판매완료된 상품이어도 판매자는 채팅 내역을 볼 수 있어야 함
-      // 따라서 여기서는 판매완료 체크를 하지 않음
-
-      // 로그인 체크
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
         this.$router.push("/login");
         return;
       }
 
-      // URL 문자열을 직접 구성하여 이동
       const targetUrl = `/chat/${this.currentUserId}?itemId=${itemId}`;
-      console.log("이동할 URL:", targetUrl);
-
-      // 직접 URL 문자열을 사용해 라우팅
       this.$router.push(targetUrl);
     },
 
     checkIfMyItem() {
-      // 로그인되어 있고 현재 사용자 ID와 판매자 ID가 같은지 확인
       this.isMyItem =
         this.isAuthenticated &&
         this.currentUserId === this.currentItem.data.sellerId;
     },
 
     toggleMenu() {
-      console.log("메뉴 토글:", !this.showMenu);
       this.showMenu = !this.showMenu;
     },
 
     handleEdit() {
-      // 로그인 및 권한 체크
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
         this.$router.push("/login");
@@ -254,27 +216,26 @@ export default {
     },
 
     async handleDelete() {
+      if (!this.isAuthenticated) {
+        alert("로그인이 필요합니다.");
+        this.$router.push("/login");
+        return;
+      }
+
+      if (!this.isMyItem) {
+        alert("권한이 없습니다.");
+        return;
+      }
+
+      if (!confirm("정말 삭제하시겠습니까?")) return;
+
+      const itemId = this.$route.params.id;
+      if (!itemId) {
+        alert("상품 ID를 찾을 수 없습니다.");
+        return;
+      }
+
       try {
-        // 로그인 및 권한 체크
-        if (!this.isAuthenticated) {
-          alert("로그인이 필요합니다.");
-          this.$router.push("/login");
-          return;
-        }
-
-        if (!this.isMyItem) {
-          alert("권한이 없습니다.");
-          return;
-        }
-
-        if (!confirm("정말 삭제하시겠습니까?")) return;
-
-        const itemId = this.$route.params.id;
-        if (!itemId) {
-          alert("상품 ID를 찾을 수 없습니다.");
-          return;
-        }
-
         await this.deleteItem(itemId);
         this.toggleMenu();
         alert("상품이 성공적으로 삭제되었습니다.");
@@ -285,22 +246,7 @@ export default {
       }
     },
 
-    handleShare() {
-      if (navigator.share) {
-        navigator
-          .share({
-            title: this.currentItem.title || "",
-            text: this.currentItem.description,
-            url: window.location.href,
-          })
-          .catch((error) => {
-            console.error("공유하기 실패:", error);
-          });
-      }
-    },
-
     async handleReport() {
-      // 로그인 체크
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
         this.$router.push("/login");
@@ -312,13 +258,11 @@ export default {
     },
 
     handlePurchase() {
-      // 판매완료 상품 체크
       if (this.isSoldItem(this.currentItem)) {
         alert("판매완료된 상품은 구매할 수 없습니다.");
         return;
       }
 
-      // 로그인 체크
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
         this.$router.push("/login");
@@ -328,21 +272,14 @@ export default {
       this.$router.push(`/purchase/${this.currentItem.id}`);
     },
 
-    // 찜하기 토글 함수 - 중복 호출 방지 로직 추가
     async handleLike() {
-      // 이미 처리 중이면 무시
-      if (this.isToggling) {
-        console.log("이미 찜하기 처리 중입니다.");
-        return;
-      }
+      if (this.isToggling) return;
 
-      // 판매완료 상품 체크
       if (this.isSoldItem(this.currentItem)) {
         alert("판매완료된 상품은 찜할 수 없습니다.");
         return;
       }
 
-      // 로그인 체크
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
         this.$router.push("/login");
@@ -352,21 +289,13 @@ export default {
       this.isToggling = true;
 
       try {
-        console.log("===== itemDetailPage/handleLike 시작 =====");
-        console.log("현재 사용자 ID:", this.currentUserId);
-        console.log("현재 찜 상태:", this.isCurrentItemLiked);
-
         const itemId = this.$route.params.id;
-        const result = await this.toggleItemLike(itemId);
-
-        console.log("찜하기 결과:", result);
-        console.log("===== itemDetailPage/handleLike 완료 =====");
+        await this.toggleItemLike(itemId);
       } catch (error) {
         console.error("찜하기 처리 실패:", error);
         this.$toast?.error?.("찜하기 처리에 실패했습니다.") ||
           alert("찜하기 처리에 실패했습니다.");
       } finally {
-        // 500ms 후 다시 클릭 가능하도록 설정
         setTimeout(() => {
           this.isToggling = false;
         }, 500);
@@ -374,16 +303,11 @@ export default {
     },
 
     async handleChat() {
-      console.log("handleChat 호출됨");
-      console.log("currentItem:", this.currentItem);
-
-      // 판매완료 상품 체크
       if (this.isSoldItem(this.currentItem)) {
         alert("판매완료된 상품은 채팅할 수 없습니다.");
         return;
       }
 
-      // 로그인 체크
       if (!this.isAuthenticated) {
         alert("로그인이 필요합니다.");
         this.$router.push("/login");
@@ -391,13 +315,10 @@ export default {
       }
 
       try {
-        // 채팅방 생성 API 호출
         const response = await this.$store.dispatch("chat/createChatRoom", {
           itemId: parseInt(this.$route.params.id),
           userId: this.currentUserId,
         });
-
-        console.log("채팅방 생성 응답:", response);
 
         const roomId = response.data?.roomId;
 
@@ -405,7 +326,6 @@ export default {
           throw new Error("채팅방 ID를 받지 못했습니다");
         }
 
-        // 생성된 roomId로 채팅방 이동
         this.$router.push({
           name: "ChatRoom",
           params: {
@@ -424,7 +344,6 @@ export default {
     },
 
     handleChatWithSeller() {
-      // 판매완료 상품 체크
       if (this.isSoldItem(this.currentItem)) {
         alert("판매완료된 상품은 채팅할 수 없습니다.");
         return;
@@ -439,19 +358,7 @@ export default {
   },
 
   async created() {
-    console.log("ItemDetailPage created with id:", this.$route.params.id);
     await this.loadItemData();
-  },
-
-  mounted() {
-    // 페이지 로드시 현재 로그인 정보 확인
-    console.log("=== ItemDetailPage 로그인 정보 ===");
-    console.log("인증 상태:", this.isAuthenticated);
-    console.log("현재 사용자:", this.currentUser);
-    console.log("사용자 ID:", this.currentUserId);
-    console.log("내 상품 여부:", this.isMyItem);
-    console.log("현재 찜 상태:", this.isCurrentItemLiked);
-    console.log("================================");
   },
 
   async beforeRouteUpdate(to, from, next) {

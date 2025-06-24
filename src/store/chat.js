@@ -10,27 +10,30 @@ const state = {
   rooms: [],
   currentRoom: null,
   messages: [],
-  chatCount: 0, // 사용자가 참여한 채팅방 개수
+  chatCount: 0,
 };
 
 const mutations = {
   SET_ROOMS(state, rooms) {
     state.rooms = rooms || [];
   },
+
   SET_MESSAGES(state, messages) {
     state.messages = messages;
   },
+
   SET_CHAT_COUNT(state, count) {
     state.chatCount = count;
   },
+
   REMOVE_ROOM(state, roomId) {
     state.rooms = state.rooms.filter((room) => room.roomId !== roomId);
-    // 현재 채팅방이 삭제된 방이면 초기화
+
     if (state.currentRoom && state.currentRoom.roomId === roomId) {
       state.currentRoom = null;
       state.messages = [];
     }
-    // 채팅방이 삭제되면 채팅방 개수도 감소
+
     if (state.chatCount > 0) {
       state.chatCount = state.chatCount - 1;
     }
@@ -83,10 +86,7 @@ const actions = {
   async createChatRoom({ dispatch }, { itemId, userId }) {
     try {
       const response = await createChatRoom(itemId, userId);
-
-      // 채팅방 생성 후 채팅방 개수 새로고침
       await dispatch("fetchUserChatCount", userId);
-
       return response.data;
     } catch (error) {
       console.error("채팅방 생성 실패:", error);
@@ -98,7 +98,6 @@ const actions = {
     try {
       const response = await deleteChatRoom(roomId);
 
-      // 성공시 로컬 state에서도 제거
       if (response.data.code === 20000) {
         commit("REMOVE_ROOM", roomId);
       }
