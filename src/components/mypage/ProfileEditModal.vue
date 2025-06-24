@@ -130,10 +130,10 @@ export default {
       editForm: {
         nickname: "",
         introduction: "",
-        profileImage: null, // 새로 업로드할 이미지 파일
+        profileImage: null,
       },
       isSaving: false,
-      previewImage: null, // 미리보기용 이미지 URL
+      previewImage: null,
     };
   },
 
@@ -158,11 +158,6 @@ export default {
       } catch (error) {
         return getPlaceholderImage();
       }
-    },
-
-    // 🔧 유효성 검사 로직 제거 (항상 저장 가능)
-    isFormValid() {
-      return true; // 항상 저장 가능하도록 변경
     },
   },
 
@@ -197,8 +192,8 @@ export default {
 
       // 폼 초기화 - 기존 값으로 미리 채우기
       this.editForm = {
-        nickname: this.userProfile?.nickname || "", // 기존 닉네임으로 미리 채우기
-        introduction: this.userProfile?.introduction || "", // 기존 자기소개로 미리 채우기
+        nickname: this.userProfile?.nickname || "",
+        introduction: this.userProfile?.introduction || "",
         profileImage: null,
       };
       this.previewImage = null;
@@ -245,8 +240,6 @@ export default {
         this.previewImage = e.target.result;
       };
       reader.readAsDataURL(file);
-
-      console.log("이미지 선택:", file.name);
     },
 
     async handleDeleteImage() {
@@ -278,7 +271,6 @@ export default {
       try {
         this.isSaving = true;
 
-        // 🔧 변경된 저장 로직
         const currentNickname = this.userProfile?.nickname || "";
         const currentIntroduction = this.userProfile?.introduction || "";
 
@@ -296,9 +288,9 @@ export default {
         // 변경사항이 있을 때만 업데이트
         if (hasNicknameChanged || hasIntroductionChanged || hasImageChanged) {
           const profileData = {
-            name: this.userProfile?.name || "", // 이름은 기존 값 유지
-            nickname: finalNickname, // 🔧 최종 결정된 닉네임 사용
-            introduction: finalIntroduction, // 🔧 입력된 자기소개 사용
+            name: this.userProfile?.name || "",
+            nickname: finalNickname,
+            introduction: finalIntroduction,
           };
 
           await this.updateUserProfile({

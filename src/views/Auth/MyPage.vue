@@ -9,7 +9,7 @@
       />
 
       <!-- 통계 카드들 -->
-      <StatsCards :stats="userStats" />
+      <StatsCards :stats="finalUserStats" />
 
       <!-- 탭 콘텐츠 -->
       <div class="bg-white rounded-xl shadow-sm border">
@@ -111,18 +111,12 @@ export default {
         { id: "likes", name: "관심목록" },
         { id: "support", name: "고객지원" },
       ],
-
-      userStats: {
-        sales: 0,
-        likes: 0,
-        chats: 0,
-        completed: 0,
-      },
     };
   },
 
   computed: {
     ...mapGetters("auth", ["currentUser", "isAuthenticated", "userProfile"]),
+    ...mapGetters("chat", ["chatCount"]),
     ...mapState("itemLike", ["likedItems"]),
 
     // 현재 사용자의 판매상품만 필터링
@@ -155,6 +149,25 @@ export default {
         return normalizedStatus === normalizedFilter;
       });
     },
+
+    // 거래완료 상품들
+    completedItems() {
+      return this.mySalesData.filter((item) => {
+        const status =
+          item.status || (item.data && item.data.status) || "SELLING";
+        return status.toUpperCase() === "SOLD";
+      });
+    },
+
+    // 최종 통계 - Vuex chatCount와 로컬 통계 합치기
+    finalUserStats() {
+      return {
+        sales: this.mySalesData.length,
+        likes: this.likedItems?.length || 0,
+        chats: this.chatCount, // Vuex에서 가져온 채팅방 수
+        completed: this.completedItems.length,
+      };
+    },
   },
 
   watch: {
@@ -165,30 +178,13 @@ export default {
         this.refreshLikesData();
       }
     },
-
-    // 찜 목록 변경 감지하여 통계 업데이트
-    likedItems: {
-      handler(newItems) {
-        if (newItems && Array.isArray(newItems)) {
-          this.userStats.likes = newItems.length;
-        }
-      },
-      immediate: true,
-    },
-
-    // 🆕 판매상품 변경 감지하여 통계 업데이트
-    mySalesData: {
-      handler() {
-        this.fetchUserStats();
-      },
-      deep: true,
-    },
   },
 
   methods: {
     ...mapActions("item", ["fetchItems"]),
     ...mapActions("itemLike", ["refreshLikedItems"]),
     ...mapActions("auth", ["fetchUserProfile"]),
+    ...mapActions("chat", ["fetchUserChatCount"]),
 
     handleEditProfile() {
       this.showProfileEdit = true;
@@ -198,12 +194,10 @@ export default {
       this.showPasswordModal = true;
     },
 
-    // 프로필 수정 모달 닫기
     handleCloseProfileEdit() {
       this.showProfileEdit = false;
     },
 
-    // 비밀번호 변경 모달 닫기
     handleClosePasswordModal() {
       this.showPasswordModal = false;
     },
@@ -211,12 +205,9 @@ export default {
     // 프로필 수정 완료 후 처리
     async handleProfileSaved() {
       try {
-        // 프로필 정보 새로고침해서 ProfileCard에 반영
         await this.fetchUserProfile();
-
         this.showProfileEdit = false;
 
-        // 성공 알림 (토스트 메시지 있으면 사용, 없으면 alert)
         if (this.$toast?.success) {
           this.$toast.success("프로필이 성공적으로 수정되었습니다.");
         } else {
@@ -224,8 +215,6 @@ export default {
         }
       } catch (error) {
         console.error("프로필 새로고침 실패:", error);
-
-        // 에러가 발생해도 모달은 닫고 사용자에게 알림
         this.showProfileEdit = false;
 
         if (this.$toast?.warning) {
@@ -244,7 +233,6 @@ export default {
     handlePasswordChanged() {
       this.showPasswordModal = false;
 
-      // 성공 알림
       if (this.$toast?.success) {
         this.$toast.success("비밀번호가 성공적으로 변경되었습니다.");
       } else {
@@ -276,14 +264,8 @@ export default {
       this.$router.push("/items");
     },
 
-    // 통계 업데이트 핸들러
-    handleUpdateStats(statsUpdate) {
-      Object.assign(this.userStats, statsUpdate);
-    },
-
-    // 🔧 아이템 상태 변경 핸들러 - 통계 업데이트 추가
+    // 아이템 상태 변경 핸들러
     handleItemStatusChanged({ itemId, newStatus }) {
-      // allItems에서 해당 아이템의 상태 업데이트
       const item = this.allItems.find((item) => {
         const id = item.itemId || (item.data && item.data.itemId) || item.id;
         return String(id) === String(itemId);
@@ -296,19 +278,16 @@ export default {
         }
         item.status = newStatus;
 
-        // 🆕 통계 재계산
-        this.fetchUserStats();
-
         // Vue 반응성 트리거
         this.$forceUpdate();
       }
     },
 
-    // API 호출 메서드들
+    // 아이템 데이터 조회
     async fetchAllItems(forceRefresh = false) {
       try {
         if (forceRefresh) {
-          // Vuex 우회하고 직접 API 호출
+          // 직접 API 호출
           const { getItemList } = await import("@/api/item");
           const response = await getItemList();
 
@@ -325,7 +304,7 @@ export default {
             }
           }
         } else {
-          // 기존 Vuex 방식
+          // Vuex 방식
           await this.fetchItems();
           const items = this.$store.state.item.items;
           if (items && items.data) {
@@ -351,61 +330,17 @@ export default {
       }
     },
 
-    // 🆕 채팅방 수 조회
+    // 채팅방 수 조회
     async fetchChatRoomCount() {
       try {
-        // 채팅방 목록이 Vuex store에 있다면 사용
-        if (this.$store.state.chat && this.$store.state.chat.rooms) {
-          this.userStats.chats = this.$store.state.chat.rooms.length;
+        if (!this.currentUser?.userId) {
           return;
         }
 
-        // 또는 직접 API 호출 (API가 있다면)
-        try {
-          const { fetchUserRooms } = await import("@/store/modules/chat");
-          if (fetchUserRooms && this.currentUser?.userId) {
-            await this.$store.dispatch(
-              "chat/fetchUserRooms",
-              this.currentUser.userId
-            );
-            const rooms = this.$store.state.chat?.rooms || [];
-            this.userStats.chats = rooms.length;
-          }
-        } catch (apiError) {
-          console.log("채팅방 API 호출 실패, 기본값 사용:", apiError);
-          this.userStats.chats = 0;
-        }
+        await this.fetchUserChatCount(this.currentUser.userId);
       } catch (error) {
         console.error("채팅방 수 조회 실패:", error);
-        this.userStats.chats = 0;
       }
-    },
-
-    // 🔧 사용자 통계 계산 - 거래완료 통계 추가
-    fetchUserStats() {
-      // 판매상품 통계
-      this.userStats.sales = this.mySalesData.length;
-
-      // 🆕 거래완료 통계 추가
-      const completedItems = this.mySalesData.filter((item) => {
-        const status =
-          item.status || (item.data && item.data.status) || "SELLING";
-        return status.toUpperCase() === "SOLD";
-      });
-      this.userStats.completed = completedItems.length;
-
-      // 찜 목록 통계
-      if (this.likedItems && Array.isArray(this.likedItems)) {
-        this.userStats.likes = this.likedItems.length;
-      }
-
-      // 디버깅용 로그
-      console.log("📊 통계 업데이트:", {
-        총판매상품: this.userStats.sales,
-        거래완료: this.userStats.completed,
-        관심목록: this.userStats.likes,
-        채팅방: this.userStats.chats,
-      });
     },
   },
 
@@ -417,17 +352,14 @@ export default {
       return;
     }
 
-    // 초기 데이터 로딩 - 채팅방 수 조회 추가
+    // 초기 데이터 로딩
     try {
       await Promise.all([
-        this.fetchUserProfile(), // 프로필 정보 로드
-        this.fetchAllItems(true), // 강제 새로고침
-        this.refreshLikesData(), // 찜 목록 로드
-        this.fetchChatRoomCount(), // 채팅방 수 조회 추가
+        this.fetchUserProfile(),
+        this.fetchAllItems(true),
+        this.refreshLikesData(),
+        this.fetchChatRoomCount(),
       ]);
-
-      // 아이템 로드 후 통계 업데이트
-      this.fetchUserStats();
     } catch (error) {
       console.error("초기 데이터 로딩 실패:", error);
     }

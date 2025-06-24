@@ -19,7 +19,9 @@
           />
         </svg>
       </div>
-      <div class="text-2xl font-bold text-gray-900 mb-1">{{ stats.sales }}</div>
+      <div class="text-2xl font-bold text-gray-900 mb-1">
+        {{ stats.sales }}
+      </div>
       <div class="text-sm text-gray-500">판매 상품</div>
     </div>
 
@@ -38,7 +40,9 @@
           />
         </svg>
       </div>
-      <div class="text-2xl font-bold text-gray-900 mb-1">{{ stats.likes }}</div>
+      <div class="text-2xl font-bold text-gray-900 mb-1">
+        {{ stats.likes }}
+      </div>
       <div class="text-sm text-gray-500">관심 목록</div>
     </div>
 
@@ -61,7 +65,9 @@
           />
         </svg>
       </div>
-      <div class="text-2xl font-bold text-gray-900 mb-1">{{ stats.chats }}</div>
+      <div class="text-2xl font-bold text-gray-900 mb-1">
+        {{ stats.chats }}
+      </div>
       <div class="text-sm text-gray-500">채팅방</div>
     </div>
 

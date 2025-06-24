@@ -243,7 +243,6 @@ export default {
         this.$delete(this.errors, "newPassword");
       }
 
-      // 확인 비밀번호도 다시 검증
       if (this.passwordForm.confirmPassword) {
         this.validateConfirmPassword();
       }
@@ -271,7 +270,6 @@ export default {
         this.isChanging = true;
         this.$delete(this.errors, "currentPassword");
 
-        // API 호출
         const response = await changePassword({
           currentPassword: this.passwordForm.currentPassword,
           newPassword: this.passwordForm.newPassword,

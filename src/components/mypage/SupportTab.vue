@@ -322,13 +322,13 @@ export default {
   methods: {
     openInquiryModal() {
       this.showInquiryModal = true;
-      document.body.style.overflow = "hidden"; // 배경 스크롤 방지
+      document.body.style.overflow = "hidden";
     },
 
     closeInquiryModal() {
       this.showInquiryModal = false;
-      document.body.style.overflow = "auto"; // 스크롤 복원
-      // 폼 초기화
+      document.body.style.overflow = "auto";
+
       this.inquiryForm = {
         category: "",
         title: "",
@@ -338,7 +338,6 @@ export default {
     },
 
     submitInquiry() {
-      // 간단한 유효성 검사
       if (
         !this.inquiryForm.category ||
         !this.inquiryForm.title ||
@@ -349,10 +348,9 @@ export default {
         return;
       }
 
-      // 여기서 실제 API 호출을 하면 됩니다
+      // 실제 API 호출 위치
       console.log("문의 내용:", this.inquiryForm);
 
-      // 임시로 성공 메시지
       alert(
         "문의가 성공적으로 접수되었습니다. 빠른 시일 내에 답변드리겠습니다."
       );
@@ -361,7 +359,6 @@ export default {
   },
 
   beforeDestroy() {
-    // 컴포넌트 파괴 시 스크롤 복원
     document.body.style.overflow = "auto";
   },
 };

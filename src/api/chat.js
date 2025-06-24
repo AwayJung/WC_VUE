@@ -24,3 +24,8 @@ export const createChatRoom = (itemId, userId) => {
 export const deleteChatRoom = (roomId) => {
   return chatApi.delete(`/api/chat/rooms/${roomId}`);
 };
+
+// 사용자가 참여한 채팅방 개수 조회
+export const fetchUserChatCount = (userId) => {
+  return chatApi.get(`/api/chat/count/user/${userId}`);
+};

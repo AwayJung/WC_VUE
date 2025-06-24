@@ -83,12 +83,6 @@ export default {
   name: "ProfileCard",
   emits: ["edit-profile", "change-password"],
 
-  data() {
-    return {
-      // 자기소개 관련 데이터 제거 (모달에서 처리)
-    };
-  },
-
   computed: {
     ...mapGetters("auth", [
       "currentUser",
@@ -106,7 +100,6 @@ export default {
         this.userProfile?.profileImage || this.currentUser?.profileImage;
 
       if (imageFileName) {
-        // 백엔드에서 제공하는 이미지 URL로 변경 (실제 서버 경로에 맞게 수정)
         return `http://localhost:8080/images/${imageFileName}`;
       }
 
@@ -135,7 +128,6 @@ export default {
     },
   },
 
-  // 컴포넌트 마운트 시 프로필 정보 로드
   async mounted() {
     try {
       await this.fetchUserProfile();

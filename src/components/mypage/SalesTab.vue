@@ -231,7 +231,7 @@
 import { getItemImageUrl, handleImageError } from "@/utils/imageUtils";
 import { timeUtilsMixin } from "@/utils/timeUtils";
 import { soldItemMixin } from "@/utils/soldItemUtils";
-import { mapGetters, mapActions } from "vuex";
+import { mapActions } from "vuex";
 
 export default {
   name: "SalesTab",
@@ -258,14 +258,8 @@ export default {
 
   computed: {
     displayedItems() {
-      console.log("=== Sales Data 전체 확인 ===");
-      console.log("salesData:", this.salesData);
-      console.log("salesData 첫 번째 아이템:", this.salesData[0]);
-      console.log("==============================");
-
       return this.salesData.slice(0, 4);
     },
-    ...mapGetters("auth", ["currentUser"]),
   },
 
   methods: {
@@ -287,6 +281,7 @@ export default {
       const itemId = this.getItemId(item);
       this.$router.push(`/items/${itemId}`);
     },
+
     async handleStatusToggle(item) {
       const currentStatus = this.getItemStatus(item);
       const newStatus = currentStatus === "SELLING" ? "SOLD" : "SELLING";
@@ -301,8 +296,6 @@ export default {
         });
 
         this.updateLocalItemStatus(itemId, newStatus);
-
-        // 부모 컴포넌트에 알림
         this.$emit("status-changed", { itemId, newStatus });
       } catch (error) {
         console.error("상태 변경 실패:", error);
@@ -376,8 +369,6 @@ export default {
           item.data.status = newStatus;
         }
         item.status = newStatus;
-
-        // Vue 반응성 트리거
         this.$forceUpdate();
       }
     },
